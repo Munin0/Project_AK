@@ -1,0 +1,19 @@
+# Clangd configuration
+CompileFlags:
+  CompilationDatabase: build
+  Add: [-Isrc]
+  Remove: [-Werror]
+
+Diagnostics:
+  # Enable all diagnostics
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+# Inlay hints for better code understanding
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+
+# Code completion
+Completion:
+  AllScopes: Yes

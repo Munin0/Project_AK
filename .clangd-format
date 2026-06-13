@@ -1,0 +1,9 @@
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+BreakBeforeBraces: Allman
+IndentWrappedFunctionNames: false
+AllowShortFunctionsOnASingleLine: false
+ColumnLimit: 0
