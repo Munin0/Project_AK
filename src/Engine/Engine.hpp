@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Engine/Layer/GameLayer.hpp"
+#include "Engine/Services/AssetsManager.hpp"
+#include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Utils/Config.hpp"
 #include <memory>
 
@@ -23,6 +25,10 @@ namespace ENG
     private:
       EngineConfig eConfig;
       std::unique_ptr<GameLayer> game;
+      
+      /// Services
+      AssetsManager amgr;
+      ScenesManager sm;
     protected:
   };
 

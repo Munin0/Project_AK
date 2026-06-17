@@ -30,12 +30,14 @@ namespace APP
       bool IsRunning(void) override;
       void OnUpdate(float dt) override;
       void OnRender(float dt) override;
-
     private:
-      bool IsAppEnd;
+      bool IsAppEnd = false;
+      bool isGameInit = false;
       ENG::ObjectPool pool;
       std::vector<ENG::RenderEntry> renderQueue;
 
+      /// Debug FLAGS
+      bool debugDraw = false;
     protected:
       ENG::Color bgColor;
       float changer = 0.0;

@@ -8,7 +8,6 @@
 #include "Engine/Layer/GameLayer.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/PollEvent/PollEvent.hpp"
-#include "Engine/Services/AssetsManager.hpp"
 // | -------------------------------
 #include "SDL3/SDL_error.h"
 // | -------------------------------
@@ -55,10 +54,9 @@ namespace ENG
     r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
 
     LOG_INFO(" | << AssertsManager Services created");
-    AssetsManager amgr;
-    Services::Provide(&amgr);
-
-    game->OnInit();
+    Services::ProvideAssets(&amgr);
+    Services::ProvideScenes(&sm);
+    LOG_INFO(" | << ScenesManager created Succesfully");
 
     return true;
   }
@@ -71,6 +69,7 @@ namespace ENG
     auto frame_ant = std::chrono::high_resolution_clock::now();
     float dt = 0.16666f; 
     
+    game->OnInit();
     while (game->IsRunning())
     {
       // Update DeltaTime
@@ -80,6 +79,7 @@ namespace ENG
       dt = std::min(dt, 0.05f);
       
       PollEvent::Get().ProcessPollEvents();
+
       game->OnInputs(dt);
       game->OnUpdate(dt);
       auto& r = Render::Get();
@@ -106,11 +106,19 @@ namespace ENG
   void Engine::OnDestroy(void)
   {
     LOG_INFO(" | << Destroying Engine, waiting...");
+    LOG_INFO(" | << Destroying Game, waiting...");
     game->OnDestroy();
     game.reset();
-    Render::Get().DestroyBatch();
-    Render::Get().DestroyWindowSDLContext();
+    LOG_INFO(" | << Clearing Assets...");
+    Services::Assets().Clear();
+    Services::ProvideAssets(nullptr);
+    Services::ProvideScenes(nullptr); 
+    LOG_INFO(" | << Destroying PollEventBuffer, waiting...");
     PollEvent::Get().ClearPollEvent();
     PollEvent::Get().DestroyPollEvent();
+    LOG_INFO(" | << Destroying Render, waiting...");
+    Render::Get().DestroyBatch();
+    Render::Get().DestroyWindowSDLContext();
+    LOG_INFO(" | << OnDestroy finished, members next...");
   }
 }

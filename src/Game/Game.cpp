@@ -2,26 +2,23 @@
 #include "Game.hpp"
 /// | ------------------------------------ |
 #include "Engine/Object/ObjectPool.hpp"
+#include "Engine/PollEvent/PollEvent.hpp"
 #include "Engine/Render/RenderEntry.hpp"
+#include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Utils/Vector2.hpp" 
 #include "Engine/Object/Object.hpp"
-#include "Engine/Render/RColor.hpp"
 #include "Engine/Render/Render.hpp"
-#include "Engine/Render/RGeometry.hpp"
-#include "Engine/Component/Component.hpp"
-#include "Engine/PollEvent/PollEvent.hpp"
 /// | ------------------------------------ |
-#include "Game/Systems/Systems.hpp"
-#include "Game/Systems/Systems.hpp"
+#include "Game/Scenes/Demo.hpp"
+#include "Game/Scenes/MainMenu.hpp"
 /// | ------------------------------------ |
 #include "SDL3/SDL_scancode.h"
 /// | ------------------------------------ |
 #include <algorithm>
 #include <memory>
 #include <string>
-#include <utility>
+#include <vector>
 /// | ------------------------------------ |
 
 namespace APP
@@ -34,49 +31,20 @@ namespace APP
   void Game::OnInit(void)
   {
     LOG_INFO(" | << Game application Init Succesfully");
-
-    /// Player creation
-    pool.Add(std::make_unique<ENG::Object>("Player"));
-    auto player = pool.Get(PLAYER);
-    player->SetLayer(LAYER_PLAYER);
-    player->GetStats().hp = 100;
-    player->GetTransform().position = {100,100};
-    player->GetTransform().velocity = {200,200};
-    ENG::Services::Assets().Load(ASSET_PATH"Player/Player.png", "Player");
-    player->AddComponent<ENG::ISprite>("Player",1.0f);
+    /// Adding Scenes
+    ENG::Services::Scenes().AddScene(std::make_unique<MainMenu>(ENG::SCENE_MENU));
+    ENG::Services::Scenes().AddScene(std::make_unique<DemoScene>(ENG::SCENE_DEMO));
     
-    auto rect = std::make_unique<ENG::Rectangle>(0,0,300,100,ENG::Color::Green,ENG::Color::Red, 5.0f);
-    rect->SetLayer(LAYER_BACKGROUND);
-    pool.Add(std::move(rect));
+    /// Load All Assets 
+    ENG::Services::Assets().Load(ASSET_PATH"Player/Player.png", "Player");
 
-    auto line = std::make_unique<ENG::Line>(200,200,500,500, ENG::Color::White);
-    line->SetLayer(LAYER_WOLRD);
-    pool.Add(std::move(line));
-
-    ENG::Vector2 a[3];
-    a[0] = {500,100};
-    a[1] = {200,300};
-    a[2] = {800,300}; 
-    auto triangle = std::make_unique<ENG::Triangle>(a[0],a[1],a[2],ENG::Color::Blue, ENG::Color::Yellow);
-    triangle->SetLayer(LAYER_WOLRD);
-    pool.Add(std::move(triangle));
-
-    auto poly = std::make_unique<ENG::Polygon>(250,250,5,ENG::Color::Yellow);
-
-    poly->AddPoint(250,200);
-    poly->AddPoint(300,250);
-    poly->AddPoint(300,300);
-    poly->AddPoint(200,300);
-    poly->AddPoint(200,250);
-    poly->SetLayer(LAYER_FRONT);
-
-    pool.Add(std::move(poly));
-
-    ENG::sortedQueue = false;
+    /// Start firts scene
+    ENG::Services::Scenes().GetCurrent()->Init(pool);
   }
 
   void Game::OnDestroy(void)
   {
+    LOG_INFO(" | << Destroying Game, waiting...");
     IsAppEnd = true;
     pool.Clear();
   }
@@ -88,66 +56,75 @@ namespace APP
 
   void Game::OnInputs(float dt)
   {
-    auto& pollEvent = ENG::PollEvent::Get();
-
+    auto& pollEvent  = ENG::PollEvent::Get();
+     
     if(pollEvent.IsKeyPress(SDL_SCANCODE_ESCAPE))
     {
-      IsAppEnd = true;
+      IsAppEnd = !IsAppEnd;
     }
+    if(pollEvent.IsKeyPress(SDL_SCANCODE_F3))
+      debugDraw = !debugDraw;
 
     if(pollEvent.IsKeyPress(SDL_SCANCODE_F1))
     {
       auto& tF = ENG::Render::Get()._toggleFullscreen;
       tF = !tF;
     }
-
-    if(pollEvent.IsKeyDown(SDL_SCANCODE_W))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.y -= 1.0f;
-    }
-    if(pollEvent.IsKeyDown(SDL_SCANCODE_S))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.y += 1.0f;
-    }
-    if(pollEvent.IsKeyDown(SDL_SCANCODE_A))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.x -= 1.0f;
-    }
-    if(pollEvent.IsKeyDown(SDL_SCANCODE_D))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.x += 1.0f;
-    }
+    ENG::Services::Scenes().GetCurrent()->Inputs(dt,pool);
   }
 
   void Game::OnUpdate(float dt)
   {
-    System_PlayerMovement(*pool.Get(PLAYER),dt);
+    auto s_current = ENG::Services::Scenes().GetCurrent();
+    // while running the current scene
+    if(!s_current->IsRunning())
+    {
+      s_current->Destroy(pool);
+      ENG::Services::Scenes().ChangeScene();
+      ENG::Services::Scenes().GetCurrent()->Init(pool);
+      return;
+    }
 
-    // Update las position
-    pool.Get(PLAYER)->GetTransform().prev_position = pool.Get(PLAYER)->GetTransform().position;
+    // Update current scene
+    s_current->Update(dt,pool);
   }
 
   void Game::OnRender(float dt)
   {
     auto& b = ENG::Render::Get().GetBatcher();
-       
     if(!ENG::sortedQueue)
     {
       renderQueue.clear();
       for (ENG::ObjectID id : pool.GetAllIDs())
-        renderQueue.push_back({ id, pool.Get(id)->GetLayer() });
+      {
+        auto obj = pool.Get(id);
+        renderQueue.push_back({ id, obj->GetLayer() });
+      }
 
       std::sort(renderQueue.begin(), renderQueue.end(),
         [](const ENG::RenderEntry& a, const ENG::RenderEntry& b) {
         return a.layer < b.layer;
       });
-     
       ENG::sortedQueue = true;
     }
+
     for(auto& entry : renderQueue)
     {
       pool.Get(entry.id)->Draw(b);
     }
-  }
 
+    ENG::Services::Scenes().GetCurrent()->Render(b,pool);
+
+    #ifdef DEBUG
+    if(ENG::debugDraw)
+    {
+      for(ENG::ObjectID id : pool.GetAllIDs())
+      {
+        auto* obj = pool.Get(id);
+        auto& t = obj->GetTransform();
+        b.DrawQuad(t.position.x, t.position.y, t.size.x, t.size.y, ENG::Color::Green);
+      }
+    }
+    #endif
+  }
 }

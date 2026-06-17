@@ -10,7 +10,6 @@
 
 namespace ENG
 {
-
   void AssetsManager::Load(const std::string& path, const std::string& keyName)
   {
     if (mapImages.contains(keyName)) 
@@ -25,11 +24,16 @@ namespace ENG
     mapImages[keyName] = img;
   }
 
-   std::shared_ptr<RImage> AssetsManager::GetTexture(const std::string& keyName)
-   {
-     if(mapImages.contains(keyName))
-       return mapImages[keyName];
-    return nullptr;
-   }
+  std::shared_ptr<RImage> AssetsManager::GetTexture(const std::string& keyName)
+  {
+    if(mapImages.contains(keyName))
+      return mapImages[keyName];
+   return nullptr;
+  }
+  
+  void AssetsManager::Clear()
+  {
+    mapImages.clear();
+  }
 
 }

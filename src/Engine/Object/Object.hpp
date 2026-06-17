@@ -3,6 +3,7 @@
 // | -------------------------------
 #include "Engine/Component/ComponentStorage.hpp"
 #include "Engine/Render/RBatch.hpp"
+#include "Engine/Services/WorldSaver.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Component/Component.hpp"
 // | -------------------------------
@@ -78,13 +79,21 @@ namespace ENG
       Vector2 GetSize(void) const;
       void SetLayer(uint8_t _layer) { layer = _layer;}
       uint8_t GetLayer() const { return layer; }
+      void SetPersistence(bool value) { persistent = value;}
+      bool GetPersistence(void) {return this->persistent;}
+
+      // Serialization
+      ObjectState Save() const;
+      void Load(const ObjectState& state);
     private:
-      uint8_t layer;
       static int countObject;
     protected:
-      ITransform transform;
-      IStats stats;
+      uint8_t layer;
+      bool persistent;
+      
       std::string name;
+      IStats stats;
+      ITransform transform;
 
       ComponentStorage components;
   };

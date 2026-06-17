@@ -18,6 +18,7 @@ namespace ENG
 
       void Load(const std::string& path, const std::string& keyName);
       std::shared_ptr<RImage> GetTexture(const std::string& keyName);
+      void Clear(void);
 
     private:
       std::map<std::string, std::shared_ptr<RImage>> mapImages;

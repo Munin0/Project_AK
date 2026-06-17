@@ -1,6 +1,7 @@
 /// | ------------------------------------ |
 #include "RBatch.hpp"
 /// | ------------------------------------ |
+#include "Engine/Render/RColor.hpp"
 #include "RImage.hpp"
 #include "RVertex.hpp"
 #include "RShader.hpp"
@@ -236,6 +237,16 @@ namespace ENG
 
     m_VertexCount += 4;
     m_IndexCount += 6;
+  }
+
+  void Batcher::DrawQuadOutline(float x, float y, float w, float h, float thicknes, const Color& color)
+  {
+    glm::vec4 outColor = {color.r, color.g, color.b, color.a};
+
+    DrawQuad({x, y}, {w, thicknes}, outColor);                                                // Top
+    DrawQuad({x, y + h - thicknes}, {w, thicknes}, outColor);                              // Bottom
+    DrawQuad({x, y + thicknes}, {thicknes, h - thicknes * 2}, outColor);                   // Left
+    DrawQuad({x + w - thicknes, y + thicknes}, {thicknes, h - thicknes * 2}, outColor); // Right
   }
 
   void Batcher::DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint)

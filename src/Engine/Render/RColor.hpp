@@ -24,6 +24,15 @@ namespace ENG
             this->b == c.b && 
             this->a == c.a);
       }
+
+      void operator=(const Color& _color)
+      {
+        this->r = _color.r;
+        this->g = _color.g;
+        this->b = _color.b;
+        this->a = _color.a;
+      }
+
     public:
       float r;
       float g;

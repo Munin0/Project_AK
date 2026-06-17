@@ -1,33 +1,22 @@
 #include "Component.hpp"
 
+#include "Engine/Render/RColor.hpp"
 #include "Engine/Services/Services.hpp"
+#include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Vector2.hpp"
 
 #include <bits/types/timer_t.h>
 #include <string>
+#include <vector>
 
 namespace ENG
 {
-  IName::IName(const std::string& n)
-    : IComponents{}, name{n} 
-  {}
-
   ITransform::ITransform()
-    : IComponents{},
-        position(0.0f,0.0f),
-        velocity(0.0f,0.0f),
-        angle(0.0f)
+    : IComponents{}, position(0.0f,0.0f), velocity(0.0f,0.0f), angle(0.0f)
   {}
 
   ITransform::ITransform(const Vector2& pos, const Vector2& vel, float ang)
-    : IComponents{},
-        position(pos),
-        velocity(vel),
-        angle(ang)
-  {}
-
-  ITimer::ITimer()
-    : IComponents{}, actualFrame{0}
+    : IComponents{}, position(pos), velocity(vel), angle(ang)
   {}
  
   ISprite::ISprite(const std::string& _keyName, float scale)
@@ -37,17 +26,34 @@ namespace ENG
     width = Services::Assets().GetTexture(keyName)->GetWidth(); 
     height = Services::Assets().GetTexture(keyName)->GetHeight();;
   }
-    
-  IShader::IShader(const std::string& vert, const std::string& frag)
-    : IComponents{}, m_vertshaderFile(vert), m_fragshaderFile(frag)
+  
+  IAnimator::IAnimator(std::string key,int frames, float speed, int step, float scale)
+    : IComponents{}, aName(key), frames(frames), speed(speed), step(step), scale(scale)
   {}
-
-  IControl::IControl()
-    : IComponents{}
+        
+  IAnimator::IAnimator(std::string key, std::vector<ENG::Rect> _rects, float speed, int step, float scale)
+    : IComponents{}, aName(key), rectangles{_rects}, speed(speed), step(step), scale(scale)
   {}
 
   IBoundingBox::IBoundingBox(const Vector2& dim)
-    : IComponents{}
+    : IComponents{}, size(dim)
   {}
 
+  IColor::IColor(const Color& c)
+    : IComponents{}, color(c)
+  {}
+
+  IColor::IColor(float r, float g, float b, float a)
+    : IComponents(), color(r,g,b,a)
+  {}
+
+  void IColor::ChangeColor(const Color& _color)
+  {
+    this->color = _color;
+  }
+
+  void IColor::ChangeColor(float r, float g, float b, float a)
+  {
+    this->color = Color(r,g,b,a);
+  }
 }
