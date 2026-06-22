@@ -5,6 +5,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+### Static MSVC runtime: makes the final .exe not depend on the
+### VC++ Redistributable being installed on the user's machine.
+### Must be set before FetchContent_MakeAvailable so SDL3/SDL3_mixer
+### are built with the same runtime (mixing /MT and /MD breaks linking).
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 include(FetchContent)
 ### | ------------------------------------------------- |
 ### SDL3 Include && Dowload
