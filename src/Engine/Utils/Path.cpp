@@ -51,9 +51,9 @@ namespace ENG
     _executableDir = GetExecutableDir();
 
     // Ajusta estas rutas a la estructura real de Project-AK.
-    AssetsPath  = _executableDir / "assets";
-    ShadersPath = _executableDir / "shaders";
-    ConfigPath  = _executableDir / "config";
+    AssetsPath  = _executableDir / "assets/";
+    ShadersPath = _executableDir / "shaders/";
+    ConfigPath  = _executableDir / "config/";
   }
 
   Path& Path::Get()

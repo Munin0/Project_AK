@@ -51,7 +51,7 @@ namespace APP
     player->GetTransform().position = {100,100};
     player->GetTransform().velocity = {200,200};
     player->AddComponent<ENG::ISprite>("Player",1.0f);
-    player->AddComponent<ENG::IBoundingBox>((ENG::Vector2){16,16});
+    player->AddComponent<ENG::IBoundingBox>(ENG::Vector2{16,16});
 
     /// Configuration of the camera
     camera = std::make_unique<ENG::Camera2D>(1280,720);

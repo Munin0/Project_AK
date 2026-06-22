@@ -1,11 +1,15 @@
 // | -------------------------------
+#include "Engine/Utils/Path.hpp"
 #include "Game/Game.hpp"
 // | -------------------------------
 #include "Engine/Engine.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Config.hpp"
+#include "nlohmann/json_fwd.hpp"
 // | -------------------------------
+#include <nlohmann/json.hpp>
 // | -------------------------------
+#include <fstream>
 #include <memory>
 // | -------------------------------
 // STB Implementation 
@@ -21,10 +25,15 @@ int main(void)
 {
   ENG::EngineConfig _config;
 
-  _config.title = "Project AK";
-  _config.vW = 1080;
-  _config.vH = 720;
-  _config.flags = 0;
+  auto& path = ENG::Path::Get();
+
+  std::ifstream f(path.ConfigPath / "eng.json");
+  LOG_INFO(" | << PATH to JSON: " + path.ConfigPath.string() + "eng.json");
+  auto fJson = nlohmann::json::parse(f);
+  _config.title = fJson.at("name");
+  _config.vW = fJson["screen"]["w"];
+  _config.vH = fJson["screen"]["h"];
+  _config.flags = fJson["flags"];
 
   auto engine = std::make_unique<ENG::Engine>(_config, std::make_unique<APP::Game>());
   
