@@ -88,7 +88,7 @@ namespace APP
     SDL_PropertiesID options;
     SDL_SetNumberProperty(options, MIX_PROP_PLAY_LOOPS_NUMBER, -1);
     ENG::Services::Music().LoadMusic("Music/MarineHoloLive.mp3","Marine", options);
-    ENG::Services::Music().SetVolume("Marine", 100.0f);
+    ENG::Services::Music().SetVolume("Marine", 20.0f);
 
     /// Play Music in the init of the scene
     ENG::Services::Music().PlayMusic("Marine");

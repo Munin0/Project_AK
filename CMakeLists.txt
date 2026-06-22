@@ -31,13 +31,14 @@ set(SDLMIXER_VENDORED ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
-    GIT_TAG 1.0.1
-)
-### GLM (header-only)
-FetchContent_Declare(
-    glm
-    GIT_REPOSITORY https://github.com/g-truc/glm.git
     GIT_TAG 1.0.3
+)
+### | ------------------------------------------------- |
+### nlohmann_json Include
+FetchContent_Declare(
+  json
+  GIT_REPOSITORY https://github.com/nlohmann/json
+  GIT_TAG v3.12.0
 )
 ## | ------------------------------------------------- |
 ### Making libraries available for the project
@@ -45,9 +46,11 @@ message("-- Making libraries available:")
 message("--   - « SDL3 »")
 message("--   - « SDL3_Mixer »")
 message("--   - « GLM »")
+message("--   - « nlohmann_json »")
 FetchContent_MakeAvailable(SDL3)
 FetchContent_MakeAvailable(SDL3_Mixer)
 FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(json)
 ### | ------------------------------------------------- |
 add_executable(Project_AK)
 
@@ -57,9 +60,10 @@ message("-- Libraries linked: ")
 message("--   - « SDL3 »")
 message("--   - « SDL3 Image »")
 message("--   - « GLM »")
+message("--   - « nlohmann_json »")
 message("-- ")
 
-target_link_libraries(Project_AK PRIVATE SDL3::SDL3 SDL3_mixer::SDL3_mixer glm::glm)
+target_link_libraries(Project_AK PRIVATE SDL3::SDL3 SDL3_mixer::SDL3_mixer glm::glm nlohmann_json::nlohmann_json)
 
 ### | ------------------------------------------------- |
 ## Copy foldets to Debug
