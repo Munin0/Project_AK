@@ -47,6 +47,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Linux dependencies (SDL3 build deps)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential git make \
+          pkg-config cmake ninja-build \
+          libasound2-dev libpulse-dev \
+          libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+          libwayland-dev libxkbcommon-dev libdrm-dev libgbm-dev \
+          libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev \
+          libdbus-1-dev libibus-1.0-dev \
+          libudev-dev
+
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
