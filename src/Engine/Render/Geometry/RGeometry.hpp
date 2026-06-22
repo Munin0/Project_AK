@@ -1,8 +1,7 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "RColor.hpp"
-// | -------------------------------
+#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Object/Object.hpp"
 // | -------------------------------

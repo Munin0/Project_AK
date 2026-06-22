@@ -1,12 +1,12 @@
 // | -------------------------------
 #include "Object.hpp"
 // | -------------------------------
-#include "Engine/Render/RColor.hpp"
-#include "Engine/Services/WorldSaver.hpp"
+#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Render/RBatch.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Component/Component.hpp"
+#include "Engine/Services/WorldSaver.hpp"
 // | -------------------------------
 #include <glm/common.hpp>
 #include <glm/ext/vector_float2.hpp>
@@ -33,7 +33,7 @@ namespace ENG
     if(!this->GetComponent<ISprite>())
       return;
     glm::vec2 pos = {this->GetPosition().x, this->GetPosition().y};
-    glm::vec2 size = {this->GetSize().x * 6 , this->GetSize().y * 6};
+    glm::vec2 size = {this->GetSize().x * 4, this->GetSize().y * 4};
     auto img = this->GetComponent<ISprite>()->GetImage();
     glm::vec4 color = {1.0f,1.0f,1.0f,1.0f};
 
@@ -43,14 +43,16 @@ namespace ENG
       color = {c->GetColor().r,c->GetColor().g,c->GetColor().b,c->GetColor().a};
     }
 
-    pos = glm::round(pos);
 
     b.DrawTexture(pos, size, img, color);
   }
 
   void Object::Update(float dt)
   {
-    (void)dt;
+    if(auto bb = this->GetComponent<IBoundingBox>())
+    {
+      bb->Update(this->GetTransform().position);
+    }
   }
 
   void Object::SetPosition(float x, float y)

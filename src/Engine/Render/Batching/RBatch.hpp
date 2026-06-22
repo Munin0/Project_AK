@@ -1,10 +1,11 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Render/RColor.hpp"
-#include "RImage.hpp"
-#include "RVertex.hpp"
-#include "RShader.hpp"
+#include "Engine/Render/Camera/Camera2D.hpp"
+#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Image/RImage.hpp"
+#include "Engine/Render/Shaders/RVertex.hpp"
+#include "Engine/Render/Shaders/RShader.hpp"
 // | -------------------------------
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
@@ -26,19 +27,21 @@ namespace ENG
       static constexpr uint32_t MAX_QUADS     = 10000;
       static constexpr uint32_t MAX_VERTS     = MAX_QUADS * 4;
       static constexpr uint32_t MAX_INDICES   = MAX_QUADS * 6;
-      static constexpr uint32_t MAX_TEXTURES  = 16;
+      static constexpr uint32_t MAX_TEXTURES  = 32;
 
       void Init();
       void Shutdown();
 
       void Begin(); /// First Frame
       void End();   /// Flush + DrawCall
-    
+ 
+      void SetCamera2D(ENG::Camera2D* camera);
+
     public:
-      // API - Public
+      // API Private
       void DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint = {1,1,1,1});
       void DrawQuad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color);
-      void DrawQuadOutline(float x, float y, float w, float h, float thicknes, const Color& color);
+      void DrawQuadOutline(float x, float y, float w, float h, const Color& color, float thicknes = 1.0f);
       void DrawCircle(const glm::vec2& center, float radius, const glm::vec4& color, uint32_t segments = 32);
       void DrawCircleOutLine(const glm::vec2& center, float radius, const glm::vec4& outcolor, float thickness = 1.0f);
       void DrawTriangle(const glm::vec2& pointA, const glm::vec2& pointB, const glm::vec2& pointC, const glm::vec4& color);
@@ -66,6 +69,8 @@ namespace ENG
       void Flush();
       void StartBatch();
       float GetTextureIndex(const RImage& texture);
+
+      Camera2D* m_camera;
   };
 
 }

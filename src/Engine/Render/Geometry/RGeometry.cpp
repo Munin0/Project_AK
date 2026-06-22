@@ -1,9 +1,8 @@
 // | -------------------------------
 #include "RGeometry.hpp"
 // | -------------------------------
-#include "RColor.hpp"
-#include "RBatch.hpp"
-// | -------------------------------
+#include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Object/Object.hpp"

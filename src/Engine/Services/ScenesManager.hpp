@@ -15,6 +15,7 @@ namespace ENG
   enum : SceneID
   {
     SCENE_MENU = 0,
+    SCENE_LEVEL_2 = 3,
     SCENE_DEMO = 100,
   };
 
@@ -22,13 +23,14 @@ namespace ENG
   {
     public:
       ScenesManager() = default;
-      ~ScenesManager();
+      ~ScenesManager() = default;
       
       void AddScene(std::unique_ptr<Scene> _);
       Scene* GetCurrent();
       void ChangeScene(void);
       void PeddingScene(SceneID idPedding);
       void DestroyScene(SceneID id);
+      void Clear(){scenesMap.clear();}
     private:
       Scene* s_current = nullptr;
       SceneID pedding = 1;

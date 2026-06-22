@@ -2,6 +2,7 @@
 #include "ScenesManager.hpp"
 // | -------------------------------
 #include "Engine/Layer/Scene.hpp"
+#include "Engine/Render/Render.hpp"
 #include "Engine/Utils/Log.hpp"
 // | -------------------------------
 #include <cassert>
@@ -12,11 +13,6 @@
 
 namespace ENG
 {
-  ScenesManager::~ScenesManager()
-  {
-    scenesMap.clear();
-  }
-
   void ScenesManager::AddScene(std::unique_ptr<Scene> _)
   {
     auto id =_->GetSceneID();
@@ -48,6 +44,7 @@ namespace ENG
       LOG_ERROR(" | << Scene is not in the Manager: ID[" + std::to_string(pedding)+"]");
       return;
     }
+    Render::Get().GetBatcher().SetCamera2D(nullptr);
     s_current = scenesMap.at(pedding).get();
     arePedding = false;
   }

@@ -1,13 +1,12 @@
 /// | ------------------------------------ |
 #include "RBatch.hpp"
 /// | ------------------------------------ |
-#include "Engine/Render/RColor.hpp"
-#include "RImage.hpp"
-#include "RVertex.hpp"
-#include "RShader.hpp"
-#include "Render.hpp"
-#include "RGeometry.hpp"
-/// | ------------------------------------ |
+#include "Engine/Render/Camera/Camera2D.hpp"
+#include "Engine/Render/Render.hpp"
+#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Image/RImage.hpp"
+#include "Engine/Render/Shaders/RVertex.hpp"
+#include "Engine/Render/Shaders/RShader.hpp"
 #include "Engine/Utils/Path.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
@@ -23,6 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cmath>
+#include <linux/limits.h>
 #include <memory>
 #include <vector>
 /// | ------------------------------------ |
@@ -87,9 +87,9 @@ namespace ENG
     // Shader
     auto& path = Path::Get();
     
-
-    auto _vPath = path.ReadFile(SHADER_PATH "texture.vs" );
-    auto _fPath = path.ReadFile(SHADER_PATH "texture.fs" );
+    auto p = Path::Get().ShadersPath;
+    auto _vPath = path.ReadFile(p /  "gl/texture.vs" );
+    auto _fPath = path.ReadFile(p /  "gl/texture.fs" );
 
     this->shader = Shader( _vPath, _fPath);
     glUseProgram(this->shader.GetProgram());
@@ -115,19 +115,17 @@ namespace ENG
 
   void Batcher::Begin()
   {
-    Vector2 wS = Render::Get().GetScreenSize();
-    glm::mat4 proj = glm::ortho(0.0f, wS.x,wS.y,0.0f, -1.0f, 1.0f);
-    glUniformMatrix4fv(
-      glGetUniformLocation(shader.GetProgram(), "u_ViewProjection"),
-    1 , GL_FALSE, &proj[0][0]
-    );
-
     StartBatch();
   }
-
+  
   void Batcher::End()
   {
     Flush();
+  }
+
+  void Batcher::SetCamera2D(ENG::Camera2D* camera)
+  {
+    m_camera = camera; 
   }
 
   void Batcher::StartBatch()
@@ -141,12 +139,27 @@ namespace ENG
 
   void Batcher::Flush()
   {
-
+    if(m_IndexCount == 0) return;
 
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
+    
+    /// Load Matrix
+    glm::mat4 proj;
+    if(m_camera)
+    {
+      proj = m_camera->GetViewProjectionMatrix();
+    }
+    else 
+    {
+      Vector2 wS = Render::Get().GetScreenSize();
+      proj = glm::ortho(0.0f, wS.x,wS.y,0.0f, -1.0f, 1.0f);
+    }
 
-    if(m_IndexCount == 0) return;
+    glUniformMatrix4fv(
+      glGetUniformLocation(shader.GetProgram(), "u_ViewProjection"),
+    1 , GL_FALSE, &proj[0][0]
+    );
 
     // Push vertex to VRam
     uint32_t dataSize = (uint32_t)((uint8_t*)m_VertexBufferPtr - (uint8_t*)m_VertexBufferBase);
@@ -239,7 +252,7 @@ namespace ENG
     m_IndexCount += 6;
   }
 
-  void Batcher::DrawQuadOutline(float x, float y, float w, float h, float thicknes, const Color& color)
+  void Batcher::DrawQuadOutline(float x, float y, float w, float h, const Color& color, float thicknes)
   {
     glm::vec4 outColor = {color.r, color.g, color.b, color.a};
 
@@ -311,10 +324,11 @@ namespace ENG
 
     float angleIncrement = 2.0f * glm::pi<float>() / static_cast<float>(segments);
     float textureIndex = 0.0f; // White Texture
-    uint32_t base = m_VertexCount;
 
     for (uint32_t i = 0; i < segments; ++i)
     {
+      uint32_t base = m_VertexCount;
+
       float angle1 = static_cast<float>(i) * angleIncrement;
       float angle2 = static_cast<float>(i + 1) * angleIncrement;
 

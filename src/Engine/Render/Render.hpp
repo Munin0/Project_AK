@@ -1,9 +1,8 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "RBatch.hpp"
-#include "RColor.hpp"
-// | -------------------------------
+#include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include "SDL3/SDL_video.h"

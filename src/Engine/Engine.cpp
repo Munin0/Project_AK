@@ -2,14 +2,15 @@
 #include "Engine.hpp"
 // | -------------------------------
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Render/RColor.hpp"
 #include "Engine/Utils/Config.hpp"
 #include "Engine/Render/Render.hpp"
 #include "Engine/Layer/GameLayer.hpp"
 #include "Engine/Services/Services.hpp"
+#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/PollEvent/PollEvent.hpp"
 // | -------------------------------
 #include "SDL3/SDL_error.h"
+#include "SDL3_mixer/SDL_mixer.h"
 // | -------------------------------
 #include <algorithm>
 #include <chrono>
@@ -52,12 +53,22 @@ namespace ENG
     // Init Batcher and RenderContext
     r.InitRenderContext();
     r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
+    
+    // Init SDL_Mixer
+    if(!MIX_Init())
+    {
+      LOG_FATAL(" | << SDL_Mixer not could Init");
+    }
+    LOG_INFO(" | << SDL_Mixer created succesfully");
 
-    LOG_INFO(" | << AssertsManager Services created");
     Services::ProvideAssets(&amgr);
     Services::ProvideScenes(&sm);
-    LOG_INFO(" | << ScenesManager created Succesfully");
+    Services::ProvideSFX(&sfx);
+    Services::ProvideMusic(&music);
 
+    LOG_INFO(" | << AssertsManager Services created");
+    LOG_INFO(" | << ScenesManager created Succesfully");
+    LOG_INFO(" | << SFXManager created Succesfully");
     return true;
   }
 
@@ -111,6 +122,7 @@ namespace ENG
     game.reset();
     LOG_INFO(" | << Clearing Assets...");
     Services::Assets().Clear();
+    Services::Scenes().Clear();
     Services::ProvideAssets(nullptr);
     Services::ProvideScenes(nullptr); 
     LOG_INFO(" | << Destroying PollEventBuffer, waiting...");

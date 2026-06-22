@@ -1,8 +1,8 @@
 /// | ------------------------------------ |
 #pragma once
 /// | ------------------------------------ |
-#include "Engine/Render/RImage.hpp"
-#include "Engine/Render/RColor.hpp"
+#include "Engine/Render/Image/RImage.hpp"
+#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
@@ -99,11 +99,15 @@ namespace ENG
         explicit IBoundingBox(const Vector2& dim);
         ~IBoundingBox() override {}
 
+        void Update(const Vector2& _position) {this->position = _position;};
+        void Update(float x, float y) {this->position = {x,y};};
         void ChangeSize(const Vector2& dim){ this->size = dim;}
         const Vector2& GetSize(void) const {return  this->size;}
-        const Vector2& GetHalf(void) const {return this->half;}
+        const Vector2& GetPosition(void) const {return this->position;}
+        const Vector2& GetCenter(void) const {return this->half;}
         bool GetResolution(void) const {return this->resolution;}
       private:
+        Vector2 position;
         Vector2 size;
         Vector2 half;
         bool resolution;

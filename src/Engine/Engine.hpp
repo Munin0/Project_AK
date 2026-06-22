@@ -1,12 +1,17 @@
+// | -------------------------------
 #pragma once
-
+// | -------------------------------
 #include "Engine/Layer/GameLayer.hpp"
 #include "Engine/Services/AssetsManager.hpp"
+#include "Engine/Services/MusicManager.hpp"
+#include "Engine/Services/SFXManager.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Utils/Config.hpp"
+// | -------------------------------
 #include <memory>
-
 #include <string>
+// | -------------------------------
+
 namespace ENG
 {
   class Engine
@@ -29,7 +34,8 @@ namespace ENG
       /// Services
       AssetsManager amgr;
       ScenesManager sm;
+      SFXManager sfx;
+      MusicManager music;
     protected:
   };
-
 }

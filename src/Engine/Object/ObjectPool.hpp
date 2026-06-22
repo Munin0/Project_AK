@@ -2,6 +2,7 @@
 #pragma once
 /// | ------------------------------------ |
 #include "Engine/Object/Object.hpp"
+#include "Engine/Render/Batching/RenderEntry.hpp"
 /// | ------------------------------------ |
 #include <algorithm>
 #include <cstddef>
@@ -19,13 +20,34 @@ namespace ENG
 
   class ObjectPool
   {
-    std::vector<std::unique_ptr<ENG::Object>> dense;
-    std::vector<ObjectID>                     denseID;
-    std::unordered_map<ObjectID, size_t>      sparse;
-
-    ObjectID nextID = 1;
-
+    private:
+      std::vector<std::unique_ptr<ENG::Object>> dense;
+      std::vector<ObjectID>                     denseID;
+      std::unordered_map<ObjectID, size_t>      sparse;
+      std::vector<ENG::RenderEntry> renderQueue;
+      ObjectID nextID = 1;
+      bool sortedQueue = false;
     public:
+      const std::vector<RenderEntry>& Sort()
+      {
+        if(!sortedQueue)
+        {
+          renderQueue.clear();
+          for (ENG::ObjectID id : denseID)
+          {
+            auto obj = Get(id);
+            renderQueue.push_back({ id, obj->GetLayer() });
+          }
+
+          std::sort(renderQueue.begin(), renderQueue.end(),
+            [](const ENG::RenderEntry& a, const ENG::RenderEntry& b) {
+            return a.layer > b.layer;
+          });
+          sortedQueue = true;
+        }
+        return renderQueue;
+      }
+
       ObjectID Add(std::unique_ptr<Object> obj) 
       {
         ObjectID id = nextID++;
@@ -34,7 +56,8 @@ namespace ENG
         dense.push_back(std::move(obj));
         denseID.push_back(id);
         sparse[id] = index;
-
+        
+        sortedQueue = false;
         return id;
       }
 
@@ -69,6 +92,7 @@ namespace ENG
         dense.pop_back();
         denseID.pop_back();
         sparse.erase(id);
+        sortedQueue = false;
       }
 
       void Clear()

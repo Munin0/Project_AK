@@ -1,13 +1,15 @@
+// | -------------------------------
 #include "Component.hpp"
-
-#include "Engine/Render/RColor.hpp"
+// | -------------------------------
+#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Vector2.hpp"
-
+// | -------------------------------
 #include <bits/types/timer_t.h>
 #include <string>
 #include <vector>
+// | -------------------------------
 
 namespace ENG
 {
@@ -37,7 +39,9 @@ namespace ENG
 
   IBoundingBox::IBoundingBox(const Vector2& dim)
     : IComponents{}, size(dim)
-  {}
+  {
+    half = (dim / 2.0f) * 4.0f;
+  }
 
   IColor::IColor(const Color& c)
     : IComponents{}, color(c)

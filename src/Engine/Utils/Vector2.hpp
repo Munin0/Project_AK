@@ -1,6 +1,9 @@
+// | -------------------------------
 #pragma once
-
+// | -------------------------------
 #include <cmath>
+// | -------------------------------
+
 namespace ENG
 {
   class Vector2
@@ -36,10 +39,23 @@ namespace ENG
       {
         return std::sqrt(v.x*v.x + v.y*v.y);
       }
-
+      
+      // Asign
+      Vector2& operator=(const Vector2& vec)
+      {
+        this->x = vec.x;
+        this->y = vec.y;
+        return *this;
+      }
+      /// To another Vector2
       Vector2 operator*(const Vector2& v1) const
       {
         return {this->x*v1.x,this->y*v1.y};
+      }
+
+      Vector2 operator+(const Vector2& v1) const
+      {
+        return {this->x+v1.x,this->y+v1.y};
       }
 
       Vector2 operator-(const Vector2& v1) const
@@ -47,6 +63,28 @@ namespace ENG
         return {x-v1.x , y-v1.y};
       }
 
+      /// Decimal
+      Vector2 operator/(float value) const
+      {
+        return {this->x/value, this->y/value};
+      }
+      
+      Vector2 operator*(float value) const
+      {
+        return {this->x*value, this->y*value};
+      }
+
+      Vector2 operator+(float value) const
+      {
+        return {this->x+value, this->y+value};
+      }
+
+      Vector2 operator-(float value) const
+      {
+        return {this->x-value, this->y-value};
+      }
+
+      // Binaries
       bool operator==(const Vector2& v) const
       {
         return (this->x == v.x && this->y == v.y);
@@ -71,6 +109,8 @@ namespace ENG
       {
         return (this->x >= v.x && this->y >= v.y);
       }
+
+      // Inc or Dec
       Vector2& operator+=(float _inc)
       {
         this->x += _inc;
@@ -89,12 +129,13 @@ namespace ENG
         this->y -= _dec;
         return *this;
       }
-      Vector2& operator=(const Vector2& vec)
+      Vector2& operator-=(const Vector2& v)
       {
-        this->x = vec.x;
-        this->y = vec.y;
+        this->x -= v.x;
+        this->y -= v.y;
         return *this;
       }
+
     public:
       float x;
       float y;

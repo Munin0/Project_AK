@@ -1,7 +1,7 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Render/RImage.hpp"
+#include "Engine/Render/Image/RImage.hpp"
 // | -------------------------------
 #include <map>
 #include <memory>

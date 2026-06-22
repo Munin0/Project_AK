@@ -2,13 +2,14 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Component/ComponentStorage.hpp"
-#include "Engine/Render/RBatch.hpp"
+#include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Services/WorldSaver.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Component/Component.hpp"
 // | -------------------------------
-#include <cstdint>
 #include <glm/detail/qualifier.hpp>
+// | -------------------------------
+#include <cstdint>
 #include <string>
 #include <type_traits>
 // | -------------------------------
@@ -79,8 +80,6 @@ namespace ENG
       Vector2 GetSize(void) const;
       void SetLayer(uint8_t _layer) { layer = _layer;}
       uint8_t GetLayer() const { return layer; }
-      void SetPersistence(bool value) { persistent = value;}
-      bool GetPersistence(void) {return this->persistent;}
 
       // Serialization
       ObjectState Save() const;
@@ -89,7 +88,6 @@ namespace ENG
       static int countObject;
     protected:
       uint8_t layer;
-      bool persistent;
       
       std::string name;
       IStats stats;

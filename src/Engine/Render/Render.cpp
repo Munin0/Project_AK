@@ -1,17 +1,17 @@
 // | -------------------------------
 #include "Render.hpp"
 // | -------------------------------
-#include "RColor.hpp"
-#include "RBatch.hpp"
-// | -------------------------------
+#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Utils/Log.hpp"
 // | -------------------------------
 #include <glad/glad.h>
 // | -------------------------------
-#include <SDL3/SDL_init.h>
+#include "SDL3/SDL_init.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_video.h"
+#include "SDL3_mixer/SDL_mixer.h"
 // | -------------------------------
 #include <string>
 // | -------------------------------
@@ -127,6 +127,7 @@ namespace ENG
 
   void Render::DestroyWindowSDLContext(void)
   {
+    MIX_Quit();
     SDL_GL_DestroyContext(this->glContext);
     SDL_DestroyWindow(this->window);
     SDL_Quit();

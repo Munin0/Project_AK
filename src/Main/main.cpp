@@ -2,9 +2,9 @@
 #include "Game/Game.hpp"
 // | -------------------------------
 #include "Engine/Engine.hpp"
+#include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Config.hpp"
 // | -------------------------------
-#include "SDL3/SDL_log.h"
 // | -------------------------------
 #include <memory>
 // | -------------------------------
@@ -36,6 +36,6 @@ int main(void)
 
   engine.reset();
 
-  SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, " | Engine Out, cya.");
+  LOG_INFO(" | Engine Out, cya.");
   return 0;
 }

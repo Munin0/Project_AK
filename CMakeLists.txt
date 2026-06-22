@@ -19,11 +19,20 @@ set(SDL3IMAGE_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(SDL3IMAGE_VENDORED ON CACHE BOOL "" FORCE)
 set(SDL3IMAGE_PNG ON CACHE BOOL "" FORCE)
 set(SDL3IMAGE_JPG ON CACHE BOOL "" FORCE)
+### SDL3_Mixer 
+FetchContent_Declare(
+    SDL3_mixer
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
+    GIT_TAG release-3.2.4
+)
+set(SDLMIXER_VENDORED ON CACHE BOOL "" FORCE)
 ## | ------------------------------------------------- |
 ### Making libraries available for the project
 message("-- Making libraries available:")
 message("--   - « SDL3 »")
+message("--   - « SDL3_Mixer »")
 FetchContent_MakeAvailable(SDL3)
+FetchContent_MakeAvailable(SDL3_Mixer)
 ### | ------------------------------------------------- |
 add_executable(Project_AK)
 
@@ -34,15 +43,15 @@ message("--   - « SDL3 »")
 message("--   - « SDL3 Image »")
 message("-- ")
 
-target_compile_definitions(Project_AK PRIVATE 
-      ASSET_PATH="${CMAKE_SOURCE_DIR}/assets/"
-)
-target_compile_definitions(Project_AK PRIVATE 
-      CONFIG_PATH="${CMAKE_SOURCE_DIR}/config/"
-)
-target_compile_definitions(Project_AK PRIVATE 
-      SHADER_PATH="${CMAKE_SOURCE_DIR}/shaders/"
-)
+target_link_libraries(Project_AK PRIVATE SDL3::SDL3 SDL3_mixer::SDL3_mixer)
 
-
-target_link_libraries(Project_AK PRIVATE SDL3::SDL3)
+### | ------------------------------------------------- |
+## Copy foldets to Debug
+add_custom_command(TARGET Project_AK POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:Project_AK>/assets
+        ${CMAKE_SOURCE_DIR}/shaders
+        $<TARGET_FILE_DIR:Project_AK>/shaders
+)
+### | ------------------------------------------------- |

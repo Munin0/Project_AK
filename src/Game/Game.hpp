@@ -2,16 +2,14 @@
 #pragma once
 /// | ------------------------------------ |
 #include "Engine/Layer/GameLayer.hpp"
-#include "Engine/Object/ObjectPool.hpp"
-#include "Engine/Render/RColor.hpp"
-#include "Engine/Render/RenderEntry.hpp"
-#include <vector>
+#include "Engine/Render/Color/RColor.hpp"
 /// | ------------------------------------ |
 #define PLAYER 1
 /// | ------------------------------------ |
 #define LAYER_BACKGROUND  0
 #define LAYER_WOLRD       10
 #define LAYER_PLAYER      20
+#define LAYER_MIDDLE      25
 #define LAYER_FRONT       30
 #define LAYER_FX          40
 #define LAYER_UI          50
@@ -33,8 +31,6 @@ namespace APP
     private:
       bool IsAppEnd = false;
       bool isGameInit = false;
-      ENG::ObjectPool pool;
-      std::vector<ENG::RenderEntry> renderQueue;
 
       /// Debug FLAGS
       bool debugDraw = false;

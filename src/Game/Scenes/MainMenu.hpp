@@ -3,8 +3,10 @@
 /// | ------------------------------------ |
 #include "Engine/Layer/Scene.hpp"
 #include "Engine/Object/ObjectPool.hpp"
-#include "Engine/Render/RBatch.hpp"
+#include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Render/Batching/RenderEntry.hpp"
 #include "Engine/Services/ScenesManager.hpp"
+#include <vector>
 /// | ------------------------------------ |
 
 namespace APP
@@ -14,15 +16,15 @@ namespace APP
     public:
       MainMenu(ENG::SceneID id);
 
-      void Init(ENG::ObjectPool& pool) override;
-      void Destroy(ENG::ObjectPool& pool)    override;
+      void Init(void) override;
+      void Destroy(void)    override;
       bool IsRunning(void)  override; 
-      void Inputs(float dt,ENG::ObjectPool& pool) override;
-      void Update(float dt,ENG::ObjectPool& pool) override;
-      void Render(ENG::Batcher& b,ENG::ObjectPool& pool) override;
-
-      bool IsInit() override {return isInit;}; 
-      void SetInit(bool _) {isInit = _;}; 
+      void Inputs(float dt) override;
+      void Update(float dt) override;
+      void Render(ENG::Batcher& b) override;
+    private:
+      ENG::ObjectPool pool;
+      std::vector<ENG::RenderEntry> renderQueue;
   };
 }
 

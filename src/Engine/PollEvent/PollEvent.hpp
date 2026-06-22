@@ -1,11 +1,13 @@
+// | -------------------------------
 #pragma once
-
+// | -------------------------------
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_stdinc.h"
+// | -------------------------------
 #include <unordered_map>
 #include <unordered_set>
-
+// | -------------------------------
 
 namespace ENG
 {
