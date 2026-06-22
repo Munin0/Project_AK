@@ -26,13 +26,28 @@ FetchContent_Declare(
     GIT_TAG release-3.2.4
 )
 set(SDLMIXER_VENDORED ON CACHE BOOL "" FORCE)
+### | ------------------------------------------------- |
+### GLM (header-only)
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.1
+)
+### GLM (header-only)
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.3
+)
 ## | ------------------------------------------------- |
 ### Making libraries available for the project
 message("-- Making libraries available:")
 message("--   - « SDL3 »")
 message("--   - « SDL3_Mixer »")
+message("--   - « GLM »")
 FetchContent_MakeAvailable(SDL3)
 FetchContent_MakeAvailable(SDL3_Mixer)
+FetchContent_MakeAvailable(glm)
 ### | ------------------------------------------------- |
 add_executable(Project_AK)
 
@@ -41,9 +56,10 @@ add_subdirectory(src)
 message("-- Libraries linked: ")
 message("--   - « SDL3 »")
 message("--   - « SDL3 Image »")
+message("--   - « GLM »")
 message("-- ")
 
-target_link_libraries(Project_AK PRIVATE SDL3::SDL3 SDL3_mixer::SDL3_mixer)
+target_link_libraries(Project_AK PRIVATE SDL3::SDL3 SDL3_mixer::SDL3_mixer glm::glm)
 
 ### | ------------------------------------------------- |
 ## Copy foldets to Debug
@@ -51,7 +67,11 @@ add_custom_command(TARGET Project_AK POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/assets
         $<TARGET_FILE_DIR:Project_AK>/assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/shaders
         $<TARGET_FILE_DIR:Project_AK>/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/config
+        $<TARGET_FILE_DIR:Project_AK>/config
 )
 ### | ------------------------------------------------- |

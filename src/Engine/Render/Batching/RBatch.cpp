@@ -22,7 +22,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cmath>
-#include <linux/limits.h>
 #include <memory>
 #include <vector>
 /// | ------------------------------------ |
