@@ -24,13 +24,16 @@
 int main(void)
 {
   ENG::EngineConfig _config;
+  nlohmann::json fJson;
 
   auto& path = ENG::Path::Get();
 
   std::ifstream f(path.ConfigPath / "eng.json");
-  LOG_INFO(" | << PATH to JSON: " + path.ConfigPath.string() + "eng.json");
-  auto fJson = nlohmann::json::parse(f);
-  _config.title = fJson.at("name");
+  if(!f.is_open())
+    LOG_FATAL(" | << CONFIGURATION for the engine doesnt exist: eng.json");
+  f >> fJson;
+
+  _config.title = fJson["name"];
   _config.vW = fJson["screen"]["w"];
   _config.vH = fJson["screen"]["h"];
   _config.flags = fJson["flags"];

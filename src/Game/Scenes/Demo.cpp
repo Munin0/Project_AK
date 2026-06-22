@@ -48,32 +48,33 @@ namespace APP
     auto player = pool.Get(PLAYER);
     player->SetLayer(LAYER_PLAYER);
     player->GetStats().hp = 100;
-    player->GetTransform().position = {100,100};
-    player->GetTransform().velocity = {200,200};
+    player->GetTransform().position = {100.0f,100.0f};
+    player->GetTransform().velocity = {200.0f,200.0f};
     player->AddComponent<ENG::ISprite>("Player",1.0f);
-    player->AddComponent<ENG::IBoundingBox>(ENG::Vector2{16,16});
+    player->AddComponent<ENG::IBoundingBox>(ENG::Vector2{16.0f,16.0f});
 
     /// Configuration of the camera
-    camera = std::make_unique<ENG::Camera2D>(1280,720);
+    camera = std::make_unique<ENG::Camera2D>(1280.0f,720.0f);
     camera->SetTarget(player->GetComponent<ENG::IBoundingBox>());
     camera->SetPosition(player->GetTransform().position);
     camera->SetZoom(1.0f);
     ENG::Render::Get().GetBatcher().SetCamera2D(camera.get());
    
-    auto rect = std::make_unique<ENG::Rectangle>(0,0,300,100,ENG::Color::Green,ENG::Color::Red, 5.0f); rect->SetLayer(LAYER_BACKGROUND);
+    auto rect = std::make_unique<ENG::Rectangle>(0.0f,0.0f,300.0f,100.0f,ENG::Color::Green,ENG::Color::Red, 5.0f); 
+    rect->SetLayer(LAYER_BACKGROUND);
     pool.Add(std::move(rect));
 
-    auto line = std::make_unique<ENG::Line>(200,200,500,500, ENG::Color::White);
+    auto line = std::make_unique<ENG::Line>(200.0f,200.0f,500.0f,500.0f, ENG::Color::White);
     line->SetLayer(LAYER_FRONT);
     pool.Add(std::move(line));
 
-    auto poly = std::make_unique<ENG::Polygon>(250,250,5,ENG::Color::Yellow);
+    auto poly = std::make_unique<ENG::Polygon>(250.0f,250.0f,5,ENG::Color::Yellow);
 
-    poly->AddPoint(250,200);
-    poly->AddPoint(300,250);
-    poly->AddPoint(300,300);
-    poly->AddPoint(200,300);
-    poly->AddPoint(200,250);
+    poly->AddPoint(250.0f,200.0f);
+    poly->AddPoint(300.0f,250.0f);
+    poly->AddPoint(300.0f,300.0f);
+    poly->AddPoint(200.0f,300.0f);
+    poly->AddPoint(200.0f,250.0f);
     poly->SetLayer(LAYER_FRONT);
 
     pool.Add(std::move(poly));
@@ -86,6 +87,7 @@ namespace APP
 
     /// option for this music
     SDL_PropertiesID options;
+    options = SDL_CreateProperties();
     SDL_SetNumberProperty(options, MIX_PROP_PLAY_LOOPS_NUMBER, -1);
     ENG::Services::Music().LoadMusic("Music/MarineHoloLive.mp3","Marine", options);
     ENG::Services::Music().SetVolume("Marine", 20.0f);
@@ -157,7 +159,7 @@ namespace APP
       pool.Get(o)->Update(dt);
     }
     camera->Update(dt);
-    pool.Get(PLAYER)->GetTransform().direction = {0,0};
+    pool.Get(PLAYER)->GetTransform().direction = {0.0f,0.0f};
   }
 
   void DemoScene::Render(ENG::Batcher& b)
@@ -167,9 +169,9 @@ namespace APP
       pool.Get(entry.id)->Draw(b);
     }
 
-    ENG::Drawer::DrawLine({300,300},{500,300},ENG::Color::Green,2.0f);
-    ENG::Drawer::DrawCircle({150,150}, 30.0f, ENG::Color::Green, 64);
-    ENG::Drawer::DrawCircleOutLine({150,150}, 30.0f, ENG::Color::Yellow, 64);
+    ENG::Drawer::DrawLine({300.0f,300.0f},{500.0f,300.0f},ENG::Color::Green,2.0f);
+    ENG::Drawer::DrawCircle({150.0f,150.0f}, 30.0f, ENG::Color::Green, 64);
+    ENG::Drawer::DrawCircleOutLine({150.0f,150.0f}, 30.0f, ENG::Color::Yellow, 64);
   }
 
   void DemoScene::Destroy()

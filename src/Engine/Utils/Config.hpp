@@ -14,12 +14,12 @@ namespace ENG
     IS_GAME_RUNNING = 1<<2
   };
 
-  typedef struct _EngineConfig
+  class EngineConfig
   {
-    unsigned int vW = 0;
-    unsigned int vH = 0;
-    std::string title = "";
-    std::uint8_t flags = 0;
-  } EngineConfig;
-
+    public:
+      unsigned int vW = 0;
+      unsigned int vH = 0;
+      std::string title = "";
+      std::uint8_t flags = 0;
+  };
 }

@@ -35,18 +35,18 @@ namespace APP
       return;
     }
 
-    auto rect = std::make_unique<ENG::Rectangle>(0,0,300,100,ENG::Color::Green,ENG::Color::Red, 5.0f);
+    auto rect = std::make_unique<ENG::Rectangle>(0.0f,0.0f,300.0f,100.0f,ENG::Color::Green,ENG::Color::Red, 5.0f);
     rect->SetLayer(LAYER_BACKGROUND);
     pool.Add(std::move(rect));
 
-    auto line = std::make_unique<ENG::Line>(200,200,500,500, ENG::Color::White);
+    auto line = std::make_unique<ENG::Line>(200.0f,200.0f,500.0f,500.0f, ENG::Color::White);
     line->SetLayer(LAYER_WOLRD);
     pool.Add(std::move(line));
 
     ENG::Vector2 a[3];
-    a[0] = {500,100};
-    a[1] = {200,300};
-    a[2] = {800,300}; 
+    a[0] = {500.0f,100.0f};
+    a[1] = {200.0f,300.0f};
+    a[2] = {800.0f,300.0f}; 
     auto triangle = std::make_unique<ENG::Triangle>(a[0],a[1],a[2],ENG::Color::Blue, ENG::Color::Yellow);
     triangle->SetLayer(LAYER_WOLRD);
     pool.Add(std::move(triangle));
