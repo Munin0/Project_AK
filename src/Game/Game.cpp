@@ -1,6 +1,8 @@
 /// | ------------------------------------ |
 #include "Game.hpp"
 /// | ------------------------------------ |
+#include "Engine/Render/Batching/RAPIBatch.hpp"
+#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/PollEvent/PollEvent.hpp"
 #include "Engine/Services/ScenesManager.hpp"
@@ -26,6 +28,11 @@ namespace APP
   void Game::OnInit(void)
   {
     LOG_INFO(" | << Game application Init Succesfully");
+
+    /// Load All Atlas 
+    ENG::Services::Assets().Load("Player/Player.png", "Player");
+    /// Adding Shaders
+    ENG::Services::Shaders().Load("mono.fs","mono.vs","Mono");
     /// Adding Scenes
     ENG::Services::Scenes().AddScene(std::make_unique<MainMenu>(ENG::SCENE_MENU));
     ENG::Services::Scenes().AddScene(std::make_unique<DemoScene>(ENG::SCENE_DEMO));
@@ -83,20 +90,15 @@ namespace APP
   {
     auto& b = ENG::Render::Get().GetBatcher();
 
-    
-
     ENG::Services::Scenes().GetCurrent()->Render(b);
+    
+    auto screen = ENG::Render::Get().GetScreenSize();
+
+    ENG::Drawer::DrawLine({screen.x / 2,0.0f},{screen.x / 2, screen.y}, ENG::Color::Red);
+    ENG::Drawer::DrawLine({ 0.0f/ 2,screen.y/2.0f},{screen.x, screen.y/2.0f}, ENG::Color::Red);
 
     #ifdef DEBUG
-    // if(ENG::debugDraw)
-    // {
-    //   for(ENG::ObjectID id : pool.GetAllIDs())
-    //   {
-    //     auto* obj = pool.Get(id);
-    //     auto& t = obj->GetTransform();
-    //     b.DrawQuad(t.position.x, t.position.y, t.size.x, t.size.y, ENG::Color::Green);
-    //   }
-    // }
+    
     #endif
   }
 }

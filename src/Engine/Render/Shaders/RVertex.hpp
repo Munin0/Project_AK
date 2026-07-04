@@ -13,6 +13,7 @@ namespace ENG
     glm::vec3 Position;  // X,Y + Z (Z sorting layers)
     glm::vec4 Color;
     glm::vec2 TexCord;
-    float     TexIndex; // Texture slot (0.0 = white texture)
+    float     TexIndex;   // Texture slot (0.0 = white texture)
+    float     ArrayLayer; // Layer in the reserved TextureArray slot, -1.0 = not an array sample
   };
 }

@@ -3,6 +3,7 @@
 // | -------------------------------
 #include "Engine/Component/ComponentStorage.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Render/Shaders/RShader.hpp"
 #include "Engine/Services/WorldSaver.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Component/Component.hpp"
@@ -80,6 +81,13 @@ namespace ENG
       Vector2 GetSize(void) const;
       void SetLayer(uint8_t _layer) { layer = _layer;}
       uint8_t GetLayer() const { return layer; }
+      Shader* GetShader() const
+      {
+        if(HasComponent<IMaterial>())
+          return GetComponent<IMaterial>()->GetShader();
+        else
+          return nullptr;
+      }
 
       // Serialization
       ObjectState Save() const;

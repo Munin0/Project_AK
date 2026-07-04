@@ -27,7 +27,8 @@ namespace ENG
       static constexpr uint32_t MAX_QUADS     = 10000;
       static constexpr uint32_t MAX_VERTS     = MAX_QUADS * 4;
       static constexpr uint32_t MAX_INDICES   = MAX_QUADS * 6;
-      static constexpr uint32_t MAX_TEXTURES  = 32;
+      static constexpr uint32_t MAX_TEXTURES  = 16;
+      static constexpr uint32_t ARRAY_TEXTURE_UNIT = MAX_TEXTURES; // Reserved unit for the TextureArray/atlas sampler
 
       void Init();
       void Shutdown();
@@ -40,6 +41,7 @@ namespace ENG
     public:
       // API Private
       void DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint = {1,1,1,1});
+      void DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint = {1,1,1,1});
       void DrawQuad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color);
       void DrawQuadOutline(float x, float y, float w, float h, const Color& color, float thicknes = 1.0f);
       void DrawCircle(const glm::vec2& center, float radius, const glm::vec4& color, uint32_t segments = 32);
@@ -48,12 +50,18 @@ namespace ENG
       void DrawLine(const glm::vec2& a, const glm::vec2& b, float thickness, const glm::vec4& color);
       void DrawPolygon(const std::vector<glm::vec2>& points, const glm::vec4& color);
 
+      void SetMaterial(Shader* _Material);
+
     private:
-      Shader shader;
+      Shader* shader;
+      Shader* m_DefaultShader = nullptr;
+
+      glm::mat4 m_proj;
 
       GLuint m_VAO, m_VBO, m_EBO;
       GLuint m_WhiteTexture = 0;
-
+      GLuint m_ArrayTextureID = 0;
+    
       Vertex*     m_VertexBufferBase  = nullptr;
       Vertex*     m_VertexBufferPtr   = nullptr;
       uint32_t*   m_IndexBufferBase   = nullptr;

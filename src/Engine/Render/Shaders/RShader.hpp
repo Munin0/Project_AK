@@ -14,12 +14,12 @@ namespace ENG
   class Shader
   {
     public:
-      Shader() = default;
       Shader(const std::string& vert, const std::string& frag);
       ~Shader() = default;
 
       void ToString(void) const;
       GLuint GetProgram() const { return program; }
+      GLint GetViewProjectionLoc() const {return m_locViewProjection;}
     private:
       /// Why private: Because is inside of the constructor
       GLuint CompileShader(void)
@@ -100,12 +100,32 @@ namespace ENG
         if(!_frag.empty())
           glDeleteShader(fragment);
 
+        m_locViewProjection = glGetUniformLocation(program, "u_ViewProjection");
+
+        // Every shader that samples the batcher's texture slots must agree on the
+        // same unit layout (0..MAX_TEXTURES-1 for u_Textures, MAX_TEXTURES for u_AtlasArray),
+        // otherwise a sampler2D and sampler2DArray end up bound to the same unit
+        // (GL_INVALID_OPERATION / undefined behavior, draw silently produces nothing).
+        glUseProgram(program);
+        GLint texLoc = glGetUniformLocation(program, "u_Textures");
+        if(texLoc != -1)
+        {
+          int samplers[16];
+          for(int i = 0; i < 16; i++)
+            samplers[i] = i;
+          glUniform1iv(texLoc, 16, samplers);
+        }
+        GLint atlasLoc = glGetUniformLocation(program, "u_AtlasArray");
+        if(atlasLoc != -1)
+          glUniform1i(atlasLoc, 16);
+
         countShaders ++;
         return true;
       }
       
       static int countShaders;
       GLuint program;
+      GLint m_locViewProjection;
       std::string _vert;
       std::string _frag;
       GLuint vertex, fragment;

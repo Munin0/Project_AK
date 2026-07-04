@@ -19,6 +19,12 @@ namespace ENG
     MIX_PlayTrack(p.track, p.options);
   }
 
+  void MusicManager::StopMusic(const std::string& key)
+  {
+    auto p = music.at(key);
+    MIX_StopTrack(p.track, 0);
+  }
+
   void MusicManager::LoadMusic(const std::string& path, const std::string& key, SDL_PropertiesID _options)
   {
     auto pathComplete = Path::Get().AssetsPath / path;

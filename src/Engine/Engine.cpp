@@ -48,11 +48,6 @@ namespace ENG
     PollEvent::Get().ClearPollEvent();
     LOG_INFO(" | << OpenGL Context created succesfully");
     LOG_INFO(" | << Render Engine created succesfully");
-
-    LOG_INFO(" | << Creating BatchingContext");
-    // Init Batcher and RenderContext
-    r.InitRenderContext();
-    r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
     
     // Init SDL_Mixer
     if(!MIX_Init())
@@ -65,10 +60,18 @@ namespace ENG
     Services::ProvideScenes(&sm);
     Services::ProvideSFX(&sfx);
     Services::ProvideMusic(&music);
-
+    Services::ProvideShaders(&shaders);
     LOG_INFO(" | << AssertsManager Services created");
     LOG_INFO(" | << ScenesManager created Succesfully");
     LOG_INFO(" | << SFXManager created Succesfully");
+
+    // Init Game resources for batching
+    game->OnInit();
+    // Init Batcher and RenderContext
+    LOG_INFO(" | << Creating BatchingContext");
+    r.InitRenderContext();
+    r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
+    
     return true;
   }
 
@@ -80,7 +83,6 @@ namespace ENG
     auto frame_ant = std::chrono::high_resolution_clock::now();
     float dt = 0.16666f; 
     
-    game->OnInit();
     while (game->IsRunning())
     {
       // Update DeltaTime

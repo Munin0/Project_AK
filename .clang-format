@@ -1,0 +1,33 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 100
+
+BreakBeforeBraces: Allman
+
+AccessModifierOffset: -2
+IndentAccessModifiers: false
+
+NamespaceIndentation: All
+FixNamespaceComments: true
+
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+SpaceBeforeParens: ControlStatements
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 4
+
+IndentCaseLabels: true
+KeepEmptyLinesAtTheStartOfBlocks: false

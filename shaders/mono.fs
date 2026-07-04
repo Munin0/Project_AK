@@ -10,7 +10,8 @@ uniform sampler2DArray u_AtlasArray;
 
 out vec4 FragColor;
 
-void main() {
+void main()
+{
     vec4 texColor;
 
     if (v_ArrayLayer >= 0.0) {
@@ -37,5 +38,8 @@ void main() {
         }
     }
 
-    FragColor = texColor * v_Color;
+    // Luminancia perceptual (pesos estándar Rec. 709)
+    float gray = dot(texColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+
+    FragColor = vec4(vec3(gray), texColor.a) * v_Color;
 }

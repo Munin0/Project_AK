@@ -1,6 +1,8 @@
 /// | ------------------------------------ |
 #pragma once
 /// | ------------------------------------ |
+#include "Engine/Render/Shaders/RShader.hpp"
+/// | ------------------------------------ |
 #include <cstdint>
 /// | ------------------------------------ |
 
@@ -10,5 +12,6 @@ namespace ENG
   {
     uint32_t id;
     uint8_t layer;
+    Shader* shader;
   };
 }

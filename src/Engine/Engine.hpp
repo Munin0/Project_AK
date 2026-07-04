@@ -6,6 +6,7 @@
 #include "Engine/Services/MusicManager.hpp"
 #include "Engine/Services/SFXManager.hpp"
 #include "Engine/Services/ScenesManager.hpp"
+#include "Engine/Services/ShaderManager.hpp"
 #include "Engine/Utils/Config.hpp"
 // | -------------------------------
 #include <memory>
@@ -36,6 +37,7 @@ namespace ENG
       ScenesManager sm;
       SFXManager sfx;
       MusicManager music;
+      ShaderManager shaders;
     protected:
   };
 }

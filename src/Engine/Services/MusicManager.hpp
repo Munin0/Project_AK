@@ -25,6 +25,7 @@ namespace ENG
   {
     public:
       void PlayMusic(const std::string& key);
+      void StopMusic(const std::string& key);
       void LoadMusic(const std::string& path, const std::string& key, SDL_PropertiesID options = 0);
       void SetVolume(const std::string& key, float volume);
       float GetVolume(const std::string& key) const;

@@ -36,12 +36,15 @@ namespace ENG
           for (ENG::ObjectID id : denseID)
           {
             auto obj = Get(id);
-            renderQueue.push_back({ id, obj->GetLayer() });
+            renderQueue.push_back({ id, obj->GetLayer(), obj->GetShader()});
           }
 
-          std::sort(renderQueue.begin(), renderQueue.end(),
-            [](const ENG::RenderEntry& a, const ENG::RenderEntry& b) {
-            return a.layer > b.layer;
+          std::stable_sort(renderQueue.begin(), renderQueue.end(),
+            [](const ENG::RenderEntry& a, const ENG::RenderEntry& b) 
+          {
+            if(a.layer != b.layer)
+              return a.layer < b.layer;
+            return a.shader < b.shader;
           });
           sortedQueue = true;
         }

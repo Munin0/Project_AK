@@ -1,0 +1,11 @@
+{
+  "name": "Cat Iddle",
+  "texture": "Cat_Iddle.png",
+  "atlasWidth": 256,
+  "atlasHeight": 32,
+  "tileSize": 32,
+  "animations":
+  {
+    "Iddle": {"col": 0, "row": 0, "frameCount": 8}
+  }
+}

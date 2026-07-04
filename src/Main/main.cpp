@@ -5,8 +5,8 @@
 #include "Engine/Engine.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Config.hpp"
-#include "nlohmann/json_fwd.hpp"
 // | -------------------------------
+#include "nlohmann/json_fwd.hpp"
 #include <nlohmann/json.hpp>
 // | -------------------------------
 #include <fstream>

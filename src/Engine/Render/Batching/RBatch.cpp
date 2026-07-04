@@ -7,7 +7,7 @@
 #include "Engine/Render/Image/RImage.hpp"
 #include "Engine/Render/Shaders/RVertex.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
-#include "Engine/Utils/Path.hpp"
+#include "Engine/Services/Services.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
 #include <glm/detail/qualifier.hpp>
@@ -65,6 +65,10 @@ namespace ENG
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexIndex));
 
+    // | -> ArrayLayer
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, ArrayLayer));
+
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_INDICES * sizeof(uint32_t),nullptr, GL_DYNAMIC_DRAW);
 
     glBindVertexArray(0);
@@ -82,23 +86,13 @@ namespace ENG
     glBindTexture(GL_TEXTURE_2D,0);
     m_TextureSlots[0] = m_WhiteTexture;
 
-
     // Shader
-    auto& path = Path::Get();
-    
-    auto p = Path::Get().ShadersPath;
-    auto _vPath = path.ReadFile(p /  "gl/texture.vs" );
-    auto _fPath = path.ReadFile(p /  "gl/texture.fs" );
+    Services::Shaders().Load("gl/texture.fs","gl/texture.vs", "Default");
+    this->shader = Services::Shaders().Get("Default");
+    this->m_DefaultShader = this->shader;
+    glUseProgram(this->shader->GetProgram());
 
-    this->shader = Shader( _vPath, _fPath);
-    glUseProgram(this->shader.GetProgram());
-
-    // Asign samplers one time
-    int samplers[MAX_TEXTURES];
-    for (int i=0; i < MAX_TEXTURES; i++)
-      samplers[i] = i;
-    glUniform1iv(glGetUniformLocation(this->shader.GetProgram(), "u_Textures"), MAX_TEXTURES, samplers);
-
+    m_ArrayTextureID = Services::Assets().GetTextureArrayID();
   }
 
   void Batcher::Shutdown()
@@ -107,7 +101,6 @@ namespace ENG
     glDeleteBuffers(1, &m_VBO);
     glDeleteBuffers(1, &m_EBO);
     glDeleteTextures(1, &m_WhiteTexture);
-    glDeleteProgram(this->shader.GetProgram());
     delete [] m_VertexBufferBase;
     delete [] m_IndexBufferBase;
   }
@@ -115,11 +108,24 @@ namespace ENG
   void Batcher::Begin()
   {
     StartBatch();
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
   }
   
   void Batcher::End()
   {
     Flush();
+    SetMaterial(nullptr);
+  }
+
+  void Batcher::SetMaterial(Shader* material)
+  {
+    Shader* target = material != nullptr ? material : m_DefaultShader;
+    if(shader != target)
+    {
+      Flush();
+      shader = target;
+    }
   }
 
   void Batcher::SetCamera2D(ENG::Camera2D* camera)
@@ -139,26 +145,17 @@ namespace ENG
   void Batcher::Flush()
   {
     if(m_IndexCount == 0) return;
-
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
     
-    /// Load Matrix
-    glm::mat4 proj;
-    if(m_camera)
-    {
-      proj = m_camera->GetViewProjectionMatrix();
-    }
-    else 
-    {
-      Vector2 wS = Render::Get().GetScreenSize();
-      proj = glm::ortho(0.0f, wS.x,wS.y,0.0f, -1.0f, 1.0f);
-    }
+    Vector2 wS = Render::Get().GetScreenSize();
+    m_proj = glm::ortho(0.0f, wS.x,wS.y,0.0f, -1.0f, 1.0f);
 
-    glUniformMatrix4fv(
-      glGetUniformLocation(shader.GetProgram(), "u_ViewProjection"),
-    1 , GL_FALSE, &proj[0][0]
-    );
+    /// Load Matrix
+    const glm::mat4 proj = m_camera ? m_camera->GetViewProjectionMatrix() : m_proj;
+
+    // Get default Shader, if we have a MaterialShader in coming, we change drawing
+    Shader* activeShader = shader;
+    glUseProgram(activeShader->GetProgram());
+    glUniformMatrix4fv( activeShader->GetViewProjectionLoc(),1 , GL_FALSE, &proj[0][0]);
 
     // Push vertex to VRam
     uint32_t dataSize = (uint32_t)((uint8_t*)m_VertexBufferPtr - (uint8_t*)m_VertexBufferBase);
@@ -175,7 +172,10 @@ namespace ENG
       glActiveTexture(GL_TEXTURE0 + i);
       glBindTexture(GL_TEXTURE_2D, m_TextureSlots[i]);
     }
-    glUseProgram(shader.GetProgram());
+
+    glActiveTexture(GL_TEXTURE0 + ARRAY_TEXTURE_UNIT);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, m_ArrayTextureID);
+
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, m_IndexCount, GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
@@ -213,31 +213,35 @@ namespace ENG
     uint32_t base = m_VertexCount;
 
     // Bottom-left
-    m_VertexBufferPtr->Position  = {pos.x, pos.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {0.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = 0.0f;
+    m_VertexBufferPtr->Position   = {pos.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {0.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Bottom-right
-    m_VertexBufferPtr->Position  = {pos.x + size.x, pos.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {1.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = 0.0f;
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {1.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Top-right
-    m_VertexBufferPtr->Position  = {pos.x + size.x, pos.y + size.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {1.0f, 1.0f};
-    m_VertexBufferPtr->TexIndex  = 0.0f;
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {1.0f, 1.0f};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Top-left
-    m_VertexBufferPtr->Position  = {pos.x, pos.y + size.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {0.0f, 1.0f};
-    m_VertexBufferPtr->TexIndex  = 0.0f;
+    m_VertexBufferPtr->Position   = {pos.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {0.0f, 1.0f};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     *m_IndexBufferPtr++ = base + 0;
@@ -275,31 +279,35 @@ namespace ENG
     uint32_t base = m_VertexCount;
 
     // Bottom-left
-    m_VertexBufferPtr->Position  = {pos.x, pos.y, 0.0f};
-    m_VertexBufferPtr->Color     = tint;
-    m_VertexBufferPtr->TexCord   = {0.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {pos.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {0.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Bottom-right
-    m_VertexBufferPtr->Position  = {pos.x + size.x, pos.y, 0.0f};
-    m_VertexBufferPtr->Color     = tint;
-    m_VertexBufferPtr->TexCord   = {1.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {1.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Top-right
-    m_VertexBufferPtr->Position  = {pos.x + size.x, pos.y + size.y, 0.0f};
-    m_VertexBufferPtr->Color     = tint;
-    m_VertexBufferPtr->TexCord   = {1.0f, 1.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {1.0f, 1.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Top-left
-    m_VertexBufferPtr->Position  = {pos.x, pos.y + size.y, 0.0f};
-    m_VertexBufferPtr->Color     = tint;
-    m_VertexBufferPtr->TexCord   = {0.0f, 1.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {pos.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {0.0f, 1.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     *m_IndexBufferPtr++ = base + 0;
@@ -308,7 +316,61 @@ namespace ENG
     *m_IndexBufferPtr++ = base + 2;
     *m_IndexBufferPtr++ = base + 3;
     *m_IndexBufferPtr++ = base + 0;
-    
+
+    m_VertexCount += 4;
+    m_IndexCount  += 6;
+  }
+
+  void Batcher::DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint)
+  {
+    if (m_IndexCount >= MAX_INDICES)
+    {
+      Flush();
+      StartBatch();
+    }
+
+    uint32_t base = m_VertexCount;
+    float arrayLayer = (float)layer;
+
+    // Bottom-left
+    m_VertexBufferPtr->Position   = {pos.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMin.x, uvMin.y};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = arrayLayer;
+    m_VertexBufferPtr++;
+
+    // Bottom-right
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMax.x, uvMin.y};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = arrayLayer;
+    m_VertexBufferPtr++;
+
+    // Top-right
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMax.x, uvMax.y};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = arrayLayer;
+    m_VertexBufferPtr++;
+
+    // Top-left
+    m_VertexBufferPtr->Position   = {pos.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMin.x, uvMax.y};
+    m_VertexBufferPtr->TexIndex   = 0.0f;
+    m_VertexBufferPtr->ArrayLayer = arrayLayer;
+    m_VertexBufferPtr++;
+
+    *m_IndexBufferPtr++ = base + 0;
+    *m_IndexBufferPtr++ = base + 1;
+    *m_IndexBufferPtr++ = base + 2;
+    *m_IndexBufferPtr++ = base + 2;
+    *m_IndexBufferPtr++ = base + 3;
+    *m_IndexBufferPtr++ = base + 0;
+
     m_VertexCount += 4;
     m_IndexCount  += 6;
   }
@@ -335,24 +397,27 @@ namespace ENG
       glm::vec2 p2 = {center.x + radius * std::cos(angle2), center.y + radius * std::sin(angle2)};
 
       // Center vertex
-      m_VertexBufferPtr->Position = {center.x, center.y, 0.0f};
-      m_VertexBufferPtr->Color    = color;
-      m_VertexBufferPtr->TexCord  = {0.5f, 0.5f}; // Center of a dummy texture
-      m_VertexBufferPtr->TexIndex = textureIndex;
+      m_VertexBufferPtr->Position   = {center.x, center.y, 0.0f};
+      m_VertexBufferPtr->Color      = color;
+      m_VertexBufferPtr->TexCord    = {0.5f, 0.5f}; // Center of a dummy texture
+      m_VertexBufferPtr->TexIndex   = textureIndex;
+      m_VertexBufferPtr->ArrayLayer = -1.0f;
       m_VertexBufferPtr++;
 
       // Point 1 on circumference
-      m_VertexBufferPtr->Position = {p1.x, p1.y, 0.0f};
-      m_VertexBufferPtr->Color    = color;
-      m_VertexBufferPtr->TexCord  = {0.5f + 0.5f * std::cos(angle1), 0.5f + 0.5f * std::sin(angle1)};
-      m_VertexBufferPtr->TexIndex = textureIndex;
+      m_VertexBufferPtr->Position   = {p1.x, p1.y, 0.0f};
+      m_VertexBufferPtr->Color      = color;
+      m_VertexBufferPtr->TexCord    = {0.5f + 0.5f * std::cos(angle1), 0.5f + 0.5f * std::sin(angle1)};
+      m_VertexBufferPtr->TexIndex   = textureIndex;
+      m_VertexBufferPtr->ArrayLayer = -1.0f;
       m_VertexBufferPtr++;
 
       // Point 2 on circumference
-      m_VertexBufferPtr->Position = {p2.x, p2.y, 0.0f};
-      m_VertexBufferPtr->Color    = color;
-      m_VertexBufferPtr->TexCord  = {0.5f + 0.5f * std::cos(angle2), 0.5f + 0.5f * std::sin(angle2)};
-      m_VertexBufferPtr->TexIndex = textureIndex;
+      m_VertexBufferPtr->Position   = {p2.x, p2.y, 0.0f};
+      m_VertexBufferPtr->Color      = color;
+      m_VertexBufferPtr->TexCord    = {0.5f + 0.5f * std::cos(angle2), 0.5f + 0.5f * std::sin(angle2)};
+      m_VertexBufferPtr->TexIndex   = textureIndex;
+      m_VertexBufferPtr->ArrayLayer = -1.0f;
       m_VertexBufferPtr++;
       
       *m_IndexBufferPtr++ = base + 0;
@@ -399,24 +464,27 @@ namespace ENG
     uint32_t base = m_VertexCount;
 
     // Point A
-    m_VertexBufferPtr->Position  = {pointA.x, pointA.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {0.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {pointA.x, pointA.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {0.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Point B
-    m_VertexBufferPtr->Position  = {pointB.x, pointB.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {0.5f, 1.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {pointB.x, pointB.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {0.5f, 1.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Point C
-    m_VertexBufferPtr->Position  = {pointC.x, pointC.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {1.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {pointC.x, pointC.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {1.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     *m_IndexBufferPtr++ = base + 0;
@@ -453,31 +521,35 @@ namespace ENG
     uint32_t base = m_VertexCount; 
 
     // Bottom-left (p1)
-    m_VertexBufferPtr->Position  = {p1.x, p1.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {0.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {p1.x, p1.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {0.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Bottom-right (p2)
-    m_VertexBufferPtr->Position  = {p2.x, p2.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {1.0f, 0.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {p2.x, p2.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {1.0f, 0.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Top-right (p3)
-    m_VertexBufferPtr->Position  = {p3.x, p3.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {1.0f, 1.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {p3.x, p3.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {1.0f, 1.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     // Top-left (p4)
-    m_VertexBufferPtr->Position  = {p4.x, p4.y, 0.0f};
-    m_VertexBufferPtr->Color     = color;
-    m_VertexBufferPtr->TexCord   = {0.0f, 1.0f};
-    m_VertexBufferPtr->TexIndex  = textureIndex;
+    m_VertexBufferPtr->Position   = {p4.x, p4.y, 0.0f};
+    m_VertexBufferPtr->Color      = color;
+    m_VertexBufferPtr->TexCord    = {0.0f, 1.0f};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
     m_VertexBufferPtr++;
 
     *m_IndexBufferPtr++ = base + 0;
@@ -500,10 +572,11 @@ namespace ENG
     // Subir todos los vértices
     for(const auto& p : points)
     {
-        m_VertexBufferPtr->Position = {p.x, p.y, 0.0f};
-        m_VertexBufferPtr->Color    = color;
-        m_VertexBufferPtr->TexCord  = {0.0f, 0.0f};
-        m_VertexBufferPtr->TexIndex = 0.0f;
+        m_VertexBufferPtr->Position   = {p.x, p.y, 0.0f};
+        m_VertexBufferPtr->Color      = color;
+        m_VertexBufferPtr->TexCord    = {0.0f, 0.0f};
+        m_VertexBufferPtr->TexIndex   = 0.0f;
+        m_VertexBufferPtr->ArrayLayer = -1.0f;
         m_VertexBufferPtr++;
         m_VertexCount++;
     }

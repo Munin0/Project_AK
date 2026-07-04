@@ -3,6 +3,7 @@
 // | -------------------------------
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Component/Component.hpp"
@@ -29,11 +30,11 @@ namespace ENG
   
   void Object::Draw(Batcher& b) const
   {
-    if(!this->GetComponent<ISprite>())
+    auto* sprite = this->GetComponent<ISprite>();
+    if(!sprite)
       return;
     glm::vec2 pos = {this->GetPosition().x, this->GetPosition().y};
-    glm::vec2 size = {this->GetSize().x * 4, this->GetSize().y * 4};
-    auto img = this->GetComponent<ISprite>()->GetImage();
+    glm::vec2 size = {this->GetSize().x * sprite->GetScale(), this->GetSize().y * sprite->GetScale()};
     glm::vec4 color = {1.0f,1.0f,1.0f,1.0f};
 
     if(HasComponent<IColor>())
@@ -42,8 +43,21 @@ namespace ENG
       color = {c->GetColor().r,c->GetColor().g,c->GetColor().b,c->GetColor().a};
     }
 
+    if(HasComponent<IMaterial>())
+    {
+      auto m = GetComponent<IMaterial>();
+      b.SetMaterial(m->GetShader());
+    }
 
-    b.DrawTexture(pos, size, img, color);
+    if(sprite->IsAtlas())
+    {
+      const UVRect& uv = sprite->GetUV();
+      b.DrawAtlasSprite(pos, size, sprite->GetAtlasLayer(), uv.uvMin, uv.uvMax, color);
+    }
+    else
+    {
+      b.DrawTexture(pos, size, sprite->GetImage(), color);
+    }
   }
 
   void Object::Update(float dt)
@@ -51,6 +65,13 @@ namespace ENG
     if(auto bb = this->GetComponent<IBoundingBox>())
     {
       bb->Update(this->GetTransform().position);
+    }
+
+    if(auto* anim = this->GetComponent<IAnimator>())
+    {
+      anim->Advance(dt);
+      if(auto* sprite = this->GetComponent<ISprite>())
+        sprite->SetFrame(anim->GetCurrentFrame());
     }
   }
 
@@ -73,7 +94,7 @@ namespace ENG
 
   Vector2 Object::GetSize() const
   {
-    auto s = GetComponent<ISprite>()->GetImage();
+    auto* s = GetComponent<ISprite>();
     return {(float)s->GetWidth(), (float)s->GetHeight()};
   }
   
