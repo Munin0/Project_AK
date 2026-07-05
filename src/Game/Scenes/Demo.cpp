@@ -1,6 +1,7 @@
 /// | ------------------------------------ |
 #include "Demo.hpp"
 /// | ------------------------------------ |
+#include "Engine/Map/TileMap/TileMap.hpp"
 #include "Game/Game.hpp"
 #include "Game/Systems/Systems.hpp"
 /// | ------------------------------------ |
@@ -8,6 +9,7 @@
 #include "Engine/Layer/Scene.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Object/ObjectPool.hpp"
+#include "Engine/Physics/Collision.hpp"
 #include "Engine/PollEvent/PollEvent.hpp"
 #include "Engine/Render/Batching/RAPIBatch.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
@@ -17,12 +19,14 @@
 #include "Engine/Render/Render.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
+#include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
 #include "SDL3/SDL_properties.h"
 #include "SDL3/SDL_scancode.h"
 #include "SDL3_mixer/SDL_mixer.h"
 /// | ------------------------------------ |
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -41,7 +45,7 @@ namespace APP
       return;
 
     /// Load All Assets
-    ENG::Services::Assets().Load("Player/Player.png", "Player");
+    ENG::Services::Assets().Load("Atlas/Player.png", "Player");
     // Player creation
     pool.Add(std::make_unique<ENG::Object>("Player"));
     auto player = pool.Get(PLAYER);
@@ -49,24 +53,35 @@ namespace APP
     player->GetStats().hp = 100;
     player->GetTransform().position = {100.0f, 100.0f};
     player->GetTransform().velocity = {200.0f, 200.0f};
-    player->AddComponent<ENG::ISprite>("Player", 2.0f);
-    player->AddComponent<ENG::IBoundingBox>(ENG::Vector2{32.0f, 32.0f});
-    player->AddComponent<ENG::IMaterial>("Mono");
+    player->AddComponent<ENG::ISprite>("Player", 1.0f);
+    player->AddBoundingBox(ENG::Vector2{16.0f, 16.0f});              // solid
+    player->AddBoundingBox(ENG::Vector2{18.0f, 18.0f}, /*isTrigger*/ true); // sensor around the player
 
     /// Atlas-backed sprite (TextureArray path)
-    ENG::Services::Assets().LoadAtlas("Player/CatAtlas/atlasInfo.json", "CatIddle");
+    ENG::Services::Assets().LoadAtlas("Atlas/CatAtlas/atlasInfo.json", "CatIddle");
     ENG::ObjectID catID = pool.Add(std::make_unique<ENG::Object>("Cat"));
     auto cat = pool.Get(catID);
     cat->SetLayer(LAYER_PLAYER);
     cat->GetTransform().position = {400.0f, 300.0f};
-    cat->AddComponent<ENG::ISprite>("CatIddle", "Iddle", 0, 2.0f);
+    cat->AddComponent<ENG::ISprite>("CatIddle", "Iddle", 0, 1.0f);
     cat->AddComponent<ENG::IAnimator>("Iddle", 8, 8.0f, 1);
+    cat->AddComponent<ENG::IMaterial>("Mono");
+    cat->AddBoundingBox(ENG::Vector2{32.0f, 32.0f});                 // solid
+
+    /// Tile map (Tiled JSON export, atlas resolved by tile "id" == gid - firstgid)
+    ENG::Services::Assets().LoadAtlas("Atlas/Scenario1/atlasInfo.json", "Scenario1");
+    for (auto& mapLayer : ENG::TileMap::LoadTiledMap("Scenario1", "Map/Scenes/Escena1.json"))
+    {
+      mapLayer.SetLayer(TiledLayerToEngineLayer(mapLayer.GetName()));
+      mapLayer.SetPosition({0.0f, 0.0f});
+      AddTileMap(std::move(mapLayer));
+    }
 
     /// Configuration of the camera
     camera = std::make_unique<ENG::Camera2D>(1280.0f, 720.0f);
-    camera->SetTarget(player->GetComponent<ENG::IBoundingBox>());
+    camera->SetTarget(player->GetSolidBox());
     camera->SetPosition(player->GetTransform().position);
-    camera->SetZoom(1.0f);
+    camera->SetZoom(2.0f);
     ENG::Render::Get().GetBatcher().SetCamera2D(camera.get());
 
     auto rect = std::make_unique<ENG::Rectangle>(0.0f, 0.0f, 300.0f, 100.0f, ENG::Color::Green,
@@ -159,6 +174,13 @@ namespace APP
     {
       pool.Get(PLAYER)->GetTransform().direction.x += 1.0f;
     }
+
+    float wheel = pollEvent.GetMouseWheel();
+    if (wheel != 0.0f)
+    {
+      float zoom = camera->GetZoom() + wheel * 0.1f;
+      camera->SetZoom(std::clamp(zoom, 2.0f, 3.0f));
+    }
   }
 
   void DemoScene::Update(float dt)
@@ -170,15 +192,42 @@ namespace APP
     {
       pool.Get(o)->Update(dt);
     }
+
+    {
+      auto p = pool.Get(PLAYER)->GetTransform().position;
+      auto c = pool.Get(2)->GetTransform().position;
+      LOG_DEBUG("DBG player=(" + std::to_string(p.x) + "," + std::to_string(p.y) +
+                ") cat=(" + std::to_string(c.x) + "," + std::to_string(c.y) + ")");
+    }
+
+    for (const auto& trigger : ENG::ResolveCollisions(pool))
+    {
+      LOG_DEBUG("Trigger overlap between entities " + std::to_string(trigger.a) +
+                " and " + std::to_string(trigger.b));
+    }
+
     camera->Update(dt);
     pool.Get(PLAYER)->GetTransform().direction = {0.0f, 0.0f};
   }
 
   void DemoScene::Render(ENG::Batcher& b)
   {
+    RenderTileMaps(b, 0, LAYER_PLAYER);      /// Layer back of the player
     for (auto& entry : renderQueue)
     {
       pool.Get(entry.id)->Draw(b);
+    }
+    RenderTileMaps(b, LAYER_PLAYER, 255);    /// Layer front of the player
+
+    // TEMP DEBUG: draw every bounding box outline (red = solid, yellow = trigger)
+    for (const auto& id : pool.GetAllIDs())
+    {
+      auto* o = pool.Get(id);
+      for (auto& bb : o->GetBoundingBoxes())
+      {
+        ENG::Drawer::DrawRectangleOutline(bb.GetPosition(), bb.GetSize(),
+          bb.IsTrigger() ? ENG::Color::Yellow : ENG::Color::Red, 0.5f);
+      }
     }
 
     // ENG::Drawer::DrawLine({300.0f, 300.0f}, {500.0f, 300.0f}, ENG::Color::Green, 2.0f);

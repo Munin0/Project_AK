@@ -47,6 +47,22 @@ namespace ENG
     height = atlas->tileSize;
   }
 
+  ISprite::ISprite(const std::string& atlasKey, const std::string& tileID, float scale)
+    : IComponents{}, keyName(atlasKey), width(0), height(0), scale(scale), isAtlas(true), tileID(tileID)
+  {
+    const AtlasData* atlas = Services::Assets().GetAtlas(atlasKey);
+    if(!atlas)
+    {
+      LOG_ERROR("ISprite: atlas not found: " + atlasKey);
+      return;
+    }
+
+    uv = GetTileUV(*atlas, tileID);
+    atlasLayer = atlas->atlasLayer;
+    width  = atlas->tileSize;
+    height = atlas->tileSize;
+  }
+
   void ISprite::SetFrame(int frameIndex)
   {
     if(!isAtlas)
@@ -106,11 +122,9 @@ namespace ENG
     }
   }
 
-  IBoundingBox::IBoundingBox(const Vector2& dim)
-    : IComponents{}, size(dim)
-  {
-    half = (dim / 2.0f) ;
-  }
+  IBoundingBox::IBoundingBox(const Vector2& dim, bool isTrigger)
+    : IComponents{}, size(dim), isTrigger(isTrigger)
+  {}
 
   IColor::IColor(const Color& c)
     : IComponents{}, color(c)

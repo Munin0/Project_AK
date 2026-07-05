@@ -2,6 +2,7 @@
 #include "PollEvent.hpp"
 // | -------------------------------
 #include "SDL3/SDL_events.h"
+#include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_stdinc.h"
 // | -------------------------------
@@ -99,8 +100,11 @@ namespace ENG
     prevmouseMap = mouseMap;
   }
 
-  void PollEvent::ProcessPollEvents() 
+  void PollEvent::ProcessPollEvents()
   {
+    // Wheel motion is a one-shot delta, not a held state -- only valid for the frame it fires in.
+    wheelY = 0.0f;
+
     SDL_Event event;
     while(SDL_PollEvent(&event))
     {
@@ -120,6 +124,9 @@ namespace ENG
           break;
         case SDL_EVENT_MOUSE_BUTTON_UP:
           mouseMap.erase(event.button.button);
+          break;
+        case SDL_EVENT_MOUSE_WHEEL:
+          wheelY += (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) ? -event.wheel.y : event.wheel.y;
           break;
       }
     }

@@ -51,7 +51,8 @@ namespace ENG
   {
     public:
       ISprite(const std::string& _keyName, float scale);
-      ISprite(const std::string& atlasKey, const std::string& animName, int frameIndex, float scale);
+      ISprite(const std::string& atlasKey, const std::string& animName, int frameIndex, float scale = 1.0f);
+      ISprite(const std::string& atlasKey, const std::string& tileID, float scale = 1.0f);
       ~ISprite() override {}
 
       const std::string& GetKeyName(void) const {return  this->keyName;}
@@ -76,6 +77,7 @@ namespace ENG
       int atlasLayer = -1;
       UVRect uv{};
       std::string animName;
+      std::string tileID;
   };
     
   class IAnimator : public IComponents
@@ -117,21 +119,27 @@ namespace ENG
   class IBoundingBox: public IComponents
   {
     public:
-      explicit IBoundingBox(const Vector2& dim);
+      explicit IBoundingBox(const Vector2& dim, bool isTrigger = false);
       ~IBoundingBox() override {}
 
+      // position is the same anchor Object/Batcher::DrawQuad use to draw a sprite (its
+      // bottom-left corner), not the box's center -- this keeps the box aligned with what's
+      // actually drawn on screen.
       void Update(const Vector2& _position) {this->position = _position;};
       void Update(float x, float y) {this->position = {x,y};};
-      void ChangeSize(const Vector2& dim){ this->size = dim;}
+      void ChangeSize(const Vector2& dim){ this->size = dim; }
       const Vector2& GetSize(void) const {return  this->size;}
       const Vector2& GetPosition(void) const {return this->position;}
-      const Vector2& GetCenter(void) const {return this->half;}
-      bool GetResolution(void) const {return this->resolution;}
+      Vector2 GetCenter(void) const {return this->position + this->size / 2.0f;}
+
+      // Trigger boxes report overlaps (see ResolveCollisions) but are never pushed apart;
+      // non-trigger (solid) boxes get their overlaps resolved.
+      bool IsTrigger(void) const {return this->isTrigger;}
+      void SetTrigger(bool _isTrigger) {this->isTrigger = _isTrigger;}
     private:
       Vector2 position;
       Vector2 size;
-      Vector2 half;
-      bool resolution;
+      bool isTrigger;
   };
 
   class IColor : public IComponents

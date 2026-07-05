@@ -31,7 +31,12 @@ namespace ENG
       bool IsMouseButtonDown(SDL_MouseButton button);
       bool IsMouseButtonRepeat(SDL_MouseButton button, int times);
       bool IsMouseButtonRelease(SDL_MouseButton button);
-      
+
+      // Vertical scroll amount for the current frame only (positive = scrolled up/away from the
+      // user, negative = scrolled down); 0 on every frame with no wheel motion.
+      float GetMouseWheel(void) const { return wheelY; }
+
+
       bool IsGamepadButtonPress(Uint8 button);
       bool IsGamepadButtonDown(Uint8 button);
       bool IsGamepadAxisMove(Uint8 axis);
@@ -47,5 +52,7 @@ namespace ENG
 
       std::unordered_map<SDL_MouseButton,SDL_MouseButtonEvent> mouseMap;
       std::unordered_map<SDL_MouseButton,SDL_MouseButtonEvent> prevmouseMap;
+
+      float wheelY = 0.0f;
   };
 }

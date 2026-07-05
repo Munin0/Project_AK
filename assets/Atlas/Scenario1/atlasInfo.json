@@ -1,0 +1,18 @@
+{
+  "name":"Escenario 1",
+  "texture": "Escene1_Atlas.png",
+  "tileSize": 16,
+  "tiles":
+  {
+    "Grass":            {"id":0, "col":0,"row":0},
+    "Grass_Cesped":     {"id":1, "col":1,"row":0},
+    "Grass_GPlant_1":   {"id":2, "col":2,"row":0},
+    "Grass_GPlant_2":   {"id":3, "col":3,"row":0},
+    "Grass_FlowerYL":   {"id":4, "col":4,"row":0},
+    "Grass_Cesped_W":   {"id":5, "col":0,"row":1},
+    "Grass_GPlant_1W":  {"id":6, "col":1,"row":1},
+    "Grass_GPlant_2W":  {"id":7, "col":2,"row":1},
+    "Grass_RockG":      {"id":8, "col":3,"row":1},
+    "Grass_FloyerY":    {"id":9, "col":4,"row":1}
+  }
+}

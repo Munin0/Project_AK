@@ -35,6 +35,26 @@ namespace ENG
 
     return { uvMin, uvMax };
   }
+  
+  UVRect GetTileUV(const AtlasData& atlas, const std::string& tileID)
+  {
+    float ts = static_cast<float>(atlas.tileSize);
+    const auto& tile = atlas.tiles.at(tileID);
+    glm::vec2 uvMin = glm::vec2(tile.col * ts / atlas.containerWidth, tile.row * ts / atlas.containerHeight);
+    glm::vec2 uvMax = glm::vec2((tile.col + 1) * ts / atlas.containerWidth, (tile.row + 1) * ts / atlas.containerHeight);
+
+    return UVRect{uvMin, uvMax};
+  }
+
+  UVRect GetTileUV(const AtlasData& atlas, int tileID)
+  {
+    float ts = static_cast<float>(atlas.tileSize);
+    const auto& tile = atlas.tilesById.at(tileID);
+    glm::vec2 uvMin = glm::vec2(tile.col * ts / atlas.containerWidth, tile.row * ts / atlas.containerHeight);
+    glm::vec2 uvMax = glm::vec2((tile.col + 1) * ts / atlas.containerWidth, (tile.row + 1) * ts / atlas.containerHeight);
+
+    return UVRect{uvMin, uvMax};
+  }
 
   AtlasData ParseAtlasJSON(const std::string& jsonPath)
   {
@@ -46,17 +66,32 @@ namespace ENG
 
       data.name        = j.at("name").get<std::string>();
       data.texturePath = j.at("texture").get<std::string>();
-      data.atlasWidth  = j.at("atlasWidth").get<int>();
-      data.atlasHeight = j.at("atlasHeight").get<int>();
       data.tileSize    = j.at("tileSize").get<int>();
 
-      for (auto& [animName, animJson] : j.at("animations").items())
+      if (j.contains("animations"))
       {
-        data.animations[animName] = {
-          animJson.at("col").get<int>(),
-          animJson.at("row").get<int>(),
-          animJson.at("frameCount").get<int>()
-        };
+        for (auto& [animName, animJson] : j.at("animations").items())
+        {
+          data.animations[animName] = {
+            animJson.at("col").get<int>(),
+            animJson.at("row").get<int>(),
+            animJson.at("frameCount").get<int>()
+          };
+        }
+      }
+
+      if (j.contains("tiles"))
+      {
+        for (auto& [tileID, tileJson] : j.at("tiles").items())
+        {
+          TileRegion region{
+            tileJson.at("col").get<int>(),
+            tileJson.at("row").get<int>(),
+            tileJson.value("id", 0)
+          };
+          data.tiles[tileID] = region;
+          data.tilesById[region.id] = region;
+        }
       }
     }
     catch (const nlohmann::json::exception& e)

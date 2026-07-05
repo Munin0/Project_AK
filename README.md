@@ -10,11 +10,14 @@ The goal of this project isn't a one-off game, but to progressively build a **pr
 
 The engine already has a working foundation that's still being iterated on:
 
-- **Batched renderer** (`Batcher`): a single draw call groups quads, circles, triangles, lines, polygons, and textured sprites, using dynamic VAO/VBO/EBO and up to 16 simultaneous texture slots.
+- **Batched renderer** (`Batcher`): a single draw call groups quads, circles, triangles, lines, polygons, and textured sprites, using dynamic VAO/VBO/EBO, up to 16 simultaneous texture slots, plus a reserved `TextureArray` sampler unit for atlas-backed sprites. A per-object `IMaterial` can override the default shader for its own draws.
 - **Object + component system**: `Object` as the base entity with a lifecycle (`Update`/`Draw`) and a type-safe `ComponentStorage` (based on `std::type_index`).
 - **`ObjectPool`**: an object pool with a dense array + sparse map and `ObjectID` handles, designed for O(1) add/remove (swap-and-pop) without invalidating external references.
-- **Layered render queue** (`RenderEntry`): support for sorting draws by `layer`, avoiding unnecessary full re-sorts every frame.
-- **Scene system**: a `Scene` interface (`Init`/`Update`/`Inputs`/`Render`) managed by a `ScenesManager`.
+- **Layered render queue** (`RenderEntry`): support for sorting draws by `layer` (then by shader), avoiding unnecessary full re-sorts every frame.
+- **Atlas + TextureArray asset pipeline**: `AssetsManager` loads sprite sheets into a GPU `TextureArray` and parses their layout from a JSON atlas file (`AtlasData`/`ParseAtlasJSON`) into either named `animations` (frame strips, for `IAnimator`) or named `tiles` (single-cell lookups, for tilemaps and static atlas sprites).
+- **Animation**: `IAnimator` advances an atlas-backed `ISprite`'s frame over time (speed/step-controlled), driven by named animation regions from the atlas JSON.
+- **Tile maps**: `TileMap` (`Engine/Map/TileMap`) loads a tile grid + a tile-atlas JSON, resolving each cell to a UV once at load time; `Scene::AddTileMap`/`RenderTileMaps` let a scene keep tile maps sorted by layer and interleave their draws with the object render queue (e.g. background tiles before the player, foreground tiles after).
+- **Scene system**: a `Scene` interface (`Init`/`Update`/`Inputs`/`Render`) managed by a `ScenesManager`, each owning its own `Camera2D` and tile maps.
 - **Service Locator** (`Services`): controlled global access.
 - **Application layer** (`GameLayer`): decouples the engine from the actual game; the current executable (`Game`).
 - **Asset loading**: `stb_image`, `stb_image_write`, and `stb_truetype` used for textures and, eventually, fonts.
@@ -25,7 +28,7 @@ The engine already has a working foundation that's still being iterated on:
 The mid-term goal is a complete, polished 2D engine. Next up:
 
 - 2D collision/physics built on `IBoundingBox` (broad-phase + resolution).
-- A more complete animation system on top of `IAnimator`.
+- Expanding `TileMap` (collision layers, multi-atlas maps, editor-friendly authoring).
 - Audio `IAudio` or a service to manage Audio and Music (`WAV`, `MP3`, `FLAC`, `OGG`).
 - Remappable input (beyond the current `PollEvent` polling).
 - Editor or support tooling (object inspection, asset hot-reload).
@@ -47,7 +50,8 @@ The mid-term goal is a complete, polished 2D engine. Next up:
 
 ```
 Project_AK/
-├── assets/              # Game resources (sprites, etc.)
+├── assets/              # Game resources (sprite atlases, tile maps, etc.)
+│   └── Atlas/           # Atlas textures + JSON layouts (animations and/or tiles)
 ├── external/glad/       # Vendored OpenGL loader
 ├── shaders/             # GLSL shaders (texture.vs / texture.fs)
 ├── src/
@@ -56,7 +60,8 @@ Project_AK/
 │   │   ├── Component/   # Components and storage (ECS-like)
 │   │   ├── Object/      # Object and ObjectPool
 │   │   ├── Layer/       # GameLayer and Scene (base interfaces)
-│   │   ├── Render/      # Batcher, Shader, Image, Color, Vertex...
+│   │   ├── Map/         # TileMap: tile-grid loading and rendering
+│   │   ├── Render/      # Batcher, Shader, Image, AtlasData, TextureArray, Color, Vertex...
 │   │   ├── Services/    # AssetsManager, ScenesManager, WorldSaver
 │   │   ├── PollEvent/   # Event/input handling
 │   │   ├── Utils/       # Vector2, Rects, Config, Log, Path
@@ -100,4 +105,4 @@ Or, more directly, using the included script:
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.ameEngine 2D, using OpenGL 3.3|Batching.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.

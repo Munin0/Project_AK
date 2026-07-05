@@ -4,6 +4,9 @@
 #include "Engine/Layer/GameLayer.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 /// | ------------------------------------ |
+#include <cstdint>
+#include <string>
+/// | ------------------------------------ |
 #define PLAYER 1
 /// | ------------------------------------ |
 #define LAYER_BACKGROUND  0
@@ -17,6 +20,20 @@
 
 namespace APP
 {
+  // Maps a Tiled layer name to the engine's draw-order layer (LAYER_* above), so tile map
+  // layers are placed in front of/behind other objects just by naming them in Tiled --
+  // no per-map C++ wiring needed. Unrecognized names fall back to LAYER_BACKGROUND.
+  inline uint8_t TiledLayerToEngineLayer(const std::string& name)
+  {
+    if (name == "Background") return LAYER_BACKGROUND;
+    if (name == "World")      return LAYER_WOLRD;
+    if (name == "Middle")     return LAYER_MIDDLE;
+    if (name == "Front")      return LAYER_FRONT;
+    if (name == "FX")         return LAYER_FX;
+    if (name == "UI")         return LAYER_UI;
+    return LAYER_BACKGROUND;
+  }
+
   class Game: public ENG::GameLayer
   {
     public:

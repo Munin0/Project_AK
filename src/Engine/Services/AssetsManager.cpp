@@ -48,6 +48,8 @@ namespace ENG
       return;
 
     data.atlasLayer      = layer;
+    data.atlasWidth      = img.width;
+    data.atlasHeight     = img.height;
     data.containerWidth  = m_textureArray.GetWidth();
     data.containerHeight = m_textureArray.GetHeight();
     m_atlases[idkey] = data;

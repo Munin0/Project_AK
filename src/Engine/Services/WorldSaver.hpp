@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 // | -------------------------------
 
 namespace ENG
@@ -23,6 +24,7 @@ namespace ENG
   {
     float width;
     float height;
+    bool  isTrigger;
   };
 
   struct IAnimatorData
@@ -68,7 +70,7 @@ namespace ENG
     IStatsData        _sData;
     std::optional<ISpriteData>       _spData;
     std::optional<IAnimatorData>    _anData;
-    std::optional<IBoundingBoxData> _bbData;
+    std::vector<IBoundingBoxData>   _bbData;
     std::optional<IColorData>       _cData;
   };
 

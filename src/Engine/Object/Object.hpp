@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <vector>
 // | -------------------------------
 
 namespace ENG
@@ -39,10 +40,39 @@ namespace ENG
       }
 
       template<typename T>
-      bool HasComponent() const 
+      bool HasComponent() const
       {
         static_assert(std::is_base_of_v<IComponents, T>);
         return components.Has<T>();
+      }
+
+      // IBoundingBox needs multiple simultaneous instances per object (e.g. one solid box +
+      // one trigger box), which ComponentStorage doesn't support (one instance per type), so it
+      // gets its own dedicated storage instead of going through AddComponent/GetComponent.
+      IBoundingBox& AddBoundingBox(const Vector2& dim, bool isTrigger = false)
+      {
+        boundingBoxes.emplace_back(dim, isTrigger);
+        return boundingBoxes.back();
+      }
+
+      std::vector<IBoundingBox>& GetBoundingBoxes(void) { return boundingBoxes; }
+      const std::vector<IBoundingBox>& GetBoundingBoxes(void) const { return boundingBoxes; }
+      bool HasBoundingBoxes(void) const { return !boundingBoxes.empty(); }
+
+      IBoundingBox* GetSolidBox(void)
+      {
+        for (auto& bb : boundingBoxes)
+          if (!bb.IsTrigger())
+            return &bb;
+        return nullptr;
+      }
+
+      IBoundingBox* GetTriggerBox(void)
+      {
+        for (auto& bb : boundingBoxes)
+          if (bb.IsTrigger())
+            return &bb;
+        return nullptr;
       }
 
       static int GetCountObj()
@@ -100,6 +130,7 @@ namespace ENG
       std::string name;
       IStats stats;
       ITransform transform;
+      std::vector<IBoundingBox> boundingBoxes;
 
       ComponentStorage components;
   };

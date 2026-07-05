@@ -62,10 +62,8 @@ namespace ENG
 
   void Object::Update(float dt)
   {
-    if(auto bb = this->GetComponent<IBoundingBox>())
-    {
-      bb->Update(this->GetTransform().position);
-    }
+    for (auto& bb : boundingBoxes)
+      bb.Update(this->GetTransform().position);
 
     if(auto* anim = this->GetComponent<IAnimator>())
     {
@@ -140,12 +138,13 @@ namespace ENG
                        .speed = an->GetSpeed(),
                        .scale = an->GetScale()};
 
-    // IBoundingBox
-    if (auto *bb = GetComponent<IBoundingBox>())
-      state._bbData = {
-        .width = bb->GetSize().x,
-        .height = bb->GetSize().y,
-      };
+    // IBoundingBox(es)
+    for (const auto& bb : boundingBoxes)
+      state._bbData.push_back({
+        .width = bb.GetSize().x,
+        .height = bb.GetSize().y,
+        .isTrigger = bb.IsTrigger(),
+      });
 
     // IColor
     if (auto *c = GetComponent<IColor>()) {
@@ -190,10 +189,9 @@ namespace ENG
           );
     }
 
-    if(state._bbData)
+    for (const auto& bbData : state._bbData)
     {
-      Vector2 v = {state._bbData->width, state._bbData->height};
-      AddComponent<IBoundingBox>(v);
+      AddBoundingBox({bbData.width, bbData.height}, bbData.isTrigger);
     }
 
     if(state._cData)

@@ -34,7 +34,7 @@ namespace ENG
           m_position = m_target->position;
         if(m_target_bb != nullptr)
         {
-          m_position = m_target_bb->GetPosition() + m_target_bb->GetCenter();
+          m_position = m_target_bb->GetCenter();
         }
       }
 
