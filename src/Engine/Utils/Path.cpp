@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <cstddef>
+#include <cstdint>
 // | -------------------------------
 #if defined(_WIN32)
 #include <windows.h>
@@ -16,6 +17,10 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <unistd.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#include <sys/syslimits.h>
+#include <cstdlib>
 #endif
 // | -------------------------------
 
@@ -40,6 +45,23 @@ namespace ENG
       throw std::runtime_error("Path: failed to resolve executable path (/proc/self/exe)");
     }
     return std::filesystem::path(std::string(result, static_cast<size_t>(count))).parent_path();
+
+#elif defined(__APPLE__)
+    char rawPath[PATH_MAX];
+    uint32_t size = sizeof(rawPath);
+    if(_NSGetExecutablePath(rawPath, &size) != 0)
+    {
+      throw std::runtime_error("Path: failed to resolve executable path (_NSGetExecutablePath)");
+    }
+
+    // _NSGetExecutablePath may return a path containing symlinks (e.g. via a relative
+    // component); resolve it to the real, absolute path like Linux's /proc/self/exe does.
+    char resolvedPath[PATH_MAX];
+    if(!realpath(rawPath, resolvedPath))
+    {
+      throw std::runtime_error("Path: failed to resolve executable path (realpath)");
+    }
+    return std::filesystem::path(resolvedPath).parent_path();
 
 #else
   #error "Path::GetExecutableDir: platform not supported"
