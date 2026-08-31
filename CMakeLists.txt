@@ -67,6 +67,11 @@ add_executable(Project_AK)
 
 add_subdirectory(src)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_options(Project_AK PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+  target_link_options(Project_AK PRIVATE -fsanitize=address)
+endif()
+
 message("-- Libraries linked: ")
 message("--   - « SDL3 »")
 message("--   - « SDL3 Image »")
@@ -88,5 +93,9 @@ add_custom_command(TARGET Project_AK POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/config
         $<TARGET_FILE_DIR:Project_AK>/config
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/data
+        $<TARGET_FILE_DIR:Project_AK>/data
 )
+
 ### | ------------------------------------------------- |

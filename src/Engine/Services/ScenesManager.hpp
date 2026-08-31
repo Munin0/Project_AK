@@ -30,12 +30,12 @@ namespace ENG
       void ChangeScene(void);
       void PeddingScene(SceneID idPedding);
       void DestroyScene(SceneID id);
-      void Clear(){scenesMap.clear();}
+      void Clear(){m_scenesMap.clear();}
     private:
-      Scene* s_current = nullptr;
-      SceneID pedding = 1;
-      bool arePedding = false;
-      std::map<SceneID, std::unique_ptr<Scene>> scenesMap;
+      Scene* m_s_current = nullptr;
+      SceneID m_pedding = 1;
+      bool m_arePedding = false;
+      std::map<SceneID, std::unique_ptr<Scene>> m_scenesMap;
   };
 
 }

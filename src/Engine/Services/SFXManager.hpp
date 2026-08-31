@@ -36,12 +36,12 @@ namespace ENG
 
       void Init(void)
       {
-        mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
+        m_mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
       }
     private:
       MIX_Track* GetTrackFreeOrNew(SFXPool& pool);
     private:
-      MIX_Mixer *mixer = nullptr;
-      std::map<std::string, SFXPool> sfx;
+      MIX_Mixer* m_mixer = nullptr;
+      std::map<std::string, SFXPool> m_sfx;
   };
 }

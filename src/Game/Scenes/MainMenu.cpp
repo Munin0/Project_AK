@@ -1,99 +1,192 @@
 /// | ------------------------------------ |
-#include "MainMenu.hpp"
-/// | ------------------------------------ |
-#include "Game/Game.hpp"
-/// | ------------------------------------ |
+#include "MainMenu.hpp" /// | ------------------------------------ |
+#include "Engine/Component/Component.hpp"
+#include "Engine/GUI/Button.hpp"
+#include "Engine/GUI/Label.hpp"
 #include "Engine/Layer/Scene.hpp"
+#include "Engine/Object/Object.hpp"
+#include "Engine/Physics/Collision.hpp"
+#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Render.hpp"
+#include "Engine/Text/Text.hpp"
+#include "Engine/Text/TextAPI.hpp"
 #include "Engine/Utils/Log.hpp"
+#include "Engine/Inputs/Mouse.hpp"
+#include "Engine/Utils/Path.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Object/ObjectPool.hpp"
-#include "Engine/PollEvent/PollEvent.hpp"
+#include "Engine/Inputs/PollEvent.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
-#include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Geometry/RGeometry.hpp"
-/// | ------------------------------------ |
+  /// | ------------------------------------ |
+#include "Game/Game.hpp"
+#include "Game/Systems/Functions.hpp"
+  /// | ------------------------------------ |
+#include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_scancode.h"
-/// | ------------------------------------ |
-#include <utility>
+  /// | ------------------------------------ |
+#include <linux/limits.h>
 #include <memory>
-/// | ------------------------------------ |
+#include <string>
+  /// | ------------------------------------ |
 
-namespace APP
-{
-  MainMenu::MainMenu(ENG::SceneID id)
-    : ENG::Scene{}
+  namespace APP
   {
-    sceneID = id;
-  }
-
-  void MainMenu::Init(void)
-  {
-    if(isInit)
+    MainMenu::MainMenu(ENG::SceneID id)
+      : ENG::Scene{}
     {
-      LOG_INFO(" | << SCENE MAINMENU ALREADY INIT");
-      return;
+      sceneID = id;
     }
 
-    auto rect = std::make_unique<ENG::Rectangle>(0.0f,0.0f,300.0f,100.0f,ENG::Color::Green,ENG::Color::Red, 5.0f);
-    rect->SetLayer(LAYER_BACKGROUND);
-    pool.Add(std::move(rect));
-
-    auto line = std::make_unique<ENG::Line>(200.0f,200.0f,500.0f,500.0f, ENG::Color::White);
-    line->SetLayer(LAYER_WOLRD);
-    pool.Add(std::move(line));
-
-    ENG::Vector2 a[3];
-    a[0] = {500.0f,100.0f};
-    a[1] = {200.0f,300.0f};
-    a[2] = {800.0f,300.0f}; 
-    auto triangle = std::make_unique<ENG::Triangle>(a[0],a[1],a[2],ENG::Color::Blue, ENG::Color::Yellow);
-    triangle->SetLayer(LAYER_WOLRD);
-    pool.Add(std::move(triangle));
-
-    
-    /// Always last
-    isInit = true;
-    isRunning = true;
-    this->renderQueue = pool.Sort();
-  }
-
-  void MainMenu::Destroy(void)
-  {
-    pool.Clear();
-    renderQueue.clear();
-    isInit = false;
-    isRunning = false;
-  }
-
-  bool MainMenu::IsRunning()
-  {
-    return isRunning;
-  }
-
-  void MainMenu::Inputs(float dt)
-  {
-    auto& pollEvent = ENG::PollEvent::Get();
-    
-    if(pollEvent.IsKeyPress(SDL_SCANCODE_P))
+    void MainMenu::Init(void)
     {
+      if(isInit)
+      {
+        LOG_INFO(" | << SCENE MAINMENU ALREADY INIT");
+        return;
+      }
+      // ###############################
+      /// Screen Size
+      auto sizeScreen = ENG::Render::Get().GetScreenSize();
+      auto f_CabinItalic = ENG::Services::Fonts().GetFont("CabinItalic");
+
+      // ###############################
+      // Objects
+      // Configuration of the Object entities
+      // ###############################
+      /// Gui Elements
+      ENG::ObjectID btStartID = pool.Add(std::make_unique<ENG::Button>("StartGame", ENG::Vector2{100,50} ));
+      auto startBT = static_cast<ENG::Button*>(pool.Get(btStartID));
+
+      startBT->SetPosition({800,500});
+      startBT->SetData(static_cast<ENG::SceneID>(ENG::SCENE_DEMO));
+      startBT->SetFunction(ChangeSceneButton);
+      startBT->SetLayer(LAYER_UI);
+      startBT->SetFont(*f_CabinItalic);
+      startBT->SetText("Start Game");
+      startBT->SetTextSize(24);
+      startBT->SetTextColor(ENG::Color::Black);;
+
+      // ###############################
+      // Objects Text
+      // Configuration of the Object Text
+      // ###############################
+      // ENG::ObjectID textID = pool.Add(std::make_unique<ENG::Text>(ENG::Vector2{100,100}, 120.0f, "TEXTO DE PRUEBA"));
+      // auto textObj = static_cast<ENG::Text*>(pool.Get(textID));
+      // textObj->AddComponent<ENG::IColor>(ENG::Color::Black);
+
+      // ###############################
+      // Objects Label
+      // Configuration of the Object Labels
+      // ###############################
+      // ENG::ObjectID labelID = pool.Add(std::make_unique<ENG::Label>("IniciarPrueba", ENG::Vector2{250,150}));
+      // auto labelObj = static_cast<ENG::Label*>(pool.Get(labelID));
+      // labelObj->SetFont(*f_CabinItalic);
+      // labelObj->SetText("Iniciar Partida");
+      // labelObj->SetPosition({sizeScreen.x/2.0f - 250/2.0f,sizeScreen.y/2.0f - 150/2.0f});
+      // labelObj->SetFontSize(64);
+      // labelObj->SetOffset({5.0f,5.0f});
+      // labelObj->SetTextAlign(ENG::AlignText::TEXT_ALIGN_CENTER);
+      // labelObj->SetColorText(ENG::Color::Black);
+      // labelObj->SetBackgoundColor(ENG::Color::White);
+
+      // ###############################
+      // Final configurations
+      // Final configurations for the GameLayer
+      // ###############################
+      isInit = true;
+      isRunning = true;
+      this->renderQueue = pool.Sort();
+    }
+
+    void MainMenu::Destroy(void)
+    {
+      pool.Clear();
+      renderQueue.clear();
+      isInit = false;
       isRunning = false;
-      // Cambio
-      ENG::Services::Scenes().PeddingScene(ENG::SCENE_DEMO);
     }
-  }
 
-  void MainMenu::Update(float dt)
-  { 
-    this->renderQueue = pool.Sort();
-  }
-
-  void MainMenu::Render(ENG::Batcher& b)
-  { 
-    for(auto& entry : renderQueue)
+    bool MainMenu::IsRunning()
     {
-      pool.Get(entry.id)->Draw(b);
+      return isRunning;
     }
-  }
 
-}
+    void MainMenu::Inputs(float dt)
+    {
+      auto& pollEvent = ENG::PollEvent::Get();
+      
+      if(pollEvent.IsKeyPress(SDL_SCANCODE_P))
+      {   
+        mousePressed = false;
+        isRunning = false;
+        // Cambio
+        ENG::Services::Scenes().PeddingScene(ENG::SCENE_DEMO);
+      }
+
+      if(pollEvent.IsMouseButtonPress(SDL_BUTTON_LEFT))
+      {
+        mousePressed = true;
+      }
+
+      if(pollEvent.IsKeyPress(SDL_SCANCODE_T))
+      {
+        auto objButton = pool.Get(1)->Save();
+        ENG::Services::WSaver().SaveObject(objButton);
+        LOG_INFO(" | << Save to ram");
+      }
+
+      if(pollEvent.IsKeyPress(SDL_SCANCODE_Y))
+      {
+        auto path = ENG::Path::Get().DataPath / "dataTest.dak";
+        ENG::Services::WSaver().SaveToDisk(path.string());
+        LOG_INFO(" | << Save to disk");
+      }
+
+      if(pollEvent.IsKeyPress(SDL_SCANCODE_U))
+      {
+        auto path = ENG::Path::Get().DataPath / "dataTest.dak";
+        ENG::Services::WSaver().LoadFromDisk(path.string());
+      }
+
+      if(pollEvent.IsKeyPress(SDL_SCANCODE_I))
+      {
+        auto objBotton = ENG::Services::WSaver().GetObject("StartGame");
+        if(objBotton)
+          pool.Get(1)->Load(*objBotton);
+        else
+          LOG_ERROR(" | << Object not found");
+      }
+    }
+
+    void MainMenu::Update(float dt)
+    {
+      for (auto& o : pool.GetAllIDs())
+        pool.Get(o)->Update(dt);
+      
+      for (auto& o : pool.GetAllIDs())
+      {
+        if(auto b = dynamic_cast<ENG::Button*>(pool.Get(o)))
+        {
+          if(ENG::CollisionPointRect(ENG::GetMousePosition(), b->GetRect()) && mousePressed)
+          {
+            b->Action(b->GetData());
+            isRunning = false;
+            mousePressed = false;
+          }
+        }
+      }
+      mousePressed = false;
+      /// EndUpdate
+    }
+
+    void MainMenu::Render(ENG::Batcher& b)
+    {
+      for(auto& entry : renderQueue)
+      {
+        pool.Get(entry.id)->Draw(b);
+      }
+    }
+
+  }

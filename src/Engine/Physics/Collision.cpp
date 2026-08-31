@@ -4,6 +4,7 @@
 #include "Engine/Component/Component.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Object/ObjectPool.hpp"
+#include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include <algorithm>
@@ -13,28 +14,22 @@
 
 namespace ENG
 {
-  namespace
+  bool Overlap(const IBoundingBox& a, const IBoundingBox& b, Vector2& outDepth)
   {
-    // Boxes are corner-anchored (GetPosition() is the bottom-left corner, matching how
-    // Batcher::DrawQuad places a sprite -- see IBoundingBox). Returns false if the boxes don't
-    // overlap; otherwise fills outDepth with the (positive) overlap on each axis.
-    bool Overlap(const IBoundingBox& a, const IBoundingBox& b, Vector2& outDepth)
-    {
-      float aLeft = a.GetPosition().x, aRight = aLeft + a.GetSize().x;
-      float bLeft = b.GetPosition().x, bRight = bLeft + b.GetSize().x;
-      float overlapX = std::min(aRight, bRight) - std::max(aLeft, bLeft);
-      if (overlapX <= 0.0f)
-        return false;
+    float aLeft = a.GetPosition().x, aRight = aLeft + a.GetSize().x;
+    float bLeft = b.GetPosition().x, bRight = bLeft + b.GetSize().x;
+    float overlapX = std::min(aRight, bRight) - std::max(aLeft, bLeft);
+    if (overlapX <= 0.0f)
+      return false;
 
-      float aBottom = a.GetPosition().y, aTop = aBottom + a.GetSize().y;
-      float bBottom = b.GetPosition().y, bTop = bBottom + b.GetSize().y;
-      float overlapY = std::min(aTop, bTop) - std::max(aBottom, bBottom);
-      if (overlapY <= 0.0f)
-        return false;
+    float aBottom = a.GetPosition().y, aTop = aBottom + a.GetSize().y;
+    float bBottom = b.GetPosition().y, bTop = bBottom + b.GetSize().y;
+    float overlapY = std::min(aTop, bTop) - std::max(aBottom, bBottom);
+    if (overlapY <= 0.0f)
+      return false;
 
-      outDepth = {overlapX, overlapY};
-      return true;
-    }
+    outDepth = {overlapX, overlapY};
+    return true;
   }
 
   std::vector<TriggerEvent> ResolveCollisions(ObjectPool& pool)
@@ -68,9 +63,6 @@ namespace ENG
               continue;
             }
 
-            // Resolve along the axis of least penetration. objB is treated as immovable (a wall):
-            // only objA is pushed back out of the overlap, so a collision just stops the mover at
-            // the boundary instead of shoving both sides apart.
             Vector2 posA = objA->GetTransform().position;
             Vector2 centerA = boxA.GetCenter();
             Vector2 centerB = boxB.GetCenter();
@@ -96,5 +88,16 @@ namespace ENG
     }
 
     return triggers;
+  }
+
+
+  bool CollisionPointRect(const Vector2 &point, const Rect &rect)
+  {
+    return (point.x >= rect.x && point.x <= rect.x + rect.w) && (point.y >= rect.y && point.y <= rect.y + rect.h); 
+  }
+
+  bool RectIntersects(const Rect& a, const Rect& b)
+  {
+    return !(a.w < b.x || b.w < a.x || a.h < b.y || b.h < a.y);
   }
 }

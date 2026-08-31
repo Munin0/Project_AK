@@ -15,13 +15,13 @@ namespace ENG
 {
   void MusicManager::PlayMusic(const std::string& key)
   {
-    auto p = music.at(key);
+    auto p = m_music.at(key);
     MIX_PlayTrack(p.track, p.options);
   }
 
   void MusicManager::StopMusic(const std::string& key)
   {
-    auto p = music.at(key);
+    auto p = m_music.at(key);
     MIX_StopTrack(p.track, 0);
   }
 
@@ -29,25 +29,25 @@ namespace ENG
   {
     auto pathComplete = Path::Get().AssetsPath / path;
     MusicTrack mT;
-    mT.audio = MIX_LoadAudio(this->mixer, pathComplete.string().c_str(), false);
+    mT.audio = MIX_LoadAudio(this->m_mixer, pathComplete.string().c_str(), false);
     if (!mT.audio)
       LOG_ERROR(std::string(" | << MIX_LoadAudio failed: ") + SDL_GetError());
     mT.options = _options;
-    mT.track = MIX_CreateTrack(mixer);
+    mT.track = MIX_CreateTrack(m_mixer);
     MIX_SetTrackAudio(mT.track, mT.audio);
 
-    music[key] = mT;
+    m_music[key] = mT;
     LOG_INFO(" | <<    ->"+pathComplete.string());
   }
 
   bool MusicManager::IsMusicLoaded(const std::string& key)
   {
-    return music.contains(key);
+    return m_music.contains(key);
   }
 
   float MusicManager::GetVolume(const std::string& key) const
   {
-    auto& m = music.at(key);
+    auto& m = m_music.at(key);
     return m.volume * 100.0f;
   }
 
@@ -58,7 +58,7 @@ namespace ENG
     if(_volume > 100.0f)
       _volume = 100.0f;
 
-    auto& foo = music.at(key);
+    auto& foo = m_music.at(key);
     foo.volume = _volume * 0.01;
     if(!MIX_SetTrackGain(foo.track, foo.volume))
       LOG_INFO(" | << Error " + (std::string)SDL_GetError());
@@ -66,11 +66,11 @@ namespace ENG
 
   void MusicManager::Clear()
   {
-    for (auto& [key, mT] : music)
+    for (auto& [key, mT] : m_music)
     {
       MIX_DestroyTrack(mT.track);
     }
-    music.clear();
+    m_music.clear();
   }
 }
 

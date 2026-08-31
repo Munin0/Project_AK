@@ -14,6 +14,7 @@ namespace ENG
       virtual bool IsRunning(void){return !gl_Done;};
       virtual void OnInputs(float dt){(void)dt;};
       virtual void OnUpdate(float dt){(void)dt;};
+      virtual void OnUpdateFixed(float dt){(void)dt;};
       virtual void OnRender(float dt){(void)dt;};
 
     protected:

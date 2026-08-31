@@ -10,7 +10,7 @@ namespace ENG
 {
   struct Vertex
   {
-    glm::vec3 Position;  // X,Y + Z (Z sorting layers)
+    glm::vec3 Position;  // X,Y,Z
     glm::vec4 Color;
     glm::vec2 TexCord;
     float     TexIndex;   // Texture slot (0.0 = white texture)

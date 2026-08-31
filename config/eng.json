@@ -1,8 +1,8 @@
 {
   "name" : "Project_AK",
   "screen" : {
-    "w" : 1080,
-    "h" : 720
+    "w" : 1920,
+    "h" : 1080
   },
   "flags" : 0
 }

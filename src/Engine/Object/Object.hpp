@@ -46,9 +46,6 @@ namespace ENG
         return components.Has<T>();
       }
 
-      // IBoundingBox needs multiple simultaneous instances per object (e.g. one solid box +
-      // one trigger box), which ComponentStorage doesn't support (one instance per type), so it
-      // gets its own dedicated storage instead of going through AddComponent/GetComponent.
       IBoundingBox& AddBoundingBox(const Vector2& dim, bool isTrigger = false)
       {
         boundingBoxes.emplace_back(dim, isTrigger);
@@ -120,18 +117,16 @@ namespace ENG
       }
 
       // Serialization
-      ObjectState Save() const;
+      ObjectState Save();
       void Load(const ObjectState& state);
     private:
       static int countObject;
     protected:
       uint8_t layer;
-      
       std::string name;
       IStats stats;
       ITransform transform;
       std::vector<IBoundingBox> boundingBoxes;
-
       ComponentStorage components;
   };
 } // namespace ENG

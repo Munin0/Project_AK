@@ -2,6 +2,7 @@
 #include "Demo.hpp"
 /// | ------------------------------------ |
 #include "Engine/Map/TileMap/TileMap.hpp"
+#include "Engine/Utils/Rects.hpp"
 #include "Game/Game.hpp"
 #include "Game/Systems/Systems.hpp"
 /// | ------------------------------------ |
@@ -10,7 +11,7 @@
 #include "Engine/Object/Object.hpp"
 #include "Engine/Object/ObjectPool.hpp"
 #include "Engine/Physics/Collision.hpp"
-#include "Engine/PollEvent/PollEvent.hpp"
+#include "Engine/Inputs/PollEvent.hpp"
 #include "Engine/Render/Batching/RAPIBatch.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Camera/Camera2D.hpp"
@@ -44,31 +45,16 @@ namespace APP
     if (isInit)
       return;
 
-    /// Load All Assets
-    ENG::Services::Assets().Load("Atlas/Player.png", "Player");
-    // Player creation
-    pool.Add(std::make_unique<ENG::Object>("Player"));
-    auto player = pool.Get(PLAYER);
-    player->SetLayer(LAYER_PLAYER);
-    player->GetStats().hp = 100;
-    player->GetTransform().position = {100.0f, 100.0f};
-    player->GetTransform().velocity = {200.0f, 200.0f};
-    player->AddComponent<ENG::ISprite>("Player", 1.0f);
-    player->AddBoundingBox(ENG::Vector2{16.0f, 16.0f});              // solid
-    player->AddBoundingBox(ENG::Vector2{18.0f, 18.0f}, /*isTrigger*/ true); // sensor around the player
-
-    /// Atlas-backed sprite (TextureArray path)
-    ENG::Services::Assets().LoadAtlas("Atlas/CatAtlas/atlasInfo.json", "CatIddle");
-    ENG::ObjectID catID = pool.Add(std::make_unique<ENG::Object>("Cat"));
-    auto cat = pool.Get(catID);
-    cat->SetLayer(LAYER_PLAYER);
-    cat->GetTransform().position = {400.0f, 300.0f};
-    cat->AddComponent<ENG::ISprite>("CatIddle", "Iddle", 0, 1.0f);
-    cat->AddComponent<ENG::IAnimator>("Iddle", 8, 8.0f, 1);
-    cat->AddComponent<ENG::IMaterial>("Mono");
-    cat->AddBoundingBox(ENG::Vector2{32.0f, 32.0f});                 // solid
-
-    /// Tile map (Tiled JSON export, atlas resolved by tile "id" == gid - firstgid)
+    // ###############################
+    // Objects  
+    // Configuration of the Object entities 
+    // ###############################
+    
+    // ###############################
+    // Tilemap 
+    // Configuration of the Tilemaps
+    // ###############################
+    // Tile map (Tiled JSON export, atlas resolved by tile "id" == gid - firstgid)
     ENG::Services::Assets().LoadAtlas("Atlas/Scenario1/atlasInfo.json", "Scenario1");
     for (auto& mapLayer : ENG::TileMap::LoadTiledMap("Scenario1", "Map/Scenes/Escena1.json"))
     {
@@ -76,39 +62,20 @@ namespace APP
       mapLayer.SetPosition({0.0f, 0.0f});
       AddTileMap(std::move(mapLayer));
     }
-
-    /// Configuration of the camera
-    camera = std::make_unique<ENG::Camera2D>(1280.0f, 720.0f);
-    camera->SetTarget(player->GetSolidBox());
-    camera->SetPosition(player->GetTransform().position);
-    camera->SetZoom(2.0f);
-    ENG::Render::Get().GetBatcher().SetCamera2D(camera.get());
-
-    auto rect = std::make_unique<ENG::Rectangle>(0.0f, 0.0f, 300.0f, 100.0f, ENG::Color::Green,
-                                                 ENG::Color::Red, 5.0f);
-    rect->SetLayer(LAYER_BACKGROUND);
-    pool.Add(std::move(rect));
-
-    auto line = std::make_unique<ENG::Line>(200.0f, 200.0f, 500.0f, 500.0f, ENG::Color::White);
-    line->SetLayer(LAYER_FRONT);
-    pool.Add(std::move(line));
-
-    auto poly = std::make_unique<ENG::Polygon>(250.0f, 250.0f, 5, ENG::Color::Yellow);
-
-    poly->AddPoint(250.0f, 200.0f);
-    poly->AddPoint(300.0f, 250.0f);
-    poly->AddPoint(300.0f, 300.0f);
-    poly->AddPoint(200.0f, 300.0f);
-    poly->AddPoint(200.0f, 250.0f);
-    poly->SetLayer(LAYER_FRONT);
-
-    pool.Add(std::move(poly));
-
     // ###############################
-    //  AUDIO
-    //  Loading Audios Part
+    // Camera  
+    // Configuration of the camera
     // ###############################
-    ENG::Services::SFX().LoadSFX("SFX/Shot_Gun.mp3", "Shot", 16);
+    // camera = std::make_unique<ENG::Camera2D>(1280.0f, 720.0f);
+    // camera->SetTarget(player->GetSolidBox());
+    // camera->SetPosition(player->GetTransform().position);
+    // camera->SetZoom(2.0f);
+    // ENG::Render::Get().GetBatcher().SetCamera2D(camera.get());
+   
+    // ###############################
+    //  audio
+    //  loading audios part
+    // ###############################
 
     /// option for this music
     SDL_PropertiesID options;
@@ -117,12 +84,12 @@ namespace APP
     ENG::Services::Music().LoadMusic("Music/MarineHoloLive.mp3", "Marine", options);
     ENG::Services::Music().SetVolume("Marine", 20.0f);
 
-    /// Play Music in the init of the scene
-    ENG::Services::Music().PlayMusic("Marine");
-
+    // ###############################
+    // Final
+    // Final configurations
+    // ###############################
     isInit = true;
     isRunning = true;
-
     this->renderQueue = pool.Sort();
   }
 
@@ -185,50 +152,30 @@ namespace APP
 
   void DemoScene::Update(float dt)
   {
-    renderQueue = pool.Sort();
-    pool.Get(PLAYER)->GetTransform().prev_position = pool.Get(PLAYER)->GetTransform().position;
-    System_PlayerMovement(*pool.Get(PLAYER), dt);
     for (auto& o : pool.GetAllIDs())
     {
       pool.Get(o)->Update(dt);
     }
 
-    {
-      auto p = pool.Get(PLAYER)->GetTransform().position;
-      auto c = pool.Get(2)->GetTransform().position;
-      LOG_DEBUG("DBG player=(" + std::to_string(p.x) + "," + std::to_string(p.y) +
-                ") cat=(" + std::to_string(c.x) + "," + std::to_string(c.y) + ")");
-    }
-
-    for (const auto& trigger : ENG::ResolveCollisions(pool))
-    {
-      LOG_DEBUG("Trigger overlap between entities " + std::to_string(trigger.a) +
-                " and " + std::to_string(trigger.b));
-    }
-
-    camera->Update(dt);
-    pool.Get(PLAYER)->GetTransform().direction = {0.0f, 0.0f};
   }
 
   void DemoScene::Render(ENG::Batcher& b)
   {
-    RenderTileMaps(b, 0, LAYER_PLAYER);      /// Layer back of the player
-    for (auto& entry : renderQueue)
-    {
-      pool.Get(entry.id)->Draw(b);
-    }
-    RenderTileMaps(b, LAYER_PLAYER, 255);    /// Layer front of the player
-
-    // TEMP DEBUG: draw every bounding box outline (red = solid, yellow = trigger)
-    for (const auto& id : pool.GetAllIDs())
-    {
-      auto* o = pool.Get(id);
-      for (auto& bb : o->GetBoundingBoxes())
-      {
-        ENG::Drawer::DrawRectangleOutline(bb.GetPosition(), bb.GetSize(),
-          bb.IsTrigger() ? ENG::Color::Yellow : ENG::Color::Red, 0.5f);
-      }
-    }
+    // auto camRect = camera->GetRectCamera();
+    // RenderTileMaps(b, LAYER_BACKGROUND, LAYER_PLAYER);      /// Layer back of the player
+    // for (auto& entry : renderQueue)
+    // {
+    //   auto* obj = pool.Get(entry.id);
+    //
+    //   if (auto* bb = obj->GetComponent<ENG::IBoundingBox>())
+    //   {
+    //     ENG::Rect objRect = { bb->GetPosition().x, bb->GetPosition().y, bb->GetSize().x, bb->GetSize().y};
+    //     if (!RectIntersects(camRect, objRect))
+    //       continue;
+    //   }
+    //   obj->Draw(b);
+    // }
+    // RenderTileMaps(b, LAYER_PLAYER, LAYER_MAX);    /// Layer front of the player
 
     // ENG::Drawer::DrawLine({300.0f, 300.0f}, {500.0f, 300.0f}, ENG::Color::Green, 2.0f);
     ENG::Drawer::DrawCircle({150.0f, 150.0f}, 30.0f, ENG::Color::Green, 64);
@@ -241,6 +188,7 @@ namespace APP
     renderQueue.clear();
     isInit = false;
     isRunning = false;
+    tileMaps.clear();
   }
 
   bool DemoScene::IsRunning()

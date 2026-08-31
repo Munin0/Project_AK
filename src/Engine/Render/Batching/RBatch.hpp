@@ -37,10 +37,12 @@ namespace ENG
       void End();   /// Flush + DrawCall
  
       void SetCamera2D(ENG::Camera2D* camera);
+      Camera2D& GetCamera2D() const;
 
     public:
       // API Private
       void DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint = {1,1,1,1});
+      void DrawGlyph(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> fontAtlas, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint = {1,1,1,1});
       void DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint = {1,1,1,1});
       void DrawQuad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color);
       void DrawQuadOutline(float x, float y, float w, float h, const Color& color, float thicknes = 1.0f);

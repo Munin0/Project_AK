@@ -1,6 +1,7 @@
 /// | ------------------------------------ |
 #pragma once
 /// | ------------------------------------ |
+#include "glm/ext/vector_float4.hpp"
 #include <cstdint>
 /// | ------------------------------------ |
 
@@ -25,6 +26,11 @@ namespace ENG
             this->a == c.a);
       }
 
+      operator glm::vec4() const 
+      {
+        return glm::vec4{this->r, this->g, this->b, this->a};
+      }
+
       void operator=(const Color& _color)
       {
         this->r = _color.r;
@@ -46,5 +52,6 @@ namespace ENG
       static const Color White;
       static const Color Black;
       static const Color Gray;
+      static const Color Blank;
     };
 }

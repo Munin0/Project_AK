@@ -2,6 +2,7 @@
 #include "TileMap.hpp"
 // | -------------------------------
 #include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Render/Camera/Camera2D.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Utils/Log.hpp"
@@ -10,6 +11,8 @@
 #include "glm/ext/vector_float2.hpp"
 // | -------------------------------
 #include "nlohmann/json_fwd.hpp"
+#include <algorithm>
+#include <cmath>
 #include <nlohmann/json.hpp>
 // | -------------------------------
 #include <cstddef>
@@ -108,20 +111,31 @@ namespace ENG
 
   void TileMap::Render(Batcher& b) const
   {
-    for (int row = 0; row < height; row++)
+    auto rect = b.GetCamera2D().GetRectCamera();
+    float cell = tileSize * scale;
+
+    int colStart = static_cast<int>(std::floor((rect.x - position.x) / cell));
+    int colEnd   = static_cast<int>(std::ceil ((rect.w - position.x) / cell));
+    int rowStart = static_cast<int>(std::floor((rect.y - position.y) / cell));
+    int rowEnd   = static_cast<int>(std::ceil ((rect.h - position.y) / cell));
+
+    colStart = std::max(colStart, 0);
+    rowStart = std::max(rowStart, 0);
+    colEnd   = std::min(colEnd, width);
+    rowEnd   = std::min(rowEnd, height);
+
+    for (int row = rowStart; row < rowEnd; row++)
     {
-      for (int col = 0; col < width; col++)
+      for (int col = colStart; col < colEnd; col++)
       {
         int index = cells[row * width + col];
-        if (index < 0)
-          continue;
-
+        if (index < 0) continue;
         const UVRect& uv = palette[index];
-        glm::vec2 pos  = {position.x + col * tileSize * scale, position.y + row * tileSize * scale};
-        glm::vec2 size = {tileSize * scale, tileSize * scale};
-
+        glm::vec2 pos  = {position.x + col * cell, position.y + row * cell};
+        glm::vec2 size = {cell, cell};
         b.DrawAtlasSprite(pos, size, atlasLayer, uv.uvMin, uv.uvMax);
       }
     }
   }
+
 }

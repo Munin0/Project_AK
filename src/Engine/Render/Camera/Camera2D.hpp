@@ -2,6 +2,7 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
+#include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include <glm/glm.hpp>
@@ -52,7 +53,21 @@ namespace ENG
       void Resize(const Vector2& size) { m_viewportSize = size; }
       const Vector2 &GetViewportSize() const { return m_viewportSize; }
 
-      // Matriz de vista: inversa de la transformación de la cámara.
+      /// AABB Camera
+      Rect GetRectCamera() const
+      {
+        Vector2 halfExtent = m_viewportSize * 0.5f / m_zoom;
+        Rect rectCamera = {
+          .x = m_position.x - halfExtent.x,
+          .y = m_position.y - halfExtent.y,
+          .w = m_position.x + halfExtent.x,
+          .h = m_position.y + halfExtent.y
+        };
+
+        return rectCamera;
+      }
+
+      // Matrix view, inverse
       glm::mat4 GetViewMatrix() const 
       {
         glm::vec2 position = {m_position.x,m_position.y};
@@ -62,7 +77,7 @@ namespace ENG
         return glm::inverse(transform);
       }
 
-      // Proyección ortográfica centrada en el origen, en unidades de mundo.
+      // Orthographic projection centered at the origin, in world units
       glm::mat4 GetProjectionMatrix() const
       {
         float halfW = m_viewportSize.x * 0.5f;

@@ -23,7 +23,7 @@ namespace ENG
 
   Object::Object(const std::string& _name)
   {
-    name        = _name + " Entity: "+ std::to_string(Object::countObject + 1);
+    name        = _name;
     LOG_INFO(" | << Object: " + name);
     Object::countObject ++;
   }
@@ -33,8 +33,8 @@ namespace ENG
     auto* sprite = this->GetComponent<ISprite>();
     if(!sprite)
       return;
-    glm::vec2 pos = {this->GetPosition().x, this->GetPosition().y};
-    glm::vec2 size = {this->GetSize().x * sprite->GetScale(), this->GetSize().y * sprite->GetScale()};
+    glm::vec2 pos = this->GetPosition();
+    glm::vec2 size = this->GetSize() * sprite->GetScale();
     glm::vec4 color = {1.0f,1.0f,1.0f,1.0f};
 
     if(HasComponent<IColor>())
@@ -97,59 +97,55 @@ namespace ENG
   }
   
   /// Serialization
-  ObjectState Object::Save() const 
+  ObjectState Object::Save() 
   {
     ObjectState state;
-    state._name = this->name;
-    state._layer = this->layer;
+    state.m_name = this->name;
+    state.m_layer = this->layer;
 
     // ITransform
-    if (auto *t = GetComponent<ITransform>())
-    {
-      state._tData = {
-        .position = t->position,
-        .velocity = t->velocity,
-        .direction = t->direction,
-        .angle = t->angle
-      };
-    }
+    auto& t = this->GetTransform();
+    state.m_tData = {
+      .m_position = t.position,
+      .m_velocity = t.velocity,
+      .m_direction = t.direction,
+      .m_angle = t.angle
+    };
 
     // IStats
-    if (auto *s = GetComponent<IStats>())
-    {
-      state._sData = {
-        .hp = s->hp,
-        .hp_max = s->hp_max,
-        .str = s->str,
-        .def = s->def,
-        .agi = s->agi
-      };
-    }
+    auto& s = GetStats();
+    state.m_sData = {
+      .m_hp = s.hp,
+      .m_hp_max = s.hp_max,
+      .m_str = s.str,
+      .m_def = s.def,
+      .m_agi = s.agi
+    };
 
     // ISprite
     if (auto *sp = GetComponent<ISprite>())
-      state._spData = {.keyName = sp->GetKeyName(), .scale = sp->GetScale()};
+      state.m_spData = {.m_keyName = sp->GetKeyName(), .m_scale = sp->GetScale()};
 
     // IAnimator
     if (auto *an = GetComponent<IAnimator>())
-      state._anData = {.key = an->GetName(),
-                       .frames = an->GetFrames(),
-                       .step = an->GetStep(),
-                       .speed = an->GetSpeed(),
-                       .scale = an->GetScale()};
+      state.m_anData = {.m_key = an->GetName(),
+                       .m_frames = an->GetFrames(),
+                       .m_step = an->GetStep(),
+                       .m_speed = an->GetSpeed(),
+                       .m_scale = an->GetScale()};
 
     // IBoundingBox(es)
     for (const auto& bb : boundingBoxes)
-      state._bbData.push_back({
-        .width = bb.GetSize().x,
-        .height = bb.GetSize().y,
-        .isTrigger = bb.IsTrigger(),
+      state.m_bbData.push_back({
+        .m_width = bb.GetSize().x,
+        .m_height = bb.GetSize().y,
+        .m_isTrigger = bb.IsTrigger(),
       });
 
     // IColor
     if (auto *c = GetComponent<IColor>()) {
       auto &col = c->GetColor();
-      state._cData = {col.r, col.g, col.b, col.a};
+      state.m_cData = {col.r, col.g, col.b, col.a};
     }
 
     return state;
@@ -157,50 +153,50 @@ namespace ENG
 
   void Object::Load(const ObjectState& state)
   {
-    this->name  = state._name;
-    this->layer = state._layer;
+    this->name  = state.m_name;
+    this->layer = state.m_layer;
 
-    auto* t    = GetComponent<ITransform>();
-    t->position  = state._tData.position;
-    t->velocity  = state._tData.velocity;
-    t->direction = state._tData.direction;
-    t->angle     = state._tData.angle;
+    auto& t = GetTransform();
+    t.position  = state.m_tData.m_position;
+    t.velocity  = state.m_tData.m_velocity;
+    t.direction = state.m_tData.m_direction;
+    t.angle     = state.m_tData.m_angle;
 
-    auto* s = GetComponent<IStats>();
-    s->hp     = state._sData.hp;
-    s->hp_max = state._sData.hp_max;
-    s->str    = state._sData.str;
-    s->def    = state._sData.def;
-    s->agi    = state._sData.agi;
+    auto& s = GetStats();
+    s.hp     = state.m_sData.m_hp;
+    s.hp_max = state.m_sData.m_hp_max;
+    s.str    = state.m_sData.m_str;
+    s.def    = state.m_sData.m_def;
+    s.agi    = state.m_sData.m_agi;
 
-    if(state._spData)
+    if(state.m_spData)
     {
-      AddComponent<ISprite>(state._spData->keyName, state._spData->scale);
+      AddComponent<ISprite>(state.m_spData->m_keyName, state.m_spData->m_scale);
     }
 
-    if(state._anData)
+    if(state.m_anData)
     {
       AddComponent<IAnimator>(
-          state._anData->key,
-          state._anData->frames,
-          state._anData->speed,
-          state._anData->step,
-          state._anData->scale
+          state.m_anData->m_key,
+          state.m_anData->m_frames,
+          state.m_anData->m_speed,
+          state.m_anData->m_step,
+          state.m_anData->m_scale
           );
     }
 
-    for (const auto& bbData : state._bbData)
+    for (const auto& bbData : state.m_bbData)
     {
-      AddBoundingBox({bbData.width, bbData.height}, bbData.isTrigger);
+      AddBoundingBox({bbData.m_width, bbData.m_height}, bbData.m_isTrigger);
     }
 
-    if(state._cData)
+    if(state.m_cData)
     {
       AddComponent<IColor>(
-          state._cData->r,
-          state._cData->g,
-          state._cData->b,
-          state._cData->a
+          state.m_cData->m_r,
+          state.m_cData->m_g,
+          state.m_cData->m_b,
+          state.m_cData->m_a
           );
     }
   }

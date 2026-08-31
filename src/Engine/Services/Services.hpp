@@ -3,10 +3,12 @@
 // | -------------------------------
 #include "AssetsManager.hpp"
 // | -------------------------------
+#include "Engine/Services/FontManager.hpp"
 #include "Engine/Services/MusicManager.hpp"
 #include "Engine/Services/SFXManager.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/ShaderManager.hpp"
+#include "Engine/Services/WorldSaver.hpp"
 // | -------------------------------
 
 namespace ENG
@@ -14,41 +16,52 @@ namespace ENG
   class Services
   {
     public:
-      static AssetsManager& Assets() {return *assets;}
+      static AssetsManager& Assets() {return *m_assets;}
       static void ProvideAssets(AssetsManager* _)
       {
-        assets = _;
-        if(assets)
-          assets->Init();
+        m_assets = _;
+        if(m_assets)
+          m_assets->Init();
       }
 
-      static ScenesManager& Scenes() {return *scenes;}
-      static void ProvideScenes(ScenesManager* _) { scenes = _; }
+      static FontManager& Fonts() {return *m_fonts;}
+      static void ProvideFonts(FontManager* _) {m_fonts = _;}
 
-      static ShaderManager& Shaders() {return *shaders;}
-      static void ProvideShaders(ShaderManager* _) { shaders = _;}
+      static ScenesManager& Scenes() {return *m_scenes;}
+      static void ProvideScenes(ScenesManager* _) {m_scenes = _; }
 
-      static SFXManager& SFX() {return *sfx;}
+      static ShaderManager& Shaders() {return *m_shaders;}
+      static void ProvideShaders(ShaderManager* _) {m_shaders = _;}
+
+      static SFXManager& SFX() {return *m_sfx;}
       static void ProvideSFX(SFXManager* _)
       {
-        sfx = _;
-        if(sfx)
-          sfx->Init();
+        m_sfx = _;
+        if(m_sfx)
+          m_sfx->Init();
       }
 
-      static MusicManager& Music() {return *music;}
+      static MusicManager& Music() {return *m_music;}
       static void ProvideMusic(MusicManager* _)
       {
-        music = _;
-        if(music)
-          music->Init();
+        m_music = _;
+        if(m_music)
+          m_music->Init();
+      }
+
+      static WorldSaver& WSaver() {return *m_wSaver;}
+      static void ProvideWorldSaver(WorldSaver* _)
+      {
+        m_wSaver = _;
       }
 
     private:
-      static inline AssetsManager*  assets  = nullptr;
-      static inline ShaderManager*  shaders = nullptr;
-      static inline ScenesManager*  scenes  = nullptr;
-      static inline MusicManager*   music   = nullptr;
-      static inline SFXManager*     sfx     = nullptr;
+      static inline AssetsManager*  m_assets  = nullptr;
+      static inline ShaderManager*  m_shaders = nullptr;
+      static inline FontManager*    m_fonts   = nullptr;
+      static inline ScenesManager*  m_scenes  = nullptr;
+      static inline MusicManager*   m_music   = nullptr;
+      static inline SFXManager*     m_sfx     = nullptr;
+      static inline WorldSaver*     m_wSaver  = nullptr;
   };
 }

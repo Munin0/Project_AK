@@ -20,6 +20,7 @@ namespace ENG
       std::filesystem::path AssetsPath;
       std::filesystem::path ShadersPath;
       std::filesystem::path ConfigPath;
+      std::filesystem::path DataPath;
 
     private:
       Path();

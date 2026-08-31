@@ -16,6 +16,7 @@
 #define LAYER_FRONT       30
 #define LAYER_FX          40
 #define LAYER_UI          50
+#define LAYER_MAX         255
 /// | ------------------------------------ |
 
 namespace APP
@@ -44,11 +45,11 @@ namespace APP
       void OnDestroy(void) override;
       bool IsRunning(void) override;
       void OnUpdate(float dt) override;
+      void OnUpdateFixed(float dt) override;
       void OnRender(float dt) override;
     private:
       bool IsAppEnd = false;
       bool isGameInit = false;
-
       /// Debug FLAGS
       bool debugDraw = false;
     protected:

@@ -133,6 +133,11 @@ namespace ENG
     m_camera = camera; 
   }
 
+  Camera2D& Batcher::GetCamera2D() const
+  {
+    return *this->m_camera;
+  }
+
   void Batcher::StartBatch()
   {
     m_VertexBufferPtr = m_VertexBufferBase;
@@ -263,6 +268,63 @@ namespace ENG
     DrawQuad({x, y + h - thicknes}, {w, thicknes}, outColor);                              // Bottom
     DrawQuad({x, y + thicknes}, {thicknes, h - thicknes * 2}, outColor);                   // Left
     DrawQuad({x + w - thicknes, y + thicknes}, {thicknes, h - thicknes * 2}, outColor); // Right
+  }
+  
+  void Batcher::DrawGlyph(const glm::vec2& pos, const glm::vec2& size, 
+      std::shared_ptr<RImage> fontAtlas, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint)
+  {
+    if (m_IndexCount >= MAX_INDICES)
+    {
+        Flush();
+        StartBatch();
+    }
+
+    const RImage* tex = fontAtlas.get();
+    float textureIndex = GetTextureIndex(*tex);
+
+    uint32_t base = m_VertexCount;
+
+    // Bottom-left
+    m_VertexBufferPtr->Position   = {pos.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMin.x, uvMin.y};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
+    m_VertexBufferPtr++;
+
+    // Bottom-right
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMax.x, uvMin.y};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
+    m_VertexBufferPtr++;
+
+    // Top-right
+    m_VertexBufferPtr->Position   = {pos.x + size.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMax.x, uvMax.y};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
+    m_VertexBufferPtr++;
+
+    // Top-left
+    m_VertexBufferPtr->Position   = {pos.x, pos.y + size.y, 0.0f};
+    m_VertexBufferPtr->Color      = tint;
+    m_VertexBufferPtr->TexCord    = {uvMin.x, uvMax.y};
+    m_VertexBufferPtr->TexIndex   = textureIndex;
+    m_VertexBufferPtr->ArrayLayer = -1.0f;
+    m_VertexBufferPtr++;
+
+    *m_IndexBufferPtr++ = base + 0;
+    *m_IndexBufferPtr++ = base + 1;
+    *m_IndexBufferPtr++ = base + 2;
+    *m_IndexBufferPtr++ = base + 2;
+    *m_IndexBufferPtr++ = base + 3;
+    *m_IndexBufferPtr++ = base + 0;
+
+    m_VertexCount += 4;
+    m_IndexCount  += 6;
   }
 
   void Batcher::DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint)
@@ -592,4 +654,3 @@ namespace ENG
   }
 
 }
-

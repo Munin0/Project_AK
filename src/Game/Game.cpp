@@ -1,10 +1,13 @@
 /// | ------------------------------------ |
 #include "Game.hpp"
 /// | ------------------------------------ |
+#include "Engine/Inputs/PollEvent.hpp"
+#include "Engine/Modules/BakerFont.hpp"
+#include "Engine/Modules/LanguageRanges.hpp"
 #include "Engine/Render/Batching/RAPIBatch.hpp"
 #include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/PollEvent/PollEvent.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Render/Render.hpp"
@@ -29,8 +32,17 @@ namespace APP
   {
     LOG_INFO(" | << Game application Init Succesfully");
 
+    /// Baking fonts
+    // ENG::BakerFont baker("Font/TTF/CabinBold.ttf");
+    // baker.Bake( {ENG::Language::English, ENG::Language::Spanish} );
+    // baker.SaveToDisk("assets/Font/","CabinBold");
+    
+    /// Load All Fonts
+    ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("PottaOne"));
+    ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("Cabin"));
+    ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("CabinItalic"));
     /// Load All Atlas 
-    ENG::Services::Assets().Load("Player/Player.png", "Player");
+    // ENG::Services::Assets().Load("Player/Player.png", "Player");
     /// Adding Shaders
     ENG::Services::Shaders().Load("mono.fs","mono.vs","Mono");
     /// Adding Scenes
@@ -81,24 +93,22 @@ namespace APP
       ENG::Services::Scenes().GetCurrent()->Init();
       return;
     }
-
     // Update current scene
     s_current->Update(dt);
+  }
+
+  void Game::OnUpdateFixed(float dt)
+  {
+    (void)dt;
   }
 
   void Game::OnRender(float dt)
   {
     auto& b = ENG::Render::Get().GetBatcher();
-
     ENG::Services::Scenes().GetCurrent()->Render(b);
-    
     auto screen = ENG::Render::Get().GetScreenSize();
 
     ENG::Drawer::DrawLine({screen.x / 2,0.0f},{screen.x / 2, screen.y}, ENG::Color::Red);
     ENG::Drawer::DrawLine({ 0.0f/ 2,screen.y/2.0f},{screen.x, screen.y/2.0f}, ENG::Color::Red);
-
-    #ifdef DEBUG
-    
-    #endif
   }
 }

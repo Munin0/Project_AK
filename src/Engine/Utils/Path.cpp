@@ -76,6 +76,7 @@ namespace ENG
     AssetsPath  = _executableDir / "assets/";
     ShadersPath = _executableDir / "shaders/";
     ConfigPath  = _executableDir / "config/";
+    DataPath    = _executableDir / "data/";
   }
 
   Path& Path::Get()

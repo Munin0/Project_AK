@@ -40,6 +40,7 @@ namespace ENG
     LOG_INFO(" | << Display size; Width: " +std::to_string(this->display->w) + " Height: "+std::to_string(this->display->h));
     this->_toggleFullscreen = true;
     glViewport(0,0,display->w,display->h);
+    LOG_INFO(" | << Creating BatchingContext");
     batch.Init(); 
   }
   
@@ -117,8 +118,10 @@ namespace ENG
     SDL_SetWindowFullscreen(this->window,_toggleFullscreen);
     if(!_toggleFullscreen)
     {
-      this->wW =  1080;
-      this->wH = 720;
+      int w,h;
+      SDL_GetWindowSize(this->window, &w,&h);
+      this->wH = h;
+      this->wW = w;
     }
     if(_toggleFullscreen)
     {
@@ -152,6 +155,7 @@ namespace ENG
   {
     this->wW = w;
     this->wH = h;
+    LOG_DEBUG("ScreenSetSize " + std::to_string(this->wW) + " " + std::to_string(this->wH));
   }
 
   Vector2 Render::GetScreenSize(void) const

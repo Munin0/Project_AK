@@ -59,8 +59,12 @@ namespace ENG
       LOG_INFO(" | <<    ->"+_path);
     }
 
-    GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+    
+    GLenum format = (channels == 4) ? GL_RGBA : (channels == 1 ? GL_RED : GL_RGB);
     LOG_INFO(" | << Channels: " + std::to_string(channels));
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
     // Load to VRAM
     glGenTextures(1,&m_ID);
     glBindTexture(GL_TEXTURE_2D, m_ID);
@@ -70,13 +74,22 @@ namespace ENG
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+ 
+    if (channels == 1)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_ONE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_ONE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_ONE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_RED);
+    }
 
     glTexImage2D(GL_TEXTURE_2D, 0, format,
           m_Width, m_Height, 0,
           format, GL_UNSIGNED_BYTE, pixels
     );
-
     glGenerateMipmap(GL_TEXTURE_2D);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
     stbi_image_free(pixels);
     glBindTexture(GL_TEXTURE_2D,0);

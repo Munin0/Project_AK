@@ -15,7 +15,7 @@ namespace ENG
 {
   void SFXManager::PlaySFX(const std::string& key)
   {
-    auto p = sfx.at(key);
+    auto p = m_sfx.at(key);
 
     auto track = GetTrackFreeOrNew(p);
     if(!track) return;
@@ -27,20 +27,20 @@ namespace ENG
   {
     auto pathComplete = Path::Get().AssetsPath / path;
     
-    auto audio = MIX_LoadAudio(this->mixer, pathComplete.string().c_str(), false);
+    auto audio = MIX_LoadAudio(this->m_mixer, pathComplete.string().c_str(), false);
     if (!audio)
       LOG_ERROR(std::string(" | << MIX_LoadAudio failed: ") + SDL_GetError());
     
     SFXPool p;
     p.audio = audio;
     p.maxTracksMemory = _maxTracksMemory;
-    sfx[key] = p;
+    m_sfx[key] = p;
     LOG_INFO(" | <<    ->"+pathComplete.string());
   }
 
   float SFXManager::GetVolume(const std::string& key) const
   {
-    return sfx.at(key).volume;
+    return m_sfx.at(key).volume;
   }
 
   void SFXManager::SetVolume(const std::string& key, float volume)
@@ -51,7 +51,7 @@ namespace ENG
         volume = 100.0f;
 
     volume = volume * 0.01;
-    auto foo = sfx.at(key);
+    auto foo = m_sfx.at(key);
     foo.volume = volume;
     for(auto& t : foo.tracksPool)
       MIX_SetTrackGain(t,foo.volume);
@@ -59,17 +59,17 @@ namespace ENG
 
   bool SFXManager::IsSFXLoaded(const std::string& key)
   {
-    return sfx.contains(key);
+    return m_sfx.contains(key);
   }
 
   void SFXManager::Clear()
   {
-    for (auto& [key, pool] : sfx)
+    for (auto& [key, pool] : m_sfx)
     {
       for(auto* track : pool.tracksPool)
         MIX_DestroyTrack(track);
     }
-    sfx.clear();
+    m_sfx.clear();
   }
 
   MIX_Track* SFXManager::GetTrackFreeOrNew(SFXPool& p)
@@ -82,7 +82,7 @@ namespace ENG
 
     if(p.tracksPool.size() < p.maxTracksMemory)
     {
-        auto track = MIX_CreateTrack(this->mixer);
+        auto track = MIX_CreateTrack(this->m_mixer);
         if (!track) {
             LOG_ERROR(std::string("MIX_CreateTrack failed: ") + SDL_GetError());
             return nullptr;

@@ -37,12 +37,17 @@ int main(void)
   _config.vW = fJson["screen"]["w"];
   _config.vH = fJson["screen"]["h"];
   _config.flags = fJson["flags"];
+  
+  f.close();
 
   auto engine = std::make_unique<ENG::Engine>(_config, std::make_unique<APP::Game>());
   
   engine->OnInit();
 
   engine->OnRun();
+
+  std::ofstream fOut(path.ConfigPath / "eng.json");
+  fOut << fJson;
 
   engine->OnDestroy();
 

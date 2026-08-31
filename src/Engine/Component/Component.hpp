@@ -128,7 +128,7 @@ namespace ENG
       void Update(const Vector2& _position) {this->position = _position;};
       void Update(float x, float y) {this->position = {x,y};};
       void ChangeSize(const Vector2& dim){ this->size = dim; }
-      const Vector2& GetSize(void) const {return  this->size;}
+      const Vector2& GetSize(void) const {return this->size;}
       const Vector2& GetPosition(void) const {return this->position;}
       Vector2 GetCenter(void) const {return this->position + this->size / 2.0f;}
 

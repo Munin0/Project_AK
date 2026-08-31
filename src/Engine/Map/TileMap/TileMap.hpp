@@ -50,7 +50,7 @@ namespace ENG
       float scale      = 1.0f;
       Vector2 position{0.0f, 0.0f};
 
-      std::vector<int>    cells;   // width * height; index into the palette; -1 = empty cell
+      std::vector<int16_t>    cells;   // width * height; index into the palette; -1 = empty cell
       std::vector<UVRect> palette; // Unique UVs resolved once during LoadTiledMap()
   };
 }

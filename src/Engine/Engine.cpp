@@ -7,8 +7,9 @@
 #include "Engine/Layer/GameLayer.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Render/Color/RColor.hpp"
-#include "Engine/PollEvent/PollEvent.hpp"
+#include "Engine/Inputs/PollEvent.hpp"
 // | -------------------------------
+#include "Engine/Utils/Path.hpp"
 #include "SDL3/SDL_error.h"
 #include "SDL3_mixer/SDL_mixer.h"
 // | -------------------------------
@@ -58,19 +59,24 @@ namespace ENG
 
     Services::ProvideAssets(&amgr);
     Services::ProvideScenes(&sm);
+    Services::ProvideFonts(&fm);
     Services::ProvideSFX(&sfx);
     Services::ProvideMusic(&music);
     Services::ProvideShaders(&shaders);
-    LOG_INFO(" | << AssertsManager Services created");
+    Services::ProvideWorldSaver(&worldSaver);
+    LOG_INFO(" | << AssertsManager created Succesfully");
     LOG_INFO(" | << ScenesManager created Succesfully");
+    LOG_INFO(" | << FontsManager created Succesfully");
     LOG_INFO(" | << SFXManager created Succesfully");
+    LOG_INFO(" | << MusicManager created Succesfully");
+    LOG_INFO(" | << ShadersManager created Succesfully");
+    LOG_INFO(" | << WorldSaver created Succesfully");
 
     // Init Game resources for batching
+    r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
     game->OnInit();
     // Init Batcher and RenderContext
-    LOG_INFO(" | << Creating BatchingContext");
     r.InitRenderContext();
-    r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
     
     return true;
   }
@@ -90,20 +96,28 @@ namespace ENG
       dt = std::chrono::duration_cast<std::chrono::duration<float>>(frame_act-frame_ant).count();
       frame_ant = frame_act;
       dt = std::min(dt, 0.05f);
-      
+      m_accumulator += dt;
+
       PollEvent::Get().ProcessPollEvents();
+
+      while (m_accumulator >= Fixed_timestep)
+      {
+        game->OnUpdateFixed(Fixed_timestep);
+        m_accumulator -= Fixed_timestep;
+      }
 
       game->OnInputs(dt);
       game->OnUpdate(dt);
       auto& r = Render::Get();
-      
+
+      float alpha = m_accumulator / Fixed_timestep;
       // Update Render
       r.UpdateRender();
       // Start Rendering
       r.StartDraw();
       {
         ENG::Render::Get().RenderColor(ENG::Color::Gray); 
-        game->OnRender(dt);
+        game->OnRender(alpha);
       }
       r.EndDraw();
       // Clear Render
@@ -122,11 +136,26 @@ namespace ENG
     LOG_INFO(" | << Destroying Game, waiting...");
     game->OnDestroy();
     game.reset();
-    LOG_INFO(" | << Clearing Assets...");
+    LOG_INFO(" | << Clearing all services...");
     Services::Assets().Clear();
     Services::Scenes().Clear();
+    Services::Fonts().Clear();
+    Services::Music().Clear();
+    Services::SFX().Clear();
+    Services::Shaders().Clear();
+    // Services::WSaver().PreparedData();
+    // if(!Services::WSaver().SaveToDisk(Path::Get().DataPath / "data.dt"))
+    //   LOG_ERROR(" | << World not been saved correctly");
+    // LOG_INFO(" | << World is been saved correctly");
+    Services::WSaver().Clear();
     Services::ProvideAssets(nullptr);
     Services::ProvideScenes(nullptr); 
+    Services::ProvideFonts(nullptr);
+    Services::ProvideMusic(nullptr);
+    Services::ProvideSFX(nullptr);
+    Services::ProvideShaders(nullptr);
+    Services::ProvideWorldSaver(nullptr);
+
     LOG_INFO(" | << Destroying PollEventBuffer, waiting...");
     PollEvent::Get().ClearPollEvent();
     PollEvent::Get().DestroyPollEvent();

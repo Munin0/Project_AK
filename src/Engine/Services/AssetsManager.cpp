@@ -7,6 +7,7 @@
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
 // | -------------------------------
+#include <filesystem>
 #include <memory>
 #include <string>
 // | -------------------------------
@@ -21,20 +22,26 @@ namespace ENG
   void AssetsManager::Load(const std::string& path, const std::string& keyName)
   {
     auto p = Path::Get().AssetsPath / path;
-    if (mapImages.contains(keyName)) 
+    if (m_mapImages.contains(keyName)) 
     {
-      LOG_INFO(" | << mapImages contains: " + keyName);
+      LOG_ERROR(" | << mapImages contains: " + keyName);
       return;
     }
 
     auto img = std::make_shared<RImage>(p.string(),keyName);
     img->LoadImage();
 
-    mapImages[keyName] = img;
+    m_mapImages[keyName] = img;
   }
 
   void AssetsManager::LoadAtlas(const std::string& path, const std::string& idkey)
   {
+    if(m_atlases.contains(idkey))
+    {
+      LOG_ERROR(" | << ERROR: Atlas already exist " + idkey);
+      return;
+    }
+
     auto jsonPath = Path::Get().AssetsPath / path;
     AtlasData data = ParseAtlasJSON(jsonPath.string());
 
@@ -57,8 +64,8 @@ namespace ENG
 
   std::shared_ptr<RImage> AssetsManager::GetTexture(const std::string& keyName)
   {
-    if(mapImages.contains(keyName))
-      return mapImages[keyName];
+    if(m_mapImages.contains(keyName))
+      return m_mapImages[keyName];
    return nullptr;
   }
 
@@ -70,9 +77,22 @@ namespace ENG
     return &it->second;
   }
 
+  const AtlasData* AssetsManager::GetAtlasByTexture(const std::string& texturePath) const
+  {
+    if(texturePath.empty())
+      return nullptr;
+    const std::string texName = std::filesystem::path(texturePath).filename().string();
+    for (const auto& [key, data] : m_atlases)
+    {
+      if(std::filesystem::path(data.texturePath).filename().string() == texName)
+        return &data;
+    }
+    return nullptr;
+  }
+
   void AssetsManager::Clear()
   {
-    mapImages.clear();
+    m_mapImages.clear();
     m_atlases.clear();
     m_textureArray.Destroy();
   }

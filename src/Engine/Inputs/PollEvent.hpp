@@ -32,10 +32,7 @@ namespace ENG
       bool IsMouseButtonRepeat(SDL_MouseButton button, int times);
       bool IsMouseButtonRelease(SDL_MouseButton button);
 
-      // Vertical scroll amount for the current frame only (positive = scrolled up/away from the
-      // user, negative = scrolled down); 0 on every frame with no wheel motion.
       float GetMouseWheel(void) const { return wheelY; }
-
 
       bool IsGamepadButtonPress(Uint8 button);
       bool IsGamepadButtonDown(Uint8 button);

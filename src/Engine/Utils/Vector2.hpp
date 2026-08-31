@@ -1,6 +1,11 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
+#include "glm/ext/vector_float2.hpp"
+// | -------------------------------
+#include "nlohmann/detail/macro_scope.hpp"
+#include "nlohmann/json.hpp"
+// | -------------------------------
 #include <cmath>
 // | -------------------------------
 
@@ -9,8 +14,10 @@ namespace ENG
   class Vector2
   {
     public:
+      NLOHMANN_DEFINE_TYPE_INTRUSIVE(Vector2, x, y)
+        
       Vector2() {}
-      Vector2(float _)
+      explicit Vector2(float _)
         : x(_), y(_) {}
       Vector2(float x, float y)
         : x(x), y(y) {}
@@ -40,13 +47,15 @@ namespace ENG
         return std::sqrt(v.x*v.x + v.y*v.y);
       }
       
-      // Asign
-      Vector2& operator=(const Vector2& vec)
+      /// Conversion
+      operator glm::vec2() const 
       {
-        this->x = vec.x;
-        this->y = vec.y;
-        return *this;
+        return glm::vec2{x, y};
       }
+
+      // Asign
+      Vector2& operator=(const Vector2& vec) = default;
+
       /// To another Vector2
       Vector2 operator*(const Vector2& v1) const
       {

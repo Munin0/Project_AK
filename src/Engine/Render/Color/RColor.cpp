@@ -27,4 +27,5 @@ namespace ENG
   const Color Color::White  {1.0f, 1.0f,  1.0f,  1.0f};
   const Color Color::Black  {0.0f, 0.0f,  0.0f,  1.0f};
   const Color Color::Gray   {0.3f, 0.3f, 0.3f,   1.0f};
+  const Color Color::Blank  {0.0f, 0.0f, 0.0f,   0.0f};
 }

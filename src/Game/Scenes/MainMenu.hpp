@@ -23,6 +23,7 @@ namespace APP
       void Update(float dt) override;
       void Render(ENG::Batcher& b) override;
     private:
+      bool mousePressed;
       ENG::ObjectPool pool;
       std::vector<ENG::RenderEntry> renderQueue;
   };
