@@ -8,9 +8,9 @@ Compact record of engine changes and versions.
 
 ## Alpha 0.04b 
 
-`Alpha 0.04 | update > update data/, now having something.`
+`Alpha 0.04b | update > update data/, now having something.`
 
-`Alpha 0.04 | adding > THIRD_PARTY_NOTICIES, for libraries copyrigth`
+`Alpha 0.04b | adding > THIRD_PARTY_NOTICIES, for libraries copyrigth`
 
 ## Alpha 0.04 — OpenGL 4.6
 
