@@ -59,7 +59,7 @@ namespace APP
     for (auto& mapLayer : ENG::TileMap::LoadTiledMap("Scenario1", "Map/Scenes/Escena1.json"))
     {
       mapLayer.SetLayer(TiledLayerToEngineLayer(mapLayer.GetName()));
-      mapLayer.SetPosition({0.0f, 0.0f});
+      mapLayer.SetPosition({10.0f, 10.0f});
       AddTileMap(std::move(mapLayer));
     }
     // ###############################
@@ -125,22 +125,22 @@ namespace APP
       m.SetVolume("Marine", v);
     }
 
-    if (pollEvent.IsKeyDown(SDL_SCANCODE_W))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.y -= 1.0f;
-    }
-    if (pollEvent.IsKeyDown(SDL_SCANCODE_S))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.y += 1.0f;
-    }
-    if (pollEvent.IsKeyDown(SDL_SCANCODE_A))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.x -= 1.0f;
-    }
-    if (pollEvent.IsKeyDown(SDL_SCANCODE_D))
-    {
-      pool.Get(PLAYER)->GetTransform().direction.x += 1.0f;
-    }
+    // if (pollEvent.IsKeyDown(SDL_SCANCODE_W))
+    // {
+    //   pool.Get(PLAYER)->GetTransform().direction.y -= 1.0f;
+    // }
+    // if (pollEvent.IsKeyDown(SDL_SCANCODE_S))
+    // {
+    //   pool.Get(PLAYER)->GetTransform().direction.y += 1.0f;
+    // }
+    // if (pollEvent.IsKeyDown(SDL_SCANCODE_A))
+    // {
+    //   pool.Get(PLAYER)->GetTransform().direction.x -= 1.0f;
+    // }
+    // if (pollEvent.IsKeyDown(SDL_SCANCODE_D))
+    // {
+    //   pool.Get(PLAYER)->GetTransform().direction.x += 1.0f;
+    // }
 
     float wheel = pollEvent.GetMouseWheel();
     if (wheel != 0.0f)
@@ -159,23 +159,28 @@ namespace APP
 
   }
 
+  void DemoScene::UpdateFixed(float dt)
+  {
+    (void)dt;
+  }
+
   void DemoScene::Render(ENG::Batcher& b)
   {
     // auto camRect = camera->GetRectCamera();
-    // RenderTileMaps(b, LAYER_BACKGROUND, LAYER_PLAYER);      /// Layer back of the player
-    // for (auto& entry : renderQueue)
-    // {
-    //   auto* obj = pool.Get(entry.id);
-    //
-    //   if (auto* bb = obj->GetComponent<ENG::IBoundingBox>())
-    //   {
-    //     ENG::Rect objRect = { bb->GetPosition().x, bb->GetPosition().y, bb->GetSize().x, bb->GetSize().y};
-    //     if (!RectIntersects(camRect, objRect))
-    //       continue;
-    //   }
-    //   obj->Draw(b);
-    // }
-    // RenderTileMaps(b, LAYER_PLAYER, LAYER_MAX);    /// Layer front of the player
+    RenderTileMaps(b, LAYER_BACKGROUND, LAYER_PLAYER);      /// Layer back of the player
+    for (auto& entry : renderQueue)
+    {
+      auto* obj = pool.Get(entry.id);
+      obj->Draw(b);
+
+      // if (auto* bb = obj->GetComponent<ENG::IBoundingBox>())
+      // {
+      //   ENG::Rect objRect = { bb->GetPosition().x, bb->GetPosition().y, bb->GetSize().x, bb->GetSize().y};
+      //   if (!RectIntersects(camRect, objRect))
+      //     continue;
+      // }
+    }
+    RenderTileMaps(b, LAYER_PLAYER, LAYER_MAX);    /// Layer front of the player
 
     // ENG::Drawer::DrawLine({300.0f, 300.0f}, {500.0f, 300.0f}, ENG::Color::Green, 2.0f);
     ENG::Drawer::DrawCircle({150.0f, 150.0f}, 30.0f, ENG::Color::Green, 64);

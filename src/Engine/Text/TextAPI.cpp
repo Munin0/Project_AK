@@ -5,8 +5,11 @@
 #include "Engine/Render/Render.hpp"
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Vector2.hpp"
+// | -------------------------------
 #include "glm/ext/vector_float2.hpp"
 // | -------------------------------
+#include <cstdarg>
+#include <cstdio>
 #include <string>
 // | -------------------------------
 
@@ -22,6 +25,25 @@ namespace ENG
   void TextAPI::Destroy(void)
   {
     delete m_textAPI;
+  }
+
+  std::string TextAPI::FormatText(const char* format, ...)
+  {
+    va_list args;
+
+    va_start(args, format);
+    int size = std::vsnprintf(nullptr, 0, format, args);
+    va_end(args);
+
+    if (size <= 0)
+        return {};
+    std::string result(size, '\0');
+
+    va_start(args, format);
+    std::vsnprintf(result.data(), size + 1, format, args);
+    va_end(args);
+
+    return result;
   }
 
   void TextAPI::DrawText(const Font& font, float x, float y, float size, const std::string& text)

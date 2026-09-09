@@ -5,6 +5,7 @@
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
 #include "Engine/Services/Services.hpp"
+#include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Vector2.hpp"
@@ -153,4 +154,8 @@ namespace ENG
   {
     return this->shader;
   }
+
+  IText::IText()
+    : IComponents(), m_text(""), m_fontSize(0.0f), m_font(nullptr)
+  {}
 }

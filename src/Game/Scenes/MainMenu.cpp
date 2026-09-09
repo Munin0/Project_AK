@@ -26,7 +26,6 @@
 #include "SDL3/SDL_mouse.h"
 #include "SDL3/SDL_scancode.h"
   /// | ------------------------------------ |
-#include <linux/limits.h>
 #include <memory>
 #include <string>
   /// | ------------------------------------ |
@@ -59,7 +58,7 @@
       ENG::ObjectID btStartID = pool.Add(std::make_unique<ENG::Button>("StartGame", ENG::Vector2{100,50} ));
       auto startBT = static_cast<ENG::Button*>(pool.Get(btStartID));
 
-      startBT->SetPosition({800,500});
+      startBT->SetPosition({100,100});
       startBT->SetData(static_cast<ENG::SceneID>(ENG::SCENE_DEMO));
       startBT->SetFunction(ChangeSceneButton);
       startBT->SetLayer(LAYER_UI);
@@ -163,10 +162,9 @@
     void MainMenu::Update(float dt)
     {
       for (auto& o : pool.GetAllIDs())
-        pool.Get(o)->Update(dt);
-      
-      for (auto& o : pool.GetAllIDs())
       {
+        pool.Get(o)->Update(dt);
+
         if(auto b = dynamic_cast<ENG::Button*>(pool.Get(o)))
         {
           if(ENG::CollisionPointRect(ENG::GetMousePosition(), b->GetRect()) && mousePressed)
@@ -177,8 +175,13 @@
           }
         }
       }
+      
       mousePressed = false;
-      /// EndUpdate
+    }
+
+    void MainMenu::UpdateFixed(float dt)
+    {
+      (void)dt;
     }
 
     void MainMenu::Render(ENG::Batcher& b)

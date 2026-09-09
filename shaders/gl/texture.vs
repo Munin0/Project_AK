@@ -1,21 +1,38 @@
-#version 330 core
+#version 460 core
 layout(location = 0) in vec3  a_Position;
 layout(location = 1) in vec4  a_Color;
 layout(location = 2) in vec2  a_TexCoord;
 layout(location = 3) in float a_TexIndex;
 layout(location = 4) in float a_ArrayLayer;
+layout(location = 5) in float a_EffectMode;
 
-uniform mat4 u_ViewProjection;
+// -----------------------------------------------------
+// UBO per frame
+// The binding needs to match with the: 
+// -> glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_FrameUBO)
+// This can be used by all the shaders needs more information per frame.
+layout(std140, binding = 0) uniform FrameData
+{
+  mat4  u_ViewProjection;
+  float u_Time;
+  float u_ScreenWidth;
+  float u_ScreenHeight;
+};
+// -----------------------------------------------------
 
 out vec4  v_Color;
 out vec2  v_TexCoord;
 flat out int v_TexIndex;
 flat out float v_ArrayLayer;
+flat out float v_EffectMode;
 
-void main() {
+
+void main()
+{
     v_Color      = a_Color;
     v_TexCoord   = a_TexCoord;
     v_TexIndex   = int(a_TexIndex);
     v_ArrayLayer = a_ArrayLayer;
+    v_EffectMode = a_EffectMode;
     gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
 }

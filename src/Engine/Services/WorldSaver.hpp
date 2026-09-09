@@ -1,6 +1,7 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
+#include "Engine/Component/Component.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include "nlohmann/detail/macro_scope.hpp"
@@ -78,6 +79,15 @@ namespace ENG
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(ITransformData, m_position,m_prev_position,m_velocity,m_direction,m_angle)
   };
 
+  struct ITextData
+  {
+    std::string m_text;
+    float m_fontSize;
+    std::string m_fontKey;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ITextData, m_text,m_fontSize,m_fontKey)
+  };
+
   struct ObjectState
   {
     std::string       m_name;
@@ -88,6 +98,7 @@ namespace ENG
     std::optional<IAnimatorData>    m_anData;
     std::vector<IBoundingBoxData>   m_bbData;
     std::optional<IColorData>       m_cData;
+    std::optional<ITextData>        m_txData;
   };
 
   class WorldSaver

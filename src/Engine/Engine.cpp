@@ -15,6 +15,7 @@
 // | -------------------------------
 #include <algorithm>
 #include <chrono>
+#include <ctime>
 #include <memory>
 #include <string>
 #include <utility>
@@ -64,6 +65,7 @@ namespace ENG
     Services::ProvideMusic(&music);
     Services::ProvideShaders(&shaders);
     Services::ProvideWorldSaver(&worldSaver);
+    Services::ProvideClockSaver(&clock);
     LOG_INFO(" | << AssertsManager created Succesfully");
     LOG_INFO(" | << ScenesManager created Succesfully");
     LOG_INFO(" | << FontsManager created Succesfully");
@@ -71,12 +73,13 @@ namespace ENG
     LOG_INFO(" | << MusicManager created Succesfully");
     LOG_INFO(" | << ShadersManager created Succesfully");
     LOG_INFO(" | << WorldSaver created Succesfully");
+    LOG_INFO(" | << clockManager created Succesfully");
 
     // Init Game resources for batching
     r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
+    r.InitRenderContext();
     game->OnInit();
     // Init Batcher and RenderContext
-    r.InitRenderContext();
     
     return true;
   }
@@ -86,18 +89,10 @@ namespace ENG
     LOG_INFO(" | << GameEngine Application is Running");
 
     // Create DeltaTime
-    auto frame_ant = std::chrono::high_resolution_clock::now();
-    float dt = 0.16666f; 
-    
+    auto clock = Services::Clock();
     while (game->IsRunning())
     {
-      // Update DeltaTime
-      auto frame_act = std::chrono::high_resolution_clock::now();
-      dt = std::chrono::duration_cast<std::chrono::duration<float>>(frame_act-frame_ant).count();
-      frame_ant = frame_act;
-      dt = std::min(dt, 0.05f);
-      m_accumulator += dt;
-
+      clock.Tick();
       PollEvent::Get().ProcessPollEvents();
 
       while (m_accumulator >= Fixed_timestep)
@@ -106,8 +101,8 @@ namespace ENG
         m_accumulator -= Fixed_timestep;
       }
 
-      game->OnInputs(dt);
-      game->OnUpdate(dt);
+      game->OnInputs(clock.GetDT());
+      game->OnUpdate(clock.GetDT());
       auto& r = Render::Get();
 
       float alpha = m_accumulator / Fixed_timestep;

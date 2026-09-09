@@ -53,7 +53,6 @@ namespace ENG
       }
 
       std::vector<IBoundingBox>& GetBoundingBoxes(void) { return boundingBoxes; }
-      const std::vector<IBoundingBox>& GetBoundingBoxes(void) const { return boundingBoxes; }
       bool HasBoundingBoxes(void) const { return !boundingBoxes.empty(); }
 
       IBoundingBox* GetSolidBox(void)
@@ -77,11 +76,16 @@ namespace ENG
         return countObject;
       }
 
+      void SetName(const std::string& _name)
+      {
+        this->name = _name;
+      }
+
       const std::string& GetName(void)
       {
         return this->name;
       }
-   
+
       ITransform& GetTransform(void)
       {
         return this->transform;
@@ -117,8 +121,8 @@ namespace ENG
       }
 
       // Serialization
-      ObjectState Save();
-      void Load(const ObjectState& state);
+      virtual ObjectState Save();
+      virtual void Load(const ObjectState& state);
     private:
       static int countObject;
     protected:

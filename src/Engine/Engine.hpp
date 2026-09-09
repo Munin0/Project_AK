@@ -3,6 +3,7 @@
 // | -------------------------------
 #include "Engine/Layer/GameLayer.hpp"
 #include "Engine/Services/AssetsManager.hpp"
+#include "Engine/Services/Clock.hpp"
 #include "Engine/Services/FontManager.hpp"
 #include "Engine/Services/MusicManager.hpp"
 #include "Engine/Services/SFXManager.hpp"
@@ -44,6 +45,7 @@ namespace ENG
       MusicManager music;
       ShaderManager shaders;
       WorldSaver worldSaver;
+      ClockManager clock;
     protected:
   };
 }

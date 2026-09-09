@@ -7,6 +7,7 @@
 #include "Engine/Render/Shaders/RVertex.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
 // | -------------------------------
+#include "glm/detail/qualifier.hpp"
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float4.hpp>
@@ -37,13 +38,13 @@ namespace ENG
       void End();   /// Flush + DrawCall
  
       void SetCamera2D(ENG::Camera2D* camera);
-      Camera2D& GetCamera2D() const;
+      Camera2D* GetCamera2D() const;
 
     public:
       // API Private
-      void DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint = {1,1,1,1});
+      void DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint = {1,1,1,1}, float effectMode = 0.0f);
       void DrawGlyph(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> fontAtlas, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint = {1,1,1,1});
-      void DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint = {1,1,1,1});
+      void DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint = {1,1,1,1}, float effectMode = 0.0f);
       void DrawQuad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color);
       void DrawQuadOutline(float x, float y, float w, float h, const Color& color, float thicknes = 1.0f);
       void DrawCircle(const glm::vec2& center, float radius, const glm::vec4& color, uint32_t segments = 32);
@@ -55,6 +56,17 @@ namespace ENG
       void SetMaterial(Shader* _Material);
 
     private:
+      // Struct for FrameData for GPU drawin
+      struct FrameDataGPU
+      {
+        glm::mat4 ViewProjection;
+        float     Time;
+        float     ScreenWidth;
+        float     ScreenHeight;
+      };
+
+      void UpdateFrameData(const glm::mat4& viewProj);
+
       Shader* shader;
       Shader* m_DefaultShader = nullptr;
 
@@ -63,6 +75,7 @@ namespace ENG
       GLuint m_VAO, m_VBO, m_EBO;
       GLuint m_WhiteTexture = 0;
       GLuint m_ArrayTextureID = 0;
+      GLuint m_FrameUBO = 0;
     
       Vertex*     m_VertexBufferBase  = nullptr;
       Vertex*     m_VertexBufferPtr   = nullptr;
@@ -72,6 +85,7 @@ namespace ENG
       uint32_t m_IndexCount       = 0;
       uint32_t m_VertexCount      = 0;
       
+
       // TextureSlot
       std::array<GLuint, MAX_TEXTURES> m_TextureSlots = {};
       uint32_t m_TextureSlotIndex = 1;    /// 0 = WhiteTexture

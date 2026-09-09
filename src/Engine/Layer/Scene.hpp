@@ -22,6 +22,7 @@ namespace ENG
       virtual bool IsRunning(void)  {return isRunning;}
       virtual void Inputs(float dt){(void)dt;};
       virtual void Update(float dt){(void)dt;};
+      virtual void UpdateFixed(float dt){(void)dt;};
       virtual void Render(ENG::Batcher& b) = 0;
 
       uint8_t GetSceneID(void) const

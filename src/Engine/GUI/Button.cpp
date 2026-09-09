@@ -45,7 +45,7 @@ namespace ENG
   {
     if(m_sprite != nullptr)
     {
-      b.DrawAtlasSprite(transform.position, m_box->GetSize(), m_sprite->atlasLayer, m_textureRect.uvMin, m_textureRect.uvMax);
+      b.DrawAtlasSprite(transform.position, m_box->GetSize(), m_sprite->atlasLayer, m_textureRect.uvMin, m_textureRect.uvMax,{1,1,1,1},0.0f);
     }
     else
     {

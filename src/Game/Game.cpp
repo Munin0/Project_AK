@@ -99,6 +99,9 @@ namespace APP
 
   void Game::OnUpdateFixed(float dt)
   {
+    auto s_current = ENG::Services::Scenes().GetCurrent();
+    /// Fixed Update for physics
+    s_current->UpdateFixed(dt);
     (void)dt;
   }
 

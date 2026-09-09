@@ -4,17 +4,19 @@
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Camera/Camera2D.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
+#include "Engine/Render/Render.hpp"
 #include "Engine/Services/Services.hpp"
+#include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
 // | -------------------------------
 #include "glm/ext/vector_float2.hpp"
 // | -------------------------------
 #include "nlohmann/json_fwd.hpp"
+#include "nlohmann/json.hpp"
+// | -------------------------------
 #include <algorithm>
 #include <cmath>
-#include <nlohmann/json.hpp>
-// | -------------------------------
 #include <cstddef>
 #include <stdexcept>
 #include <string>
@@ -111,7 +113,23 @@ namespace ENG
 
   void TileMap::Render(Batcher& b) const
   {
-    auto rect = b.GetCamera2D().GetRectCamera();
+    Rect rect;
+    auto cam = b.GetCamera2D();
+    if(cam)
+    {
+      rect = cam->GetRectCamera();
+    }
+    else
+    {
+      auto r = Render::Get().GetScreenSize();
+      rect = Rect {
+        .x = 0.0f,
+        .y = 0.0f,
+        .w = r.x,
+        .h = r.y
+      };
+    }
+
     float cell = tileSize * scale;
 
     int colStart = static_cast<int>(std::floor((rect.x - position.x) / cell));

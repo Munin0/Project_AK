@@ -21,6 +21,7 @@ namespace APP
       bool IsRunning(void)  override; 
       void Inputs(float dt) override;
       void Update(float dt) override;
+      void UpdateFixed(float dt) override;
       void Render(ENG::Batcher& b) override;
     
     private:

@@ -1,16 +1,27 @@
-#version 330 core
+#version 460 core
 
 in vec4  v_Color;
 in vec2  v_TexCoord;
 flat in int v_TexIndex;
 flat in float v_ArrayLayer;
+flat in float v_EffectMode;
 
-uniform sampler2D u_Textures[16];
-uniform sampler2DArray u_AtlasArray;
+layout(binding = 0)  uniform sampler2D      u_Textures[16];
+layout(binding = 16) uniform sampler2DArray u_AtlasArray;
+
+/// All the Layouts are 1::1, so always in the fs && vs needs to be the same.
+layout(std140, binding = 0) uniform FrameData
+{
+    mat4  u_ViewProjection;
+    float u_Time;
+    float u_ScreenWidth;
+    float u_ScreenHeight;
+};
 
 out vec4 FragColor;
 
-void main() {
+void main()
+{
     vec4 texColor;
 
     if (v_ArrayLayer >= 0.0) {
@@ -38,4 +49,29 @@ void main() {
     }
 
     FragColor = texColor * v_Color;
+    
+    /// Effects with de DrawCall, its simple.
+    switch(int(v_EffectMode))
+    {
+        case 1: // Mono 
+        {
+            float gray = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
+            texColor.rgb = vec3(gray);
+            break;
+        }
+        case 2: // Flash
+        {
+            texColor.rgb = vec3(1.0);
+            break;
+        }
+        case 3: // Poison (Needs u_Time) 
+        {
+            float pulse = 0.5 + 0.5 * sin(u_Time * 6.0);
+            vec3  poisonTint = vec3(0.3, 1.0, 0.3);
+            texColor.rgb = mix(texColor.rgb, poisonTint, pulse * 0.5);
+            break;
+        }
+        default: // Not Effect == 0.0f
+            break;
+    }
 }

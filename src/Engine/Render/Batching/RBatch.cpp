@@ -8,6 +8,8 @@
 #include "Engine/Render/Shaders/RVertex.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
 #include "Engine/Services/Services.hpp"
+#include "Engine/Text/TextAPI.hpp"
+#include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
 #include <glm/detail/qualifier.hpp>
@@ -23,67 +25,97 @@
 #include <cstdint>
 #include <cmath>
 #include <memory>
+#include <string>
 #include <vector>
 /// | ------------------------------------ |
 
 namespace ENG
 {
+  static void GLAPIENTRY GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei, const GLchar* message, const void*)
+  {
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
+ 
+    const char* severityStr =
+      severity == GL_DEBUG_SEVERITY_HIGH   ? "HIGH"   :
+      severity == GL_DEBUG_SEVERITY_MEDIUM ? "MEDIUM" :
+      severity == GL_DEBUG_SEVERITY_LOW    ? "LOW"    : "NOTIFICATION";
+ 
+    const char* typeStr =
+      type == GL_DEBUG_TYPE_ERROR               ? "ERROR"      :
+      type == GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR  ? "DEPRECATED" :
+      type == GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR   ? "UB"         :
+      type == GL_DEBUG_TYPE_PORTABILITY          ? "PORTABILITY": "OTHER";
+ 
+    auto msg = TextAPI::Get().FormatText("[GL %s][%s] (id=%u) %s", severityStr, typeStr, id, message);
+    LOG_ERROR(" | << " + msg);
+  }
+
   void Batcher::Init()
   {
     /// Starting buffer on CPU
     m_VertexBufferBase = new Vertex[MAX_VERTS];
     m_IndexBufferBase  = new uint32_t[MAX_INDICES];
+ 
+#ifndef NDEBUG
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(GLDebugCallback, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#endif
 
-    // EBO
-    glGenBuffers(1, &m_EBO);
+    // Create objects via DSA
+    glCreateVertexArrays(1, &m_VAO);
+    glCreateBuffers(1,&m_VBO);
+    glCreateBuffers(1,&m_EBO);
 
-    // VAO
-    glGenVertexArrays(1,&m_VAO);
-    glBindVertexArray(m_VAO);
+    glNamedBufferData(m_VBO, MAX_VERTS * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+    glNamedBufferData(m_EBO, MAX_INDICES * sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    
-    // VBO Dinamyc -> Each frame change
-    glGenBuffers(1,&m_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, MAX_VERTS * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+    // VBO to binding point 0 of the VAO (stripe = sizeof(Vertex))
+    glVertexArrayVertexBuffer(m_VAO, 0, m_VBO, 0, sizeof(Vertex));
+    glVertexArrayElementBuffer(m_VAO,m_EBO);
 
     // Vertex attributes
     // | -> Position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex), (void*)offsetof(Vertex, Position));
+    glEnableVertexArrayAttrib(m_VAO, 0);
+    glVertexArrayAttribFormat(m_VAO, 0, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, Position));
+    glVertexArrayAttribBinding(m_VAO, 0, 0);
 
     // | -> Color
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1,4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,Color));
+    glEnableVertexArrayAttrib(m_VAO, 1);
+    glVertexArrayAttribFormat(m_VAO, 1, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, Color));
+    glVertexArrayAttribBinding(m_VAO, 1, 0);
 
     // | -> TextCord
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCord));
+    glEnableVertexArrayAttrib(m_VAO, 2);
+    glVertexArrayAttribFormat(m_VAO, 2, 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, TexCord));
+    glVertexArrayAttribBinding(m_VAO, 2, 0);
 
     // | -> TexIndex
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexIndex));
+    glEnableVertexArrayAttrib(m_VAO, 3);
+    glVertexArrayAttribFormat(m_VAO, 3, 1, GL_FLOAT, GL_FALSE, offsetof(Vertex, TexIndex));
+    glVertexArrayAttribBinding(m_VAO, 3, 0);
 
     // | -> ArrayLayer
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, ArrayLayer));
+    glEnableVertexArrayAttrib(m_VAO, 4);
+    glVertexArrayAttribFormat(m_VAO, 4, 1, GL_FLOAT, GL_FALSE, offsetof(Vertex, ArrayLayer));
+    glVertexArrayAttribBinding(m_VAO, 4, 0);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, MAX_INDICES * sizeof(uint32_t),nullptr, GL_DYNAMIC_DRAW);
+    // | -> ArrayLayer
+    glEnableVertexArrayAttrib(m_VAO, 5);
+    glVertexArrayAttribFormat(m_VAO, 5, 1, GL_FLOAT, GL_FALSE, offsetof(Vertex, EffectMode));
+    glVertexArrayAttribBinding(m_VAO, 5, 0);
 
-    glBindVertexArray(0);
+    // White Texture 1x1 -> DSA + storage inmutrable (glTextureStorage2D)
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_WhiteTexture);
+    glTextureParameteri(m_WhiteTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(m_WhiteTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_WhiteTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(m_WhiteTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    // White Texture 1x1
-    glGenTextures(1, &m_WhiteTexture);
-    glBindTexture(GL_TEXTURE_2D, m_WhiteTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     uint32_t white = 0xFFFFFFFF;
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, &white);
-    glBindTexture(GL_TEXTURE_2D,0);
+    glTextureStorage2D(m_WhiteTexture, 1, GL_RGBA8, 1, 1);
+    glTextureSubImage2D(m_WhiteTexture, 0,0,0,1,1, GL_RGBA, GL_UNSIGNED_BYTE, &white);
     m_TextureSlots[0] = m_WhiteTexture;
 
     // Shader
@@ -93,6 +125,23 @@ namespace ENG
     glUseProgram(this->shader->GetProgram());
 
     m_ArrayTextureID = Services::Assets().GetTextureArrayID();
+
+    glCreateBuffers(1, &m_FrameUBO);
+    glNamedBufferData(m_FrameUBO, sizeof(FrameDataGPU), nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_FrameUBO);
+  }
+
+  void Batcher::UpdateFrameData(const glm::mat4& viewProj)
+  {
+    FrameDataGPU data;
+    data.ViewProjection = viewProj;
+    data.Time           = Services::Clock().GetTime();
+ 
+    Vector2 wS = Render::Get().GetScreenSize();
+    data.ScreenWidth  = wS.x;
+    data.ScreenHeight = wS.y;
+ 
+    glNamedBufferSubData(m_FrameUBO, 0, sizeof(FrameDataGPU), &data);
   }
 
   void Batcher::Shutdown()
@@ -133,9 +182,9 @@ namespace ENG
     m_camera = camera; 
   }
 
-  Camera2D& Batcher::GetCamera2D() const
+  Camera2D* Batcher::GetCamera2D() const
   {
-    return *this->m_camera;
+    return this->m_camera;
   }
 
   void Batcher::StartBatch()
@@ -150,7 +199,7 @@ namespace ENG
   void Batcher::Flush()
   {
     if(m_IndexCount == 0) return;
-    
+
     Vector2 wS = Render::Get().GetScreenSize();
     m_proj = glm::ortho(0.0f, wS.x,wS.y,0.0f, -1.0f, 1.0f);
 
@@ -160,26 +209,22 @@ namespace ENG
     // Get default Shader, if we have a MaterialShader in coming, we change drawing
     Shader* activeShader = shader;
     glUseProgram(activeShader->GetProgram());
-    glUniformMatrix4fv( activeShader->GetViewProjectionLoc(),1 , GL_FALSE, &proj[0][0]);
+    // glUniformMatrix4fv( activeShader->GetViewProjectionLoc(),1 , GL_FALSE, &proj[0][0]);
+
+    // Update all tempo
+    UpdateFrameData(proj);
 
     // Push vertex to VRam
     uint32_t dataSize = (uint32_t)((uint8_t*)m_VertexBufferPtr - (uint8_t*)m_VertexBufferBase);
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, m_VertexBufferBase);
+    glNamedBufferSubData(m_VBO, 0, dataSize, m_VertexBufferBase);
     
     uint32_t indexSize = (uint32_t)((uint8_t*)m_IndexBufferPtr - (uint8_t*)m_IndexBufferBase);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexSize, m_IndexBufferBase);
+    glNamedBufferSubData(m_EBO, 0, indexSize, m_IndexBufferBase);
 
-    for( uint32_t i=0; i<m_TextureSlotIndex; i++)
-    // Bind textures on slots
-    {
-      glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, m_TextureSlots[i]);
-    }
-
-    glActiveTexture(GL_TEXTURE0 + ARRAY_TEXTURE_UNIT);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, m_ArrayTextureID);
+    /// Bind all textures
+    for(uint32_t i = 0; i < m_TextureSlotIndex; i++)
+      glBindTextureUnit(i, m_TextureSlots[i]);
+    glBindTextureUnit(ARRAY_TEXTURE_UNIT, m_ArrayTextureID);
 
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, m_IndexCount, GL_UNSIGNED_INT, nullptr);
@@ -327,7 +372,7 @@ namespace ENG
     m_IndexCount  += 6;
   }
 
-  void Batcher::DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint)
+  void Batcher::DrawTexture(const glm::vec2& pos, const glm::vec2& size, std::shared_ptr<RImage> texture, const glm::vec4& tint, float effectMode)
   {
     if (m_IndexCount >= MAX_INDICES)
     {
@@ -383,7 +428,7 @@ namespace ENG
     m_IndexCount  += 6;
   }
 
-  void Batcher::DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint)
+  void Batcher::DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint, float effectMode)
   {
     if (m_IndexCount >= MAX_INDICES)
     {

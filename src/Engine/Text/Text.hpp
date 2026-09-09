@@ -1,8 +1,10 @@
 /// | -------------------------------
 #pragma once
 /// | -------------------------------
+#include "Engine/Component/Component.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Services/WorldSaver.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | -------------------------------
 /// | -------------------------------
@@ -22,11 +24,17 @@ namespace ENG
 
       void ChangeText(const std::string& newText)
       {
-        this->m_text = newText;
+        this->m_text.SetText(newText);
       }
-      void ChangeSizeFont(float newFontSize);
+      void ChangeSizeFont(float newFontSize)
+      {
+        this->m_text.SetFontSize(newFontSize);
+      }
+      
+      ObjectState Save() override;
+      void Load(const ObjectState& state) override;
+
     private:
-      std::string m_text;
-      float       m_fontSize;
+      IText m_text;
   };
 } // namespace ENG

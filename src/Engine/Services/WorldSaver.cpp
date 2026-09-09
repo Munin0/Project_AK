@@ -1,9 +1,7 @@
 // | -------------------------------
 #include "WorldSaver.hpp"
 // | -------------------------------
-#include "Engine/Utils/IOPrimitives.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Utils/ObjectStateIO.hpp"
 #include "nlohmann/json_fwd.hpp"
 // | -------------------------------
 #include <climits>
@@ -11,6 +9,7 @@
 #include <cstdint>
 #include <fstream>
 #include <ios>
+#include <iostream>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -57,19 +56,22 @@ namespace ENG
     {
       nlohmann::json j = nlohmann::json
       {
-        {"key", obj.m_name},
+        {"name", obj.m_name},
         {"layer", obj.m_layer},
-        {"transform", obj.m_tData},
+        {"trans", obj.m_tData},
         {"stats",obj.m_sData}
       };
+
       if(obj.m_spData.has_value())
-        j["sprite"] = obj.m_spData.value();
+        j["sprt"] = obj.m_spData.value();
       if(obj.m_anData.has_value())
-        j["animator"] = obj.m_anData.value();
+        j["anim"] = obj.m_anData.value();
       if(obj.m_cData.has_value())
         j["color"] = obj.m_cData.value();
       if(!obj.m_bbData.empty())
-        j["boundingBox"] = obj.m_bbData;
+        j["bbox"] = obj.m_bbData;
+      if(obj.m_txData.has_value())
+        j["text"] = obj.m_txData;
 
       data["objects"].push_back(j);
     }
@@ -81,24 +83,31 @@ namespace ENG
 
     for(auto& item:data.at("objects"))
     {
+      if (item.is_null())
+      {
+        LOG_ERROR(" | << Error, JSON is empty");
+        continue;
+      }     
       ObjectState objState;
-      
-      objState.m_name = item.at("key").get<std::string>();
+      objState.m_name = item.at("name").get<std::string>();
       objState.m_layer = item.at("layer").get<decltype(objState.m_layer)>();
-      objState.m_tData = item.at("transform").get<ITransformData>();
+      objState.m_tData = item.at("trans").get<ITransformData>();
       objState.m_sData = item.at("stats").get<IStatsData>();
 
-      if(item.contains("sprite"))
-        objState.m_spData = item.at("sprite").get<ISpriteData>();
+      if(item.contains("sprt"))
+        objState.m_spData = item.at("sprt").get<ISpriteData>();
 
-      if(item.contains("animator"))
-        objState.m_anData = item.at("animator").get<IAnimatorData>();
+      if(item.contains("anim"))
+        objState.m_anData = item.at("anim").get<IAnimatorData>();
 
       if(item.contains("color"))
         objState.m_cData = item.at("color").get<IColorData>();
 
-      if (item.contains("boundingBox"))
-        objState.m_bbData = item.at("boundingBox").get<std::vector<IBoundingBoxData>>();
+      if (item.contains("bbox"))
+        objState.m_bbData = item.at("bbox").get<std::vector<IBoundingBoxData>>();
+      
+      if(item.contains("text"))
+        objState.m_txData = item.at("text").get<ITextData>();
       
       m_ObjectSates[objState.m_name] = objState;
     }

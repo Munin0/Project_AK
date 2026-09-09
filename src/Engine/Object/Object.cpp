@@ -4,6 +4,7 @@
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
+#include "Engine/Services/Services.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Component/Component.hpp"
@@ -123,29 +124,42 @@ namespace ENG
     };
 
     // ISprite
-    if (auto *sp = GetComponent<ISprite>())
+    if (auto* sp = GetComponent<ISprite>())
+    {
       state.m_spData = {.m_keyName = sp->GetKeyName(), .m_scale = sp->GetScale()};
+    }
 
     // IAnimator
-    if (auto *an = GetComponent<IAnimator>())
+    if (auto* an = GetComponent<IAnimator>())
+    {
       state.m_anData = {.m_key = an->GetName(),
-                       .m_frames = an->GetFrames(),
-                       .m_step = an->GetStep(),
-                       .m_speed = an->GetSpeed(),
-                       .m_scale = an->GetScale()};
+        .m_frames = an->GetFrames(),
+        .m_step = an->GetStep(),
+        .m_speed = an->GetSpeed(),
+        .m_scale = an->GetScale()};
+    }
 
     // IBoundingBox(es)
     for (const auto& bb : boundingBoxes)
+    {
       state.m_bbData.push_back({
-        .m_width = bb.GetSize().x,
-        .m_height = bb.GetSize().y,
-        .m_isTrigger = bb.IsTrigger(),
-      });
+          .m_width = bb.GetSize().x,
+          .m_height = bb.GetSize().y,
+          .m_isTrigger = bb.IsTrigger(),
+          });
+    }
 
     // IColor
-    if (auto *c = GetComponent<IColor>()) {
+    if (auto* c = GetComponent<IColor>())
+    {
       auto &col = c->GetColor();
       state.m_cData = {col.r, col.g, col.b, col.a};
+    }
+
+    // IText
+    if(auto* tx = GetComponent<IText>())
+    {
+      state.m_txData = {tx->GetText(), tx->GetFontSize(), tx->GetFont()->GetName()};
     }
 
     return state;
@@ -198,6 +212,15 @@ namespace ENG
           state.m_cData->m_b,
           state.m_cData->m_a
           );
+    }
+
+    if(state.m_txData)
+    {
+      auto* f = Services::Fonts().GetFont(state.m_txData->m_fontKey);
+      auto& t = AddComponent<IText>();
+      t.SetText(state.m_txData->m_text);
+      t.SetFontSize(state.m_txData->m_fontSize);
+      t.SetFont(f);
     }
   }
 }

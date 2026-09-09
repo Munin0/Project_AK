@@ -16,6 +16,7 @@ namespace ENG
       static TextAPI& Get(void);
       static void Destroy(void);
 
+      std::string FormatText(const char* format, ...);
       void DrawText(const Font& font, float x, float y, float size, const std::string& text);
       void DrawTextEx(const Font& font, const Vector2& position, const std::string& text, float size, const Color& color);
       // void DrawTextPro(const Font& font, const Vector2& position, const std::string& text, float size, float rotation, const Color& color);

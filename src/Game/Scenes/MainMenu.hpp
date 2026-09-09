@@ -6,6 +6,7 @@
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Batching/RenderEntry.hpp"
 #include "Engine/Services/ScenesManager.hpp"
+/// | ------------------------------------ |
 #include <vector>
 /// | ------------------------------------ |
 
@@ -21,6 +22,7 @@ namespace APP
       bool IsRunning(void)  override; 
       void Inputs(float dt) override;
       void Update(float dt) override;
+      void UpdateFixed(float dt) override;
       void Render(ENG::Batcher& b) override;
     private:
       bool mousePressed;

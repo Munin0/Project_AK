@@ -5,6 +5,7 @@
 #include "Engine/Render/Image/RImage.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
+#include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
@@ -163,5 +164,55 @@ namespace ENG
       Shader* GetShader(void)const;
     private:
       Shader* shader;
+  };
+
+  class IText : public IComponents
+  {
+    public:
+      IText();
+
+      void SetText(const std::string& _text)
+      {
+        this->m_text = _text;
+      }
+
+      void SetFontSize(float _size)
+      {
+        this->m_fontSize = _size;
+      }
+
+      void SetFont(Font* _font)
+      {
+        this->m_font = _font;
+      }
+
+      std::string GetText() const
+      {
+        return this->m_text;
+      }
+
+      float GetFontSize() const
+      {
+        return this->m_fontSize;
+      }
+
+      Font* GetFont() const
+      {
+        return this->m_font;
+      }
+    private:
+      std::string m_text;
+      Font* m_font;
+      float m_fontSize;
+  };
+
+  class IDialog : public IComponents
+  {
+    public:
+      void Load(const std::string& path, const std::string& key);
+      std::vector<std::string> GetRangeText(int language, int rangeA, int rangeB, const std::string& key);
+      std::string GetText(int lenguage, int dialog, const std::string& key);
+      void Clear();
+    private:
   };
 }

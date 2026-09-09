@@ -3,6 +3,7 @@
 // | -------------------------------
 #include "AssetsManager.hpp"
 // | -------------------------------
+#include "Engine/Services/Clock.hpp"
 #include "Engine/Services/FontManager.hpp"
 #include "Engine/Services/MusicManager.hpp"
 #include "Engine/Services/SFXManager.hpp"
@@ -55,6 +56,13 @@ namespace ENG
         m_wSaver = _;
       }
 
+      static ClockManager& Clock() {return *m_clock;}
+      static void ProvideClockSaver(ClockManager* _)
+      {
+        m_clock = _;
+        if(m_clock)
+            m_clock->Init();
+      }
     private:
       static inline AssetsManager*  m_assets  = nullptr;
       static inline ShaderManager*  m_shaders = nullptr;
@@ -63,5 +71,6 @@ namespace ENG
       static inline MusicManager*   m_music   = nullptr;
       static inline SFXManager*     m_sfx     = nullptr;
       static inline WorldSaver*     m_wSaver  = nullptr;
+      static inline ClockManager*   m_clock   = nullptr;
   };
 }
