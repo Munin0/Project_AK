@@ -1,7 +1,8 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Image/RImage.hpp"
@@ -18,10 +19,10 @@ namespace ENG
     public:
       static void DrawLine(const Vector2& pInit, const Vector2& pEnd, const Color& _color, float thickness = 1.0f);
       static void DrawTexture(const Vector2& _position, const Vector2& _size, std::shared_ptr<RImage> _texture);
-      static void DrawTexture(const Rect& _rectangle, std::shared_ptr<RImage> _texture);
+      static void DrawTexture(const Rectangle& _rectangle, std::shared_ptr<RImage> _texture);
       static void DrawRectangle(const Vector2& _position, const Vector2& _size, const Color& _color);
-      static void DrawRectangle(const Rect& _rectangle, const Color& _color);
-      static void DrawRectangleOutline(const Rect& _rectangle, const Color& _color, float thickness = 1.0f);
+      static void DrawRectangle(const Rectangle& _rectangle, const Color& _color);
+      static void DrawRectangleOutline(const Rectangle& _rectangle, const Color& _color, float thickness = 1.0f);
       static void DrawRectangleOutline(const Vector2& _position, const Vector2& _size, const Color& _color, float thickness = 1.0f);
       static void DrawCircle(const Vector2& _center, float _radius, const Color& _color, uint32_t _segments);
       static void DrawCircleOutLine(const Vector2& _center, float _radius, const Color& _color, uint32_t _segments, float thickness = 1.0f);

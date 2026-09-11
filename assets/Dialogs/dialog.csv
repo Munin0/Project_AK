@@ -1,5 +1,5 @@
-﻿ID,SPANISH,ENGLISH
-0,Hola,Hello
-1,¿Cómo estas?,How a ypu?
-2,"Adios, compañero.","Goodbye, friend."
-3,¡NOOOO!,NOOOO!
+﻿ID,esp,eng
+DIALOG_1,Hola,Hello
+DIALOG_2,¿Cómo estas?,How a ypu?
+DIALOG_3,"Adios, compañero.","Goodbye, friend."
+DIALOG_4,¡NOOOO!,NOOOO!

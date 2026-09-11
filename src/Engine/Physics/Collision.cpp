@@ -3,100 +3,51 @@
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
 #include "Engine/Object/Object.hpp"
-#include "Engine/Object/ObjectPool.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
-#include <algorithm>
-#include <cstddef>
-#include <vector>
+#include "glm/geometric.hpp"
 // | -------------------------------
 
 namespace ENG
 {
-  bool Overlap(const IBoundingBox& a, const IBoundingBox& b, Vector2& outDepth)
+  bool CollisionAABB(Object& source, Object& target, bool resolution)
   {
-    float aLeft = a.GetPosition().x, aRight = aLeft + a.GetSize().x;
-    float bLeft = b.GetPosition().x, bRight = bLeft + b.GetSize().x;
-    float overlapX = std::min(aRight, bRight) - std::max(aLeft, bLeft);
-    if (overlapX <= 0.0f)
-      return false;
+    Vector2 posA = source.GetPosition(), posB = target.GetPosition();
+    auto dimA = source.GetSolidBox()->GetSize();
+    auto dimB = target.GetSolidBox()->GetSize();
+    bool r = (posA.x <= dimB.x && dimA.x >= posB.x) && (posA.y <= dimB.y && dimA.y >= posB.y);
 
-    float aBottom = a.GetPosition().y, aTop = aBottom + a.GetSize().y;
-    float bBottom = b.GetPosition().y, bTop = bBottom + b.GetSize().y;
-    float overlapY = std::min(aTop, bTop) - std::max(aBottom, bBottom);
-    if (overlapY <= 0.0f)
-      return false;
-
-    outDepth = {overlapX, overlapY};
-    return true;
-  }
-
-  std::vector<TriggerEvent> ResolveCollisions(ObjectPool& pool)
-  {
-    std::vector<TriggerEvent> triggers;
-    const auto& ids = pool.GetAllIDs();
-
-    for (size_t i = 0; i < ids.size(); i++)
+    if(r && resolution)
     {
-      Object* objA = pool.Get(ids[i]);
-      if (!objA || !objA->HasBoundingBoxes())
-        continue;
-
-      for (size_t j = i + 1; j < ids.size(); j++)
-      {
-        Object* objB = pool.Get(ids[j]);
-        if (!objB || !objB->HasBoundingBoxes())
-          continue;
-
-        for (auto& boxA : objA->GetBoundingBoxes())
-        {
-          for (auto& boxB : objB->GetBoundingBoxes())
-          {
-            Vector2 depth;
-            if (!Overlap(boxA, boxB, depth))
-              continue;
-
-            if (boxA.IsTrigger() || boxB.IsTrigger())
-            {
-              triggers.push_back({ids[i], ids[j]});
-              continue;
-            }
-
-            Vector2 posA = objA->GetTransform().position;
-            Vector2 centerA = boxA.GetCenter();
-            Vector2 centerB = boxB.GetCenter();
-
-            if (depth.x < depth.y)
-            {
-              float sign = (centerA.x < centerB.x) ? -1.0f : 1.0f;
-              posA.x += sign * depth.x;
-            }
-            else
-            {
-              float sign = (centerA.y < centerB.y) ? -1.0f : 1.0f;
-              posA.y += sign * depth.y;
-            }
-
-            objA->SetPosition(posA);
-
-            for (auto& bb : objA->GetBoundingBoxes())
-              bb.Update(posA);
-          }
-        }
-      }
+      auto p = source.GetTransform();
+      p.position = p .prev_position;
     }
 
-    return triggers;
+    return r;
   }
 
+  bool CollisionAABB(const IBoundingBox& source, const IBoundingBox& target)
+  {
+    Vector2 posA = source.GetPosition(), posB = target.GetPosition();
+    auto dimA = source.GetSize();
+    auto dimB = target.GetSize();
+    return (posA.x <= dimB.x && dimA.x >= posB.x) && (posA.y <= dimB.y && dimA.y >= posB.y);
+  }
 
-  bool CollisionPointRect(const Vector2 &point, const Rect &rect)
+  bool CollisionPointRect(const Vector2 &point, const Rectangle &rect)
   {
     return (point.x >= rect.x && point.x <= rect.x + rect.w) && (point.y >= rect.y && point.y <= rect.y + rect.h); 
   }
 
-  bool RectIntersects(const Rect& a, const Rect& b)
+  bool CollisionCircle(const Circle& a, const Circle& b)
+  {
+    auto distSq = glm::dot(b.center.x - a.center.x, b.center.y - a.center.y);
+    float radiusSum = a.radius + b.radius;
+    return distSq <= (radiusSum * radiusSum);
+  }
+
+  bool RectIntersects(const Rectangle& a, const Rectangle& b)
   {
     return !(a.w < b.x || b.w < a.x || a.h < b.y || b.h < a.y);
   }

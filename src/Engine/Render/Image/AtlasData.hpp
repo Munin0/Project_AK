@@ -2,10 +2,10 @@
 #pragma once
 // | -------------------------------
 #include "glm/ext/vector_float2.hpp"
+// | -------------------------------
 #include <string>
 #include <unordered_map>
 // | -------------------------------
-
 
 namespace ENG
 {

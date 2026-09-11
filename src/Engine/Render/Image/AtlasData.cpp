@@ -3,7 +3,9 @@
 // | -------------------------------
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
+// | -------------------------------
 #include "glm/ext/vector_float2.hpp"
+// | -------------------------------
 #include "nlohmann/json_fwd.hpp"
 #include <nlohmann/json.hpp>
 // | -------------------------------

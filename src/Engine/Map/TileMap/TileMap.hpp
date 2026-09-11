@@ -30,6 +30,8 @@ namespace ENG
       void SetPosition(const Vector2& pos) { position = pos; }
       const Vector2& GetPosition(void) const { return position; }
 
+      uint8_t GetLayerNum(const std::string& name);
+
       // Draw-order layer, same convention as Object::layer (see LAYER_* in Game.hpp).
       void SetLayer(uint8_t _layer) { layer = _layer; }
       uint8_t GetLayer(void) const { return layer; }
@@ -53,4 +55,6 @@ namespace ENG
       std::vector<int16_t>    cells;   // width * height; index into the palette; -1 = empty cell
       std::vector<UVRect> palette; // Unique UVs resolved once during LoadTiledMap()
   };
+
+  
 }

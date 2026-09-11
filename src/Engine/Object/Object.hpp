@@ -109,7 +109,7 @@ namespace ENG
       void SetPosition(float x, float y);
       void SetPosition(const Vector2& new_pos);
       const Vector2& GetPosition(void) const;
-      Vector2 GetSize(void) const;
+      Vector2 GetSizeSprite(void) const;
       void SetLayer(uint8_t _layer) { layer = _layer;}
       uint8_t GetLayer() const { return layer; }
       Shader* GetShader() const

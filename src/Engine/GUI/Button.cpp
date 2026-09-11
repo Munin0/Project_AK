@@ -13,7 +13,7 @@
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Text/TextAPI.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include <any>
@@ -49,7 +49,7 @@ namespace ENG
     }
     else
     {
-      Rect rect = {transform.position.x, transform.position.y,m_box->GetSize().x,m_box->GetSize().y};
+      Rectangle rect = {transform.position.x, transform.position.y,m_box->GetSize().x,m_box->GetSize().y};
       Drawer::DrawRectangle(rect,Color::White);
       Drawer::DrawRectangleOutline(rect,Color::Black);
     }
@@ -138,7 +138,7 @@ namespace ENG
     return this->m_data;
   }
 
-  Rect Button::GetRect(void)
+  Rectangle Button::GetRect(void)
   {
     const Vector2 size = GetSolidBox()->GetSize();
     const Vector2 pos = GetTransform().position;

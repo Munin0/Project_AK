@@ -10,6 +10,7 @@ namespace ENG
   {
     public:
       void Init();
+      void Clear();
       void Tick();
 
       float GetDT() const;

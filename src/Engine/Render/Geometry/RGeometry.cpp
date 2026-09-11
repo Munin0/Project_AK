@@ -18,21 +18,21 @@ namespace ENG
 {
   inline static int amountGeometries = 0;
   /// Line Part
-  Line::Line(float x, float y, float xw, float yh, const Color& c)
+  GLine::GLine(float x, float y, float xw, float yh, const Color& c)
     : Object{"Line " + std::to_string(amountGeometries)}, pStart(x, y), pEnd(xw, yh), color(c)
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Line created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  Line::Line(const Vector2& start, const Vector2& end, const Color& c)
+  GLine::GLine(const Vector2& start, const Vector2& end, const Color& c)
     : Object{"Line " + std::to_string(amountGeometries)}, pStart(start), pEnd(end), color(c)
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Line created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  void Line::Draw(Batcher& b) const
+  void GLine::Draw(Batcher& b) const
   {
     glm::vec2 pointA = {pStart.x, pStart.y};
     glm::vec2 pointB = {pEnd.x, pEnd.y};
@@ -41,53 +41,53 @@ namespace ENG
     b.DrawLine(pointA, pointB, 1.0f, c);
   }
   
-  void Line::Update(float dt)
+  void GLine::Update(float dt)
   {
     (void)dt;
   }
 
   /// Rectangle part
-  Rectangle::Rectangle(float x, float y, float w, float h, const Color& c)
+  GRectangle::GRectangle(float x, float y, float w, float h, const Color& c)
     : Object("Rectangle " + std::to_string(amountGeometries)),size(w,h),position(x,y),color(c), line_color(c)
   { 
     this->GetTransform().position = {x,y};
     amountGeometries ++;
     LOG_INFO(" | << Object: Rectangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
-  Rectangle::Rectangle(float x, float y, float w, float h, const Color& c, const Color& outColor, float _thickness)
+  GRectangle::GRectangle(float x, float y, float w, float h, const Color& c, const Color& outColor, float _thickness)
     : Object{"Rectangle " + std::to_string(amountGeometries)}, position(x,y),size(w,h),color(c), line_color(outColor), thicknes{_thickness}
   { 
     amountGeometries ++;
     LOG_INFO(" | << Object: Rectangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
-  Rectangle::Rectangle(float xy, float wh, const Color& c)
+  GRectangle::GRectangle(float xy, float wh, const Color& c)
     : Object{"Rectangle " + std::to_string(amountGeometries)}, size(wh, wh), position(xy,xy), color(c), line_color(c)
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Rectangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  Rectangle::Rectangle(float xy, float wh, const Color& c, const Color& outColor, float _thickness)
+  GRectangle::GRectangle(float xy, float wh, const Color& c, const Color& outColor, float _thickness)
     : Object{"Rectangle " + std::to_string(amountGeometries)}, size(wh,wh), position(xy,xy), color(c), line_color(outColor), thicknes{_thickness}
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Rectangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
-  Rectangle::Rectangle(const Vector2& position, const Vector2& size, const Color& c)
+  GRectangle::GRectangle(const Vector2& position, const Vector2& size, const Color& c)
     : Object{"Rectangle " + std::to_string(amountGeometries)}, size(size), position(position), color{c}, line_color{c} 
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Rectangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  Rectangle::Rectangle(const Vector2& position, const Vector2& size, const Color& c, const Color& outColor, float _thickness)
+  GRectangle::GRectangle(const Vector2& position, const Vector2& size, const Color& c, const Color& outColor, float _thickness)
     : Object{"Rectangle " + std::to_string(amountGeometries)}, size(size), position(position), color{c}, line_color{outColor}, thicknes{_thickness}
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Rectangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  void Rectangle::Draw(Batcher& b) const
+  void GRectangle::Draw(Batcher& b) const
   {
     // Fill
     glm::vec4 fillColor = {color.r, color.g, color.b, color.a};
@@ -110,38 +110,38 @@ namespace ENG
     }
   }
 
-  void Rectangle::Update(float dt)
+  void GRectangle::Update(float dt)
   {
   }
 
   /// Circle part
-  Circle::Circle(float x, float y, float _diameter, const Color& _color)
+  GCircle::GCircle(float x, float y, float _diameter, const Color& _color)
     : Object{"Circle " + std::to_string(amountGeometries)}, position(x, y), diameter{_diameter}, color{_color}
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Circle created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  Circle::Circle(float x, float y, float _diameter, const Color& _color, const Color& outLine, float _thickness)
+  GCircle::GCircle(float x, float y, float _diameter, const Color& _color, const Color& outLine, float _thickness)
     : Object{"Circle " + std::to_string(amountGeometries)}, position{x, y}, diameter{_diameter}, color{_color}, line_color{outLine}, thickness{_thickness}
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Circle created, AmountGeometries " + std::to_string(amountGeometries));
   }
-  Circle::Circle(const Vector2& _position, float _diameter, const Color& _color)
+  GCircle::GCircle(const Vector2& _position, float _diameter, const Color& _color)
     : Object{"Circle " + std::to_string(amountGeometries)}, position{_position}, diameter{_diameter}, color{_color}
     {
     amountGeometries ++;
     LOG_INFO(" | << Object: Circle created, AmountGeometries " + std::to_string(amountGeometries));
   }
-  Circle::Circle(const Vector2& _position, float _diameter, const Color& _color, const Color& outLine, float _thickness)
+  GCircle::GCircle(const Vector2& _position, float _diameter, const Color& _color, const Color& outLine, float _thickness)
     : Object{"Circle " + std::to_string(amountGeometries)}, position{_position}, diameter{_diameter}, color{_color}, line_color{outLine}, thickness{_thickness}
   {
     amountGeometries ++;
     LOG_INFO(" | << Object: Circle created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  void Circle::Draw(Batcher& b) const
+  void GCircle::Draw(Batcher& b) const
   {
     float rad = diameter * 0.5f;
 
@@ -155,13 +155,13 @@ namespace ENG
       b.DrawCircleOutLine(pos, rad, oColor, thickness);
   }
 
-  void Circle::Update(float dt)
+  void GCircle::Update(float dt)
   {
     (void)dt;
   }
 
   /// Triangle part
-  Triangle::Triangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& _color)
+  GTriangle::GTriangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& _color)
     : Object{"Triangle " + std::to_string(amountGeometries)}, color(_color), outLine{_color}
   {
     points[0] = a;
@@ -172,7 +172,7 @@ namespace ENG
     LOG_INFO(" | << Object: Triangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
   
-  Triangle::Triangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& color, const Color& _outLine, float _thickness)
+  GTriangle::GTriangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& color, const Color& _outLine, float _thickness)
     : Object{"Triangle " + std::to_string(amountGeometries)}, color(color), outLine{_outLine}, thickness{_thickness}
   {
     points[0] = a;
@@ -182,7 +182,7 @@ namespace ENG
     amountGeometries ++;
     LOG_INFO(" | << Object: Triangle created, AmountGeometries " + std::to_string(amountGeometries));
   }
-  void Triangle::Draw(Batcher& b) const 
+  void GTriangle::Draw(Batcher& b) const 
   {
     // Points[0 .. 2]
     glm::vec4 c = {color.r, color.g, color.b, color.a};
@@ -202,13 +202,13 @@ namespace ENG
     }
   }
 
-  void Triangle::Update(float dt)
+  void GTriangle::Update(float dt)
   {
     (void)dt;
   }
 
   // Polygon part
-  Polygon::Polygon(float x, float y, int sides, const Color& _color, float _thickness)
+  GPolygon::GPolygon(float x, float y, int sides, const Color& _color, float _thickness)
     : Object{"Polygon " + std::to_string(amountGeometries)}, position(x,y), sides(sides), color(_color), outLine(_color), thickness(_thickness)
   {
     if(sides < 0)
@@ -221,7 +221,7 @@ namespace ENG
     LOG_INFO(" | << Object: Polygon created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  Polygon::Polygon(const Vector2& _position, int sides, const Color& _color, float _thickness)
+  GPolygon::GPolygon(const Vector2& _position, int sides, const Color& _color, float _thickness)
     : Object{"Polygon " + std::to_string(amountGeometries)}, position(_position), sides(sides), color(_color), outLine(_color), thickness(_thickness)
   {
     if(sides < 0)
@@ -234,7 +234,7 @@ namespace ENG
     LOG_INFO(" | << Object: Polygon created, AmountGeometries " + std::to_string(amountGeometries));
   }
 
-  Polygon::Polygon(const Vector2& _position, int _sides, const Color& _color, const Color& _outline,  float _thickness)
+  GPolygon::GPolygon(const Vector2& _position, int _sides, const Color& _color, const Color& _outline,  float _thickness)
     : Object{"Polygon " + std::to_string(amountGeometries)}, position{_position}, sides(_sides), color(_color), outLine{_outline}, thickness {_thickness}
   {
     if(sides < 0)
@@ -248,7 +248,7 @@ namespace ENG
 
   }
 
-  Polygon::Polygon(float x, float y, int _sides, const Color& _color, const Color& _outline,  float _thickness)
+  GPolygon::GPolygon(float x, float y, int _sides, const Color& _color, const Color& _outline,  float _thickness)
     : Object{"Polygon " + std::to_string(amountGeometries)}, position{x,y}, sides(_sides), color(_color), outLine{_outline}, thickness {_thickness}
   {
     if(sides < 0)
@@ -262,12 +262,12 @@ namespace ENG
 
   }
 
-  void Polygon::AddPoint(float x, float y)
+  void GPolygon::AddPoint(float x, float y)
   {
     this->poolPoints.push_back({x,y});
   }
 
-  void Polygon::Draw(Batcher& b) const
+  void GPolygon::Draw(Batcher& b) const
   {
     if(poolPoints.size() < 3) return;
 
@@ -279,7 +279,7 @@ namespace ENG
       DrawOutLine(b);
   }
 
-  void Polygon::DrawOutLine(Batcher& b) const
+  void GPolygon::DrawOutLine(Batcher& b) const
   { 
     std::vector<glm::vec2> points = poolPoints;
 
@@ -297,7 +297,7 @@ namespace ENG
     }
   }
   
-  void Polygon::Update(float dt)
+  void GPolygon::Update(float dt)
   {
     (void)dt;
   }

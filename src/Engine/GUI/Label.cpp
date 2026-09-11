@@ -10,7 +10,7 @@
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Text/TextAPI.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include <string>
@@ -33,7 +33,7 @@ namespace ENG
     }
     else
     {
-      Rect rect = {transform.position.x, transform.position.y,m_box->GetSize().x,m_box->GetSize().y};
+      Rectangle rect = {transform.position.x, transform.position.y,m_box->GetSize().x,m_box->GetSize().y};
       Drawer::DrawRectangle(rect,this->m_bgColor);
     }
     TextAPI::Get().DrawTextEx(*this->m_font, this->m_fontPosition, this->m_text, this->m_fontSize, this->m_colorText);

@@ -66,6 +66,7 @@ namespace ENG
     Services::ProvideShaders(&shaders);
     Services::ProvideWorldSaver(&worldSaver);
     Services::ProvideClockSaver(&clock);
+    Services::ProvideCSVManager(&csv);
     LOG_INFO(" | << AssertsManager created Succesfully");
     LOG_INFO(" | << ScenesManager created Succesfully");
     LOG_INFO(" | << FontsManager created Succesfully");
@@ -73,7 +74,8 @@ namespace ENG
     LOG_INFO(" | << MusicManager created Succesfully");
     LOG_INFO(" | << ShadersManager created Succesfully");
     LOG_INFO(" | << WorldSaver created Succesfully");
-    LOG_INFO(" | << clockManager created Succesfully");
+    LOG_INFO(" | << ClockManager created Succesfully");
+    LOG_INFO(" | << CSVManager created Succesfully");
 
     // Init Game resources for batching
     r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
@@ -138,11 +140,13 @@ namespace ENG
     Services::Music().Clear();
     Services::SFX().Clear();
     Services::Shaders().Clear();
+    Services::Clock().Clear();
+    Services::CSV().Clear();
+    Services::WSaver().Clear();
     // Services::WSaver().PreparedData();
     // if(!Services::WSaver().SaveToDisk(Path::Get().DataPath / "data.dt"))
     //   LOG_ERROR(" | << World not been saved correctly");
     // LOG_INFO(" | << World is been saved correctly");
-    Services::WSaver().Clear();
     Services::ProvideAssets(nullptr);
     Services::ProvideScenes(nullptr); 
     Services::ProvideFonts(nullptr);
@@ -150,6 +154,8 @@ namespace ENG
     Services::ProvideSFX(nullptr);
     Services::ProvideShaders(nullptr);
     Services::ProvideWorldSaver(nullptr);
+    Services::ProvideClockSaver(nullptr);
+    Services::ProvideCSVManager(nullptr);
 
     LOG_INFO(" | << Destroying PollEventBuffer, waiting...");
     PollEvent::Get().ClearPollEvent();

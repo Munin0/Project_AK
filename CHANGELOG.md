@@ -3,6 +3,15 @@
 Compact record of engine changes and versions.
 
 `Version.. | feature, bug, change > Descripción`
+---
+
+## Alpha 0.04d
+
+`Alpha 0.04d | change > Change the name of the Geometry, Rectangle now is GRectangle and every class has 'G'.`
+
+`Alpha 0.04d | change > Now Rects are Rectangle, in the archive Utils/RawGeometry.hpp`
+
+`Alpha 0.04d | added > Added Circle, Triangle to the archive Utils/RawGeometry.hpp`
 
 ---
 

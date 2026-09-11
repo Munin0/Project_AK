@@ -49,6 +49,8 @@
       /// Screen Size
       auto sizeScreen = ENG::Render::Get().GetScreenSize();
       auto f_CabinItalic = ENG::Services::Fonts().GetFont("CabinItalic");
+    
+      ENG::Services::CSV().Load("Dialogs/dialog.csv","Dialogos");
 
       // ###############################
       // Objects
@@ -120,7 +122,6 @@
       {   
         mousePressed = false;
         isRunning = false;
-        // Cambio
         ENG::Services::Scenes().PeddingScene(ENG::SCENE_DEMO);
       }
 
@@ -131,31 +132,15 @@
 
       if(pollEvent.IsKeyPress(SDL_SCANCODE_T))
       {
-        auto objButton = pool.Get(1)->Save();
-        ENG::Services::WSaver().SaveObject(objButton);
-        LOG_INFO(" | << Save to ram");
+        auto text = ENG::Services::CSV().GetText("eng","DIALOG_2", "Dialogos");
+        LOG_INFO(" | << Dialog: " + text);
       }
 
       if(pollEvent.IsKeyPress(SDL_SCANCODE_Y))
       {
-        auto path = ENG::Path::Get().DataPath / "dataTest.dak";
-        ENG::Services::WSaver().SaveToDisk(path.string());
-        LOG_INFO(" | << Save to disk");
-      }
-
-      if(pollEvent.IsKeyPress(SDL_SCANCODE_U))
-      {
-        auto path = ENG::Path::Get().DataPath / "dataTest.dak";
-        ENG::Services::WSaver().LoadFromDisk(path.string());
-      }
-
-      if(pollEvent.IsKeyPress(SDL_SCANCODE_I))
-      {
-        auto objBotton = ENG::Services::WSaver().GetObject("StartGame");
-        if(objBotton)
-          pool.Get(1)->Load(*objBotton);
-        else
-          LOG_ERROR(" | << Object not found");
+        auto text = ENG::Services::CSV().GetRangeText("esp","DIALOG_2", "DIALOG_4", "Dialogos");
+        for(auto& t : text)
+          LOG_INFO(" | << TEXT: " + t);
       }
     }
 

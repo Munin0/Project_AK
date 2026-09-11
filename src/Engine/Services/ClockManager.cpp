@@ -1,5 +1,5 @@
 // | -------------------------------
-#include "Clock.hpp"
+#include "ClockManager.hpp"
 // | -------------------------------
 #include <algorithm>
 #include <chrono>
@@ -11,6 +11,14 @@ namespace ENG
   {
     m_lastFrame = std::chrono::steady_clock::now();
     m_rawDeltaTime = 0.16666f;
+    m_deltaTime     = 0.0f;
+    m_totalTime     = 0.0f;
+  }
+
+  void ClockManager::Clear()
+  {
+    m_rawDeltaTime  = 0.16666f;
+    m_lastCounter   = 0.0f;
     m_deltaTime     = 0.0f;
     m_totalTime     = 0.0f;
   }

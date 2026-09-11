@@ -35,7 +35,4 @@ namespace ENG
       std::unordered_map<std::string, AtlasData> m_atlases;
       std::map<std::string, std::shared_ptr<RImage>> m_mapImages;
   };
-  
-  
-  
 }

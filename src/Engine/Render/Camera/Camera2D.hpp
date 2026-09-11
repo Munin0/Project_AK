@@ -2,7 +2,7 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include <glm/glm.hpp>
@@ -54,10 +54,10 @@ namespace ENG
       const Vector2 &GetViewportSize() const { return m_viewportSize; }
 
       /// AABB Camera
-      Rect GetRectCamera() const
+      Rectangle GetRectCamera() const
       {
         Vector2 halfExtent = m_viewportSize * 0.5f / m_zoom;
-        Rect rectCamera = {
+        Rectangle rectCamera = {
           .x = m_position.x - halfExtent.x,
           .y = m_position.y - halfExtent.y,
           .w = m_position.x + halfExtent.x,

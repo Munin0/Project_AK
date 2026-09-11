@@ -7,7 +7,7 @@
 #include "Engine/Services/Services.hpp"
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include <string>
@@ -80,7 +80,7 @@ namespace ENG
     : IComponents{}, aName(key), frames(frames), speed(speed), step(step), scale(scale)
   {}
         
-  IAnimator::IAnimator(std::string key, std::vector<ENG::Rect> _rects, float speed, int step, float scale)
+  IAnimator::IAnimator(std::string key, std::vector<ENG::Rectangle> _rects, float speed, int step, float scale)
     : IComponents{}, aName(key), rectangles{_rects}, speed(speed), step(step), scale(scale)
   {}
 

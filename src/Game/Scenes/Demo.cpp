@@ -1,26 +1,20 @@
 /// | ------------------------------------ |
 #include "Demo.hpp"
 /// | ------------------------------------ |
-#include "Engine/Map/TileMap/TileMap.hpp"
-#include "Engine/Utils/Rects.hpp"
 #include "Game/Game.hpp"
-#include "Game/Systems/Systems.hpp"
 /// | ------------------------------------ |
-#include "Engine/Component/Component.hpp"
 #include "Engine/Layer/Scene.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Object/ObjectPool.hpp"
-#include "Engine/Physics/Collision.hpp"
+#include "Engine/Map/TileMap/TileMap.hpp"
 #include "Engine/Inputs/PollEvent.hpp"
 #include "Engine/Render/Batching/RAPIBatch.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Camera/Camera2D.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Geometry/RGeometry.hpp"
-#include "Engine/Render/Render.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
-#include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
 #include "SDL3/SDL_properties.h"
@@ -58,8 +52,8 @@ namespace APP
     ENG::Services::Assets().LoadAtlas("Atlas/Scenario1/atlasInfo.json", "Scenario1");
     for (auto& mapLayer : ENG::TileMap::LoadTiledMap("Scenario1", "Map/Scenes/Escena1.json"))
     {
-      mapLayer.SetLayer(TiledLayerToEngineLayer(mapLayer.GetName()));
-      mapLayer.SetPosition({10.0f, 10.0f});
+      mapLayer.SetLayer(mapLayer.GetLayerNum(mapLayer.GetName()));
+      mapLayer.SetPosition({0.0f, 0.0f});
       AddTileMap(std::move(mapLayer));
     }
     // ###############################
@@ -171,8 +165,8 @@ namespace APP
     for (auto& entry : renderQueue)
     {
       auto* obj = pool.Get(entry.id);
-      obj->Draw(b);
 
+      obj->Draw(b);
       // if (auto* bb = obj->GetComponent<ENG::IBoundingBox>())
       // {
       //   ENG::Rect objRect = { bb->GetPosition().x, bb->GetPosition().y, bb->GetSize().x, bb->GetSize().y};

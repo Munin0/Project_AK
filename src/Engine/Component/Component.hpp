@@ -6,7 +6,7 @@
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
 #include "Engine/Text/Font/Font.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
 #include <cstdint>
@@ -85,7 +85,7 @@ namespace ENG
   {
     public:
       IAnimator(std::string key,int frames, float speed, int step, float scale = 1.0f);
-      IAnimator(std::string key, std::vector<ENG::Rect> _rects, float speed, int step, float scale = 1.0f);
+      IAnimator(std::string key, std::vector<ENG::Rectangle> _rects, float speed, int step, float scale = 1.0f);
       ~IAnimator() override {}
 
       void Play(void);
@@ -110,7 +110,7 @@ namespace ENG
       float speed = 0;
       float scale = 0.f;
 
-      std::vector<ENG::Rect> rectangles;
+      std::vector<ENG::Rectangle> rectangles;
 
       int currentFrame = 0;
       float elapsed     = 0.0f;

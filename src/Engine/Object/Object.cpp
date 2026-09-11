@@ -35,7 +35,7 @@ namespace ENG
     if(!sprite)
       return;
     glm::vec2 pos = this->GetPosition();
-    glm::vec2 size = this->GetSize() * sprite->GetScale();
+    glm::vec2 size = this->GetSizeSprite() * sprite->GetScale();
     glm::vec4 color = {1.0f,1.0f,1.0f,1.0f};
 
     if(HasComponent<IColor>())
@@ -91,7 +91,7 @@ namespace ENG
     return this->transform.position;
   }
 
-  Vector2 Object::GetSize() const
+  Vector2 Object::GetSizeSprite() const
   {
     auto* s = GetComponent<ISprite>();
     return {(float)s->GetWidth(), (float)s->GetHeight()};

@@ -18,12 +18,12 @@ namespace ENG
   // Forward
   class Batcher;
 
-  class Line : public Object 
+  class GLine : public Object 
   {
     public:
-      Line(float x, float y,float xw, float yh, const Color& c);
-      Line(const Vector2& start, const Vector2& end, const Color& c);
-      ~Line() override {}
+      GLine(float x, float y,float xw, float yh, const Color& c);
+      GLine(const Vector2& start, const Vector2& end, const Color& c);
+      ~GLine() override {}
 
       void Draw(Batcher& batching) const override;
       void Update(float dt) override;
@@ -33,16 +33,16 @@ namespace ENG
       Color color;
   };
 
-  class Rectangle : public Object 
+  class GRectangle : public Object 
   {
     public:
-      Rectangle(float x, float y, float w, float h, const Color& c);
-      Rectangle(float x, float y, float w, float h, const Color& c, const Color& outColor, float _thickness = 1.0f);
-      Rectangle(float xy, float wh, const Color& c);
-      Rectangle(float xy, float wh , const Color& c, const Color& outColor, float _thickness = 1.0f);
-      Rectangle(const Vector2& position, const Vector2& size, const Color& c);
-      Rectangle(const Vector2& position, const Vector2& size, const Color& c, const Color& outColor, float _thickness = 1.0f);
-      ~Rectangle() override {}
+      GRectangle(float x, float y, float w, float h, const Color& c);
+      GRectangle(float x, float y, float w, float h, const Color& c, const Color& outColor, float _thickness = 1.0f);
+      GRectangle(float xy, float wh, const Color& c);
+      GRectangle(float xy, float wh , const Color& c, const Color& outColor, float _thickness = 1.0f);
+      GRectangle(const Vector2& position, const Vector2& size, const Color& c);
+      GRectangle(const Vector2& position, const Vector2& size, const Color& c, const Color& outColor, float _thickness = 1.0f);
+      ~GRectangle() override {}
   
       void Draw(Batcher& batching) const override;
       void Update(float dt) override;
@@ -55,14 +55,14 @@ namespace ENG
       Color line_color;
   };
 
-  class Circle : public Object
+  class GCircle : public Object
   {
     public:
-      Circle(float x, float y, float diameter, const Color& c);
-      Circle(float x, float y, float diameter, const Color& c, const Color& outLine, float _thickness = 1.0f);
-      Circle(const Vector2& position, float diameter, const Color& c);
-      Circle(const Vector2& position, float diameter, const Color& c, const Color& outLine, float _thickness = 1.0f);
-      ~Circle() override {}
+      GCircle(float x, float y, float diameter, const Color& c);
+      GCircle(float x, float y, float diameter, const Color& c, const Color& outLine, float _thickness = 1.0f);
+      GCircle(const Vector2& position, float diameter, const Color& c);
+      GCircle(const Vector2& position, float diameter, const Color& c, const Color& outLine, float _thickness = 1.0f);
+      ~GCircle() override {}
 
       void Draw(Batcher& batching) const override;
       void Update(float dt) override;
@@ -74,12 +74,12 @@ namespace ENG
       Color line_color;
   };
 
-  class Triangle : public Object
+  class GTriangle : public Object
   {
     public:
-      Triangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& _color);
-      Triangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& _color, const Color& _outLine, float _thickness = 1.0f);
-      ~Triangle() override {}
+      GTriangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& _color);
+      GTriangle(const Vector2& a, const Vector2& b, const Vector2& c, const Color& _color, const Color& _outLine, float _thickness = 1.0f);
+      ~GTriangle() override {}
 
       void Draw(Batcher& batching) const override;
       void Update(float dt) override;
@@ -91,14 +91,14 @@ namespace ENG
       Color outLine;
   };
 
-  class Polygon : public Object
+  class GPolygon : public Object
   {
     public:
-      Polygon(float x, float y, int _sides, const Color& _color, float _thickness = 1.0f);
-      Polygon(const Vector2& _position, int _sides, const Color& _color, float _thickness = 1.0f);
-      Polygon(float x, float y, int _sides, const Color& _color, const Color& _outline,  float _thickness = 1.0f);
-      Polygon(const Vector2& _position, int _sides, const Color& _color, const Color& _outline,  float _thickness = 1.0f);
-      ~Polygon() override {}
+      GPolygon(float x, float y, int _sides, const Color& _color, float _thickness = 1.0f);
+      GPolygon(const Vector2& _position, int _sides, const Color& _color, float _thickness = 1.0f);
+      GPolygon(float x, float y, int _sides, const Color& _color, const Color& _outline,  float _thickness = 1.0f);
+      GPolygon(const Vector2& _position, int _sides, const Color& _color, const Color& _outline,  float _thickness = 1.0f);
+      ~GPolygon() override {}
     
       void Draw(Batcher& batching) const override;
       void DrawOutLine(Batcher& b) const;

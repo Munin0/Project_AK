@@ -3,7 +3,8 @@
 // | -------------------------------
 #include "AssetsManager.hpp"
 // | -------------------------------
-#include "Engine/Services/Clock.hpp"
+#include "Engine/Services/CSVManager.hpp"
+#include "Engine/Services/ClockManager.hpp"
 #include "Engine/Services/FontManager.hpp"
 #include "Engine/Services/MusicManager.hpp"
 #include "Engine/Services/SFXManager.hpp"
@@ -63,6 +64,12 @@ namespace ENG
         if(m_clock)
             m_clock->Init();
       }
+
+      static CSVManager& CSV() {return *m_csv;}
+      static void ProvideCSVManager(CSVManager* _)
+      {
+        m_csv = _;
+      }
     private:
       static inline AssetsManager*  m_assets  = nullptr;
       static inline ShaderManager*  m_shaders = nullptr;
@@ -72,5 +79,6 @@ namespace ENG
       static inline SFXManager*     m_sfx     = nullptr;
       static inline WorldSaver*     m_wSaver  = nullptr;
       static inline ClockManager*   m_clock   = nullptr;
+      static inline CSVManager*     m_csv     = nullptr;
   };
 }

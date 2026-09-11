@@ -6,9 +6,11 @@
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Render/Render.hpp"
 #include "Engine/Services/Services.hpp"
-#include "Engine/Utils/Rects.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
+// | -------------------------------
+#include "Game/Game.hpp"
 // | -------------------------------
 #include "glm/ext/vector_float2.hpp"
 // | -------------------------------
@@ -18,6 +20,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -113,7 +116,7 @@ namespace ENG
 
   void TileMap::Render(Batcher& b) const
   {
-    Rect rect;
+    Rectangle rect;
     auto cam = b.GetCamera2D();
     if(cam)
     {
@@ -122,7 +125,7 @@ namespace ENG
     else
     {
       auto r = Render::Get().GetScreenSize();
-      rect = Rect {
+      rect = Rectangle {
         .x = 0.0f,
         .y = 0.0f,
         .w = r.x,
@@ -154,6 +157,17 @@ namespace ENG
         b.DrawAtlasSprite(pos, size, atlasLayer, uv.uvMin, uv.uvMax);
       }
     }
+  }
+
+  uint8_t TileMap::GetLayerNum(const std::string& name)
+  {
+    if (name == "Background") return LAYER_BACKGROUND;
+    if (name == "World")      return LAYER_WOLRD;
+    if (name == "Middle")     return LAYER_MIDDLE;
+    if (name == "Front")      return LAYER_FRONT;
+    if (name == "FX")         return LAYER_FX;
+    if (name == "UI")         return LAYER_UI;
+    return LAYER_BACKGROUND;
   }
 
 }

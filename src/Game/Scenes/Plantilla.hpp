@@ -12,10 +12,10 @@
 
 namespace APP
 {
-  class DemoScene : public ENG::Scene
+  class Plantilla : public ENG::Scene
   {
     public:
-      DemoScene(ENG::SceneID id);
+      Plantilla(ENG::SceneID id);
 
       void Init(void) override;
       void Destroy(void)    override;
@@ -24,9 +24,19 @@ namespace APP
       void Update(float dt) override;
       void UpdateFixed(float dt) override;
       void Render(ENG::Batcher& b) override;
-    
     private:
       ENG::ObjectPool pool;
       std::vector<ENG::RenderEntry> renderQueue;
+
   };
 }
+
+
+
+
+
+
+
+
+
+

@@ -2,7 +2,8 @@
 // | -------------------------------
 #include "Engine/Render/Render.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Image/RImage.hpp"
@@ -32,7 +33,7 @@ namespace ENG
     Render::Get().GetBatcher().DrawTexture(pos, size, _texture);
   }
 
-  void Drawer::DrawTexture(const Rect& _rectangle, std::shared_ptr<RImage> _texture)
+  void Drawer::DrawTexture(const Rectangle& _rectangle, std::shared_ptr<RImage> _texture)
   {
     glm::vec2 pos = {_rectangle.x, _rectangle.y};
     glm::vec2 size = {_rectangle.w, _rectangle.h};
@@ -47,7 +48,7 @@ namespace ENG
     Render::Get().GetBatcher().DrawQuad(pos, size, color);
   }
 
-  void Drawer::DrawRectangle(const Rect& _rectangle, const Color& _color)
+  void Drawer::DrawRectangle(const Rectangle& _rectangle, const Color& _color)
   {
     glm::vec2 pos = {_rectangle.x, _rectangle.y};
     glm::vec2 size = {_rectangle.w, _rectangle.h};
@@ -62,7 +63,7 @@ namespace ENG
     Render::Get().GetBatcher().DrawQuadOutline(pos.x,pos.y, size.x,size.y, _color,thickness);
   }
 
-  void Drawer::DrawRectangleOutline(const Rect& _rectangle, const Color& _color, float thickness)
+  void Drawer::DrawRectangleOutline(const Rectangle& _rectangle, const Color& _color, float thickness)
   {
     glm::vec2 pos = {_rectangle.x, _rectangle.y};
     glm::vec2 size = {_rectangle.w, _rectangle.h};

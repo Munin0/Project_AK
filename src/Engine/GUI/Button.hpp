@@ -8,7 +8,7 @@
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Text/Font/Font.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include <any>
@@ -42,7 +42,7 @@ namespace ENG
       std::any& GetData(void);
       const std::any& GetData(void) const;
 
-      Rect GetRect(void);
+      Rectangle GetRect(void);
     private:
       ButtonCallback m_callback = nullptr; 
       std::any m_data;

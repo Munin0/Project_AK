@@ -1,23 +1,17 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Object/ObjectPool.hpp"
-#include "Engine/Utils/Rects.hpp"
+#include "Engine/Component/Component.hpp"
+#include "Engine/Object/Object.hpp"
+#include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
-// | -------------------------------
-#include <vector>
 // | -------------------------------
 
 namespace ENG
 {
-  struct TriggerEvent
-  {
-    ObjectID a;
-    ObjectID b;
-  };
-
-  std::vector<TriggerEvent> ResolveCollisions(ObjectPool& pool);
-
-  [[maybe_unused]] bool CollisionPointRect(const Vector2& point, const Rect& rect);
-  [[maybe_unused]] bool RectIntersects(const Rect& a, const Rect& b);
+  [[maybe_unused]] bool CollisionAABB(Object& source, Object& target, bool resolution);
+  [[maybe_unused]] bool CollisionAABB(const IBoundingBox& source, const IBoundingBox& target);
+  [[maybe_unused]] bool CollisionPointRect(const Vector2& point, const Rectangle& rect);
+  [[maybe_unused]] bool CollisionCircle(const Circle& a, const Circle& b);
+  [[maybe_unused]] bool RectIntersects(const Rectangle& a, const Rectangle& b);
 }
