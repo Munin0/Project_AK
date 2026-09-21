@@ -1,6 +1,6 @@
 # Project_AK
 
-**Alpha 0.04c**
+**Alpha 0.04e**
 
 A 2D game engine built from scratch in **C++20**, with **OpenGL 4.6 Core (DSA)** rendering and window/input handling via **SDL3**.
 
