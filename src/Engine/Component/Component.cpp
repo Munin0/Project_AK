@@ -5,7 +5,6 @@
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
 #include "Engine/Services/Services.hpp"
-#include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
@@ -17,23 +16,23 @@
 namespace ENG
 {
   ITransform::ITransform()
-    : IComponents{}, position(0.0f,0.0f), velocity(0.0f,0.0f), angle(0.0f)
+    : IComponents{}, m_position(0.0f,0.0f), m_velocity(0.0f,0.0f), m_angle(0.0f)
   {}
 
   ITransform::ITransform(const Vector2& pos, const Vector2& vel, float ang)
-    : IComponents{}, position(pos), velocity(vel), angle(ang)
+    : IComponents{}, m_position(pos), m_velocity(vel), m_angle(ang)
   {}
  
-  ISprite::ISprite(const std::string& _keyName, float scale)
-    : IComponents{}, keyName(_keyName), scale(scale)
+  ISprite::ISprite(const std::string& keyName, float scale)
+    : IComponents{}, m_keyTexture(keyName), m_scale(scale)
   {
-    image = Services::Assets().GetTexture(keyName);
-    width = Services::Assets().GetTexture(keyName)->GetWidth();
-    height = Services::Assets().GetTexture(keyName)->GetHeight();;
+    m_image = Services::Assets().GetTexture(m_keyTexture);
+    m_width = Services::Assets().GetTexture(m_keyTexture)->GetWidth();
+    m_height = Services::Assets().GetTexture(m_keyTexture)->GetHeight();;
   }
 
   ISprite::ISprite(const std::string& atlasKey, const std::string& animName, int frameIndex, float scale)
-    : IComponents{}, keyName(atlasKey), width(0), height(0), scale(scale), isAtlas(true), animName(animName)
+    : IComponents{}, m_keyTexture(atlasKey), m_width(0), m_height(0), m_scale(scale), m_isAtlas(true), m_animationKey{animName}
   {
     const AtlasData* atlas = Services::Assets().GetAtlas(atlasKey);
     if(!atlas)
@@ -42,14 +41,14 @@ namespace ENG
       return;
     }
 
-    uv = GetFrameUV(*atlas, animName, frameIndex);
-    atlasLayer = atlas->atlasLayer;
-    width  = atlas->tileSize;
-    height = atlas->tileSize;
+    m_uv = GetFrameUV(*atlas, animName, frameIndex);
+    m_atlasLayer = atlas->atlasLayer;
+    m_width  = atlas->tileSize;
+    m_height = atlas->tileSize;
   }
 
   ISprite::ISprite(const std::string& atlasKey, const std::string& tileID, float scale)
-    : IComponents{}, keyName(atlasKey), width(0), height(0), scale(scale), isAtlas(true), tileID(tileID)
+    : IComponents{}, m_keyTexture(atlasKey), m_width(0), m_height(0), m_scale(scale), m_isAtlas(true), m_tileID(tileID)
   {
     const AtlasData* atlas = Services::Assets().GetAtlas(atlasKey);
     if(!atlas)
@@ -58,104 +57,112 @@ namespace ENG
       return;
     }
 
-    uv = GetTileUV(*atlas, tileID);
-    atlasLayer = atlas->atlasLayer;
-    width  = atlas->tileSize;
-    height = atlas->tileSize;
+    m_uv = GetTileUV(*atlas, tileID);
+    m_atlasLayer = atlas->atlasLayer;
+    m_width  = atlas->tileSize;
+    m_height = atlas->tileSize;
   }
 
   void ISprite::SetFrame(int frameIndex)
   {
-    if(!isAtlas)
+    if(!m_isAtlas)
       return;
 
-    const AtlasData* atlas = Services::Assets().GetAtlas(keyName);
+    const AtlasData* atlas = Services::Assets().GetAtlas(m_keyTexture);
     if(!atlas)
       return;
 
-    uv = GetFrameUV(*atlas, animName, frameIndex);
+    m_uv = GetFrameUV(*atlas, m_animationKey, frameIndex);
   }
 
-  IAnimator::IAnimator(std::string key,int frames, float speed, int step, float scale)
-    : IComponents{}, aName(key), frames(frames), speed(speed), step(step), scale(scale)
+  IAnimator::IAnimator(std::string key, int frames, float speed, int step, float scale)
+    : IComponents{}, m_keyAnimation{key}, m_frames{frames}, m_speed{speed}, m_step{step}, m_scale{scale}
   {}
         
   IAnimator::IAnimator(std::string key, std::vector<ENG::Rectangle> _rects, float speed, int step, float scale)
-    : IComponents{}, aName(key), rectangles{_rects}, speed(speed), step(step), scale(scale)
+    : IComponents{}, m_keyAnimation{key}, m_rectangles{_rects}, m_speed{speed}, m_step{step}, m_scale{scale}
   {}
 
   void IAnimator::Play(void)
   {
-    playing = true;
-    currentFrame = 0;
-    elapsed = 0.0f;
+    m_playing = true;
+    m_currentFrame = 0;
+    m_elapsed = 0.0f;
   }
 
   void IAnimator::Stop(void)
   {
-    playing = false;
-    currentFrame = 0;
-    elapsed = 0.0f;
+    m_playing = false;
+    m_currentFrame = 0;
+    m_elapsed = 0.0f;
   }
 
   void IAnimator::Pause(void)
   {
-    playing = false;
+    m_playing = false;
   }
 
   void IAnimator::Resume(void)
   {
-    playing = true;
+    m_playing = true;
   }
 
   void IAnimator::Advance(float dt)
   {
-    if(!playing || frames <= 0 || speed <= 0.0f)
+    if(!m_playing || m_frames <= 0 || m_speed <= 0.0f)
       return;
 
-    float frameDuration = 1.0f / speed;
-    elapsed += dt;
+    float m_frameDuration = 1.0f / m_speed;
+    m_elapsed += dt;
 
-    while(elapsed >= frameDuration)
+    while(m_elapsed >= m_frameDuration)
     {
-      elapsed -= frameDuration;
-      currentFrame = (currentFrame + step) % frames;
+      m_elapsed -= m_frameDuration;
+      m_currentFrame = (m_currentFrame + m_step) % m_frames;
     }
   }
 
   IBoundingBox::IBoundingBox(const Vector2& dim, bool isTrigger)
-    : IComponents{}, size(dim), isTrigger(isTrigger)
+    : IComponents{}, m_size(dim), m_isTrigger(isTrigger)
   {}
 
   IColor::IColor(const Color& c)
-    : IComponents{}, color(c)
+    : IComponents{}, m_color(c)
   {}
 
   IColor::IColor(float r, float g, float b, float a)
-    : IComponents(), color(r,g,b,a)
+    : IComponents(), m_color(r,g,b,a)
   {}
 
   void IColor::ChangeColor(const Color& _color)
   {
-    this->color = _color;
+    this->m_color = _color;
   }
 
   void IColor::ChangeColor(float r, float g, float b, float a)
   {
-    this->color = Color(r,g,b,a);
+    this->m_color = Color(r,g,b,a);
   }
 
   IMaterial::IMaterial(const std::string& idKey)
   {
-    this->shader = Services::Shaders().Get(idKey);
+    if(auto* shader = Services::Shaders().Get(idKey))
+      this->m_shader = shader;
+    else
+      LOG_ERROR(" | << Shader not exist: " + idKey);
   }
 
   Shader* IMaterial::GetShader() const
   {
-    return this->shader;
+    if(!m_shader)
+    {
+      LOG_ERROR(" | << ERROR, GetShader cant return a shader, doesnt have one");
+      return nullptr;
+    }
+    return this->m_shader;
   }
 
-  IText::IText()
-    : IComponents(), m_text(""), m_fontSize(0.0f), m_font(nullptr)
+  IText::IText(const std::string& text)
+    : IComponents(), m_text(text), m_fontSize(0.0f), m_font(nullptr)
   {}
 }

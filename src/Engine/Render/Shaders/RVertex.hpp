@@ -8,13 +8,29 @@
 
 namespace ENG
 {
+  /**
+   * @brief Vertex sent to the GPU by the batch renderer.
+   *
+   * Each vertex carries its position, color, texture coordinates and the
+   * extra data the shader needs to pick a texture and apply an effect.
+   * All the members are floats, so the struct is tightly packed. The
+   * layout must stay in sync with the vertex attributes configured in
+   * OpenGL and with the inputs of the vertex shader.
+   */
   struct Vertex
   {
-    glm::vec3 Position;  // X,Y,Z
+    /// @brief Position of the vertex: { x, y, z }.
+    glm::vec3 Position;
+    /// @brief Color of the vertex, as RGBA.
     glm::vec4 Color;
+    /// @brief Texture coordinates (UV) of the vertex.
     glm::vec2 TexCord;
-    float     TexIndex;   // Texture slot (0.0 = white texture)
-    float     ArrayLayer; // Layer in the reserved TextureArray slot, -1.0 = not an array sample
-    float     EffectMode; // 0 = Normal, 1 = Monocromatic, etc.
+    /// @brief Texture slot to sample from. 0.0 selects the white texture.
+    float     TexIndex;
+    /// @brief Layer to sample from in the reserved texture array slot.
+    ///        -1.0 means that the vertex does not sample from the texture array.
+    float     ArrayLayer;
+    /// @brief Effect applied by the shader: 0 = normal, 1 = monochromatic, etc.
+    float     EffectMode;
   };
 }

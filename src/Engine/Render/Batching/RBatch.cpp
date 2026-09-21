@@ -316,7 +316,7 @@ namespace ENG
   }
   
   void Batcher::DrawGlyph(const glm::vec2& pos, const glm::vec2& size, 
-      std::shared_ptr<RImage> fontAtlas, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint)
+      std::shared_ptr<RImage> fontAtlas, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint, float effectMode)
   {
     if (m_IndexCount >= MAX_INDICES)
     {

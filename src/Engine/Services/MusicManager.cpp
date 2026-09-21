@@ -15,18 +15,36 @@ namespace ENG
 {
   void MusicManager::PlayMusic(const std::string& key)
   {
-    auto p = m_music.at(key);
+    auto it = m_music.find(key);
+    if (it == m_music.end())
+    {
+      LOG_ERROR( " | << Can't found music >PlayMusic(): " + key);
+      return;
+    }
+    auto p = it->second;
     MIX_PlayTrack(p.track, p.options);
   }
 
   void MusicManager::StopMusic(const std::string& key)
   {
-    auto p = m_music.at(key);
+    auto it = m_music.find(key);
+    if (it == m_music.end())
+    {
+      LOG_ERROR( " | << Can't find music >StopMusic(): " + key);
+      return;
+    }
+    auto p = it->second; 
     MIX_StopTrack(p.track, 0);
   }
 
   void MusicManager::LoadMusic(const std::string& path, const std::string& key, SDL_PropertiesID _options)
   {
+    if (m_music.contains(key))
+    {
+      // LOG_ERROR( " | << Can't load music, already loaded >LoadMusic(): " + key);
+      return;
+    }
+
     auto pathComplete = Path::Get().AssetsPath / path;
     MusicTrack mT;
     mT.audio = MIX_LoadAudio(this->m_mixer, pathComplete.string().c_str(), false);
@@ -47,7 +65,13 @@ namespace ENG
 
   float MusicManager::GetVolume(const std::string& key) const
   {
-    auto& m = m_music.at(key);
+    auto it = m_music.find(key);
+    if (it == m_music.end())
+    {
+      LOG_ERROR( " | << Can't found music >GetVolume(): " + key);
+      return -1.0f;
+    }
+    auto& m = it->second; 
     return m.volume * 100.0f;
   }
 
@@ -57,8 +81,11 @@ namespace ENG
       _volume = 0.0f;
     if(_volume > 100.0f)
       _volume = 100.0f;
+    auto it = m_music.find(key);
+    if(it == m_music.end())
+      return;
 
-    auto& foo = m_music.at(key);
+    auto& foo = it->second;
     foo.volume = _volume * 0.01;
     if(!MIX_SetTrackGain(foo.track, foo.volume))
       LOG_INFO(" | << Error " + (std::string)SDL_GetError());
@@ -70,6 +97,7 @@ namespace ENG
     {
       MIX_DestroyTrack(mT.track);
     }
+    MIX_DestroyMixer(m_mixer);
     m_music.clear();
   }
 }

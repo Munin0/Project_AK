@@ -16,7 +16,7 @@
 namespace ENG
 {
   Text::Text(const Vector2& position,float fontSize, const std::string& text)
-    : Object(text)
+    : Object(text), m_text("")
   {
     this->m_text.SetText(text);
     this->m_text.SetFontSize(fontSize);
@@ -44,20 +44,20 @@ namespace ENG
     // ITransform
     auto& t = Object::GetTransform();
     state.m_tData = {
-      .m_position = t.position,
-      .m_velocity = t.velocity,
-      .m_direction = t.direction,
-      .m_angle = t.angle
+      .m_position = t.m_position,
+      .m_velocity = t.m_velocity,
+      .m_direction = t.m_direction,
+      .m_angle = t.m_angle
     };
 
     // IStats
     auto& s = Object::GetStats();
     state.m_sData = {
-      .m_hp = s.hp,
-      .m_hp_max = s.hp_max,
-      .m_str = s.str,
-      .m_def = s.def,
-      .m_agi = s.agi
+      .m_hp = s.m_hp,
+      .m_hp_max = s.m_hp_max,
+      .m_str = s.m_str,
+      .m_def = s.m_def,
+      .m_agi = s.m_agi
     };
 
     // IText
@@ -105,17 +105,17 @@ namespace ENG
     Object::SetLayer(state.m_layer);
 
     auto& t = GetTransform();
-    t.position  = state.m_tData.m_position;
-    t.velocity  = state.m_tData.m_velocity;
-    t.direction = state.m_tData.m_direction;
-    t.angle     = state.m_tData.m_angle;
+    t.m_position  = state.m_tData.m_position;
+    t.m_velocity  = state.m_tData.m_velocity;
+    t.m_direction = state.m_tData.m_direction;
+    t.m_angle     = state.m_tData.m_angle;
 
     auto& s = GetStats();
-    s.hp     = state.m_sData.m_hp;
-    s.hp_max = state.m_sData.m_hp_max;
-    s.str    = state.m_sData.m_str;
-    s.def    = state.m_sData.m_def;
-    s.agi    = state.m_sData.m_agi;
+    s.m_hp     = state.m_sData.m_hp;
+    s.m_hp_max = state.m_sData.m_hp_max;
+    s.m_str    = state.m_sData.m_str;
+    s.m_def    = state.m_sData.m_def;
+    s.m_agi    = state.m_sData.m_agi;
 
     if(state.m_spData)
     {

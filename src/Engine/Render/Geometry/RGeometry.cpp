@@ -50,7 +50,7 @@ namespace ENG
   GRectangle::GRectangle(float x, float y, float w, float h, const Color& c)
     : Object("Rectangle " + std::to_string(amountGeometries)),size(w,h),position(x,y),color(c), line_color(c)
   { 
-    this->GetTransform().position = {x,y};
+    this->GetTransform().m_position = {x,y};
     amountGeometries ++;
     LOG_INFO(" | << Object: Rectangle created, AmountGeometries " + std::to_string(amountGeometries));
   }

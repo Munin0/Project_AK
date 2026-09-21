@@ -1,5 +1,6 @@
 /// | ------------------------------------ |
-#include "MainMenu.hpp" /// | ------------------------------------ |
+#include "MainMenu.hpp"
+/// | ------------------------------------ |
 #include "Engine/Component/Component.hpp"
 #include "Engine/GUI/Button.hpp"
 #include "Engine/GUI/Label.hpp"
@@ -56,7 +57,6 @@
       // Objects
       // Configuration of the Object entities
       // ###############################
-      /// Gui Elements
       ENG::ObjectID btStartID = pool.Add(std::make_unique<ENG::Button>("StartGame", ENG::Vector2{100,50} ));
       auto startBT = static_cast<ENG::Button*>(pool.Get(btStartID));
 
@@ -67,7 +67,7 @@
       startBT->SetFont(*f_CabinItalic);
       startBT->SetText("Start Game");
       startBT->SetTextSize(24);
-      startBT->SetTextColor(ENG::Color::Black);;
+      startBT->SetTextColor(ENG::Color::Black);
 
       // ###############################
       // Objects Text
@@ -107,6 +107,7 @@
       renderQueue.clear();
       isInit = false;
       isRunning = false;
+      m_text = "";
     }
 
     bool MainMenu::IsRunning()
@@ -132,8 +133,8 @@
 
       if(pollEvent.IsKeyPress(SDL_SCANCODE_T))
       {
-        auto text = ENG::Services::CSV().GetText("eng","DIALOG_2", "Dialogos");
-        LOG_INFO(" | << Dialog: " + text);
+        m_text = ENG::Services::CSV().GetText("eng","DIALOG_2", "Dialogos");
+        LOG_INFO(" | << Dialog: " + m_text);
       }
 
       if(pollEvent.IsKeyPress(SDL_SCANCODE_Y))
@@ -160,7 +161,6 @@
           }
         }
       }
-      
       mousePressed = false;
     }
 
@@ -175,6 +175,9 @@
       {
         pool.Get(entry.id)->Draw(b);
       }
+
+
+      ENG::TextAPI::Get().DrawText(*ENG::Services::Fonts().GetFont("CabinItalic"), 500.f, 500.f, 64, m_text);
     }
 
   }

@@ -9,13 +9,9 @@
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Inputs/PollEvent.hpp"
 // | -------------------------------
-#include "Engine/Utils/Path.hpp"
 #include "SDL3/SDL_error.h"
 #include "SDL3_mixer/SDL_mixer.h"
 // | -------------------------------
-#include <algorithm>
-#include <chrono>
-#include <ctime>
 #include <memory>
 #include <string>
 #include <utility>
@@ -23,21 +19,13 @@
 
 namespace ENG
 {
-  Engine::Engine(const EngineConfig& config, std::unique_ptr<GameLayer> layer)
-    : eConfig(std::move(config)), game(std::move(layer)) {}
-
-  Engine::~Engine()
-  {
-    if(game)
-    {
-        game.reset();
-    }
-  }
+  Engine::Engine(EngineConfig& config, std::unique_ptr<GameLayer> layer)
+    : m_eConfig(&config), m_game(std::move(layer)) {}
 
   bool Engine::OnInit(void)
   {  
     auto& r = Render::Get();
-    if(r.InitWindowSDLContext(this->eConfig.title, this->eConfig.vW, this->eConfig.vH) == 0)
+    if(r.InitWindowSDLContext(this->m_eConfig->m_title, this->m_eConfig->m_viewWidth, this->m_eConfig->m_viewHeight) == 0)
     {
       LOG_INFO(" | << SDL InitWindows Context Error :" + static_cast<std::string>(SDL_GetError()));
       return false;
@@ -58,15 +46,15 @@ namespace ENG
     }
     LOG_INFO(" | << SDL_Mixer created succesfully");
 
-    Services::ProvideAssets(&amgr);
-    Services::ProvideScenes(&sm);
-    Services::ProvideFonts(&fm);
-    Services::ProvideSFX(&sfx);
-    Services::ProvideMusic(&music);
-    Services::ProvideShaders(&shaders);
-    Services::ProvideWorldSaver(&worldSaver);
-    Services::ProvideClockSaver(&clock);
-    Services::ProvideCSVManager(&csv);
+    Services::ProvideAssets(&m_eAssets);
+    Services::ProvideScenes(&m_eScenes);
+    Services::ProvideFonts(&m_eFont);
+    Services::ProvideSFX(&m_eSFX);
+    Services::ProvideMusic(&m_eMusic);
+    Services::ProvideShaders(&m_eShaders);
+    Services::ProvideWorldSaver(&m_eWorldSaver);
+    Services::ProvideClockSaver(&m_eClock);
+    Services::ProvideCSVManager(&m_eCSV);
     LOG_INFO(" | << AssertsManager created Succesfully");
     LOG_INFO(" | << ScenesManager created Succesfully");
     LOG_INFO(" | << FontsManager created Succesfully");
@@ -76,13 +64,12 @@ namespace ENG
     LOG_INFO(" | << WorldSaver created Succesfully");
     LOG_INFO(" | << ClockManager created Succesfully");
     LOG_INFO(" | << CSVManager created Succesfully");
-
     // Init Game resources for batching
-    r.SetScreenSize(this->eConfig.vW, this->eConfig.vH);
-    r.InitRenderContext();
-    game->OnInit();
+    r.SetScreenSize(this->m_eConfig->m_viewWidth, this->m_eConfig->m_viewHeight);
     // Init Batcher and RenderContext
-    
+    r.InitRenderContext(*m_eConfig);
+    // Init Game app
+    m_game->OnInit();
     return true;
   }
 
@@ -92,29 +79,25 @@ namespace ENG
 
     // Create DeltaTime
     auto clock = Services::Clock();
-    while (game->IsRunning())
+    while (m_game->IsRunning())
     {
       clock.Tick();
+      auto dt = clock.GetDT();
       PollEvent::Get().ProcessPollEvents();
 
-      while (m_accumulator >= Fixed_timestep)
-      {
-        game->OnUpdateFixed(Fixed_timestep);
-        m_accumulator -= Fixed_timestep;
-      }
+      m_game->OnUpdateFixed(dt);
 
-      game->OnInputs(clock.GetDT());
-      game->OnUpdate(clock.GetDT());
+      m_game->OnInputs(dt);
+      m_game->OnUpdate(dt);
       auto& r = Render::Get();
 
-      float alpha = m_accumulator / Fixed_timestep;
       // Update Render
       r.UpdateRender();
       // Start Rendering
       r.StartDraw();
       {
         ENG::Render::Get().RenderColor(ENG::Color::Gray); 
-        game->OnRender(alpha);
+        m_game->OnRender(dt);
       }
       r.EndDraw();
       // Clear Render
@@ -124,16 +107,27 @@ namespace ENG
 
     }
     LOG_INFO(" | << Application next to close, waiting...");
+
+    LOG_INFO(" | << [ENGINE] Saving Engine status");
     return true;
+  }
+  
+  void Engine::OnSave(void)
+  {
+    // Get information for the Engine config
+    auto& r = Render::Get();
+    this->m_eConfig->m_eFullscreen = r.GetFullscreen();
+    this->m_eConfig->m_viewWidth = r.GetScreenSize().x;
+    this->m_eConfig->m_viewHeight = r.GetScreenSize().y;
   }
 
   void Engine::OnDestroy(void)
   {
-    LOG_INFO(" | << Destroying Engine, waiting...");
-    LOG_INFO(" | << Destroying Game, waiting...");
-    game->OnDestroy();
-    game.reset();
-    LOG_INFO(" | << Clearing all services...");
+    LOG_INFO(" | << [ENGINE] Destroying Engine, waiting...");
+    LOG_INFO(" | << [ENGINE] Destroying Game, waiting...");
+    m_game->OnDestroy();
+    m_game.reset();
+    LOG_INFO(" | << [ENGINE] Clearing all services...");
     Services::Assets().Clear();
     Services::Scenes().Clear();
     Services::Fonts().Clear();
@@ -157,12 +151,14 @@ namespace ENG
     Services::ProvideClockSaver(nullptr);
     Services::ProvideCSVManager(nullptr);
 
-    LOG_INFO(" | << Destroying PollEventBuffer, waiting...");
+    LOG_INFO(" | << [ENGINE] Destroying SDL_MIX, waiting...");
+    MIX_Quit();
+    LOG_INFO(" | << [ENGINE] Destroying PollEventBuffer, waiting...");
     PollEvent::Get().ClearPollEvent();
     PollEvent::Get().DestroyPollEvent();
-    LOG_INFO(" | << Destroying Render, waiting...");
+    LOG_INFO(" | << [ENGINE] Destroying Render, waiting...");
     Render::Get().DestroyBatch();
     Render::Get().DestroyWindowSDLContext();
-    LOG_INFO(" | << OnDestroy finished, members next...");
+    LOG_INFO(" | << [ENGINE] OnDestroy finished");
   }
 }

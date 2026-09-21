@@ -20,7 +20,7 @@ namespace ENG
   {
     if(m_fonts.contains(font->GetName()))
     {
-      LOG_ERROR(" | << ERROR: font exits " + font->GetName());
+      LOG_ERROR(" | << Font exits >LoadFont():" + font->GetName());
       return;
     }
     m_fonts.emplace(font->GetName(),std::move(font));
@@ -28,6 +28,9 @@ namespace ENG
 
   Font* FontManager::GetFont(const std::string& fontName)
   {
-    return m_fonts.find(fontName)->second != nullptr ? m_fonts.at(fontName).get() : nullptr;
+    auto it = m_fonts.find(fontName);
+    if(it == m_fonts.end())
+      return nullptr;
+    return it->second.get();
   }
 }

@@ -1,6 +1,7 @@
 /// | ------------------------------------ |
 #include "Demo.hpp"
 /// | ------------------------------------ |
+#include "Engine/Utils/Log.hpp"
 #include "Game/Game.hpp"
 /// | ------------------------------------ |
 #include "Engine/Layer/Scene.hpp"
@@ -25,7 +26,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-/// | ------------------------------------ |
+/// | ------------------------------------|
 
 namespace APP
 {
@@ -43,14 +44,14 @@ namespace APP
     // Objects  
     // Configuration of the Object entities 
     // ###############################
-    
+
     // ###############################
     // Tilemap 
     // Configuration of the Tilemaps
     // ###############################
     // Tile map (Tiled JSON export, atlas resolved by tile "id" == gid - firstgid)
     ENG::Services::Assets().LoadAtlas("Atlas/Scenario1/atlasInfo.json", "Scenario1");
-    for (auto& mapLayer : ENG::TileMap::LoadTiledMap("Scenario1", "Map/Scenes/Escena1.json"))
+    for (auto& mapLayer : ENG::TileMap::LoadTiledMap("Scenario1", "Map/Scenes/Escena2.json"))
     {
       mapLayer.SetLayer(mapLayer.GetLayerNum(mapLayer.GetName()));
       mapLayer.SetPosition({0.0f, 0.0f});
@@ -76,7 +77,11 @@ namespace APP
     options = SDL_CreateProperties();
     SDL_SetNumberProperty(options, MIX_PROP_PLAY_LOOPS_NUMBER, -1);
     ENG::Services::Music().LoadMusic("Music/MarineHoloLive.mp3", "Marine", options);
-    ENG::Services::Music().SetVolume("Marine", 20.0f);
+    ENG::Services::Music().SetVolume("Marine", 10.0f);
+    ENG::Services::Music().PlayMusic("Marine");
+
+    ENG::Services::SFX().LoadSFX("SFX/Shot_Gun.mp3", "GunShot", 2);
+    ENG::Services::SFX().SetVolume("GunShot", 10.0f);
 
     // ###############################
     // Final
@@ -100,7 +105,7 @@ namespace APP
 
     if (pollEvent.IsKeyPress(SDL_SCANCODE_T))
     {
-      ENG::Services::SFX().PlaySFX("Shot");
+      ENG::Services::SFX().PlaySFX("GunShot");
     }
 
     if (pollEvent.IsKeyPress(SDL_SCANCODE_KP_PLUS))
@@ -150,7 +155,6 @@ namespace APP
     {
       pool.Get(o)->Update(dt);
     }
-
   }
 
   void DemoScene::UpdateFixed(float dt)
@@ -165,20 +169,13 @@ namespace APP
     for (auto& entry : renderQueue)
     {
       auto* obj = pool.Get(entry.id);
-
       obj->Draw(b);
-      // if (auto* bb = obj->GetComponent<ENG::IBoundingBox>())
-      // {
-      //   ENG::Rect objRect = { bb->GetPosition().x, bb->GetPosition().y, bb->GetSize().x, bb->GetSize().y};
-      //   if (!RectIntersects(camRect, objRect))
-      //     continue;
-      // }
     }
     RenderTileMaps(b, LAYER_PLAYER, LAYER_MAX);    /// Layer front of the player
 
-    // ENG::Drawer::DrawLine({300.0f, 300.0f}, {500.0f, 300.0f}, ENG::Color::Green, 2.0f);
     ENG::Drawer::DrawCircle({150.0f, 150.0f}, 30.0f, ENG::Color::Green, 64);
     ENG::Drawer::DrawCircleOutLine({150.0f, 150.0f}, 30.0f, ENG::Color::Yellow, 64);
+
   }
 
   void DemoScene::Destroy()

@@ -8,6 +8,7 @@
 #include <cassert>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 // | -------------------------------
 
@@ -45,7 +46,10 @@ namespace ENG
       return;
     }
     Render::Get().GetBatcher().SetCamera2D(nullptr);
-    m_s_current = m_scenesMap.at(m_pedding).get();
+    auto it = m_scenesMap.find(m_pedding);
+    if(it == m_scenesMap.end())
+      return;
+    m_s_current = it->second.get();
     m_arePedding = false;
   }
 

@@ -21,7 +21,7 @@ namespace ENG
     if(r && resolution)
     {
       auto p = source.GetTransform();
-      p.position = p .prev_position;
+      p.m_position = p.m_prev_position;
     }
 
     return r;

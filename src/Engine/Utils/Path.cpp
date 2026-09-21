@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <string>
 #include <cstddef>
-#include <cstdint>
 // | -------------------------------
 #if defined(_WIN32)
 #include <windows.h>
@@ -70,31 +69,30 @@ namespace ENG
 
   Path::Path()
   {
-    _executableDir = GetExecutableDir();
-
-    // Ajusta estas rutas a la estructura real de Project-AK.
-    AssetsPath  = _executableDir / "assets/";
-    ShadersPath = _executableDir / "shaders/";
-    ConfigPath  = _executableDir / "config/";
-    DataPath    = _executableDir / "data/";
+    m_executableDir = GetExecutableDir();
+    // Ajust the directories to the Executable path.
+    AssetsPath  = m_executableDir / "assets/";
+    ShadersPath = m_executableDir / "shaders/";
+    ConfigPath  = m_executableDir / "config/";
+    DataPath    = m_executableDir / "data/";
   }
 
   Path& Path::Get()
   {
-    if(!_instance)
+    if(!m_instance)
     {
-      _instance = new Path();
+      m_instance = new Path();
     }
-    return *_instance;
+    return *m_instance;
   }
 
   void Path::Destroy()
   {
-    delete _instance;
-    _instance = nullptr;
+    delete m_instance;
+    m_instance = nullptr;
   }
 
-  std::string Path::ReadFile(const std::filesystem::path& path) const
+  std::string Path::ReadFileString(const std::filesystem::path& path) const
   {
     std::ifstream file(path, std::ios::in | std::ios::binary);
     if(!file.is_open())
@@ -105,5 +103,18 @@ namespace ENG
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
+  }
+
+  std::stringstream Path::ReadFile(const std::filesystem::path& path) const
+  {
+    std::ifstream file(path, std::ios::in | std::ios::binary);
+    if(!file.is_open())
+    {
+      throw std::runtime_error("Path::ReadFile: could not open file: " + path.string());
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer;
   }
 }

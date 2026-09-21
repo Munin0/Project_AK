@@ -3,7 +3,6 @@
 // | -------------------------------
 #include "Engine/Render/Render.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
-#include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
 // | -------------------------------
 #include <memory>
@@ -22,17 +21,15 @@ namespace ENG
   {
     if(m_shaders.contains(idKey))
     {
-      LOG_ERROR(" | << ERROR: Shader exits " + idKey);
       return;
     }
     auto& path = Path::Get();
     auto p = Path::Get().ShadersPath;
 
-    auto _fPath = path.ReadFile(p / frag);
-    auto _vPath = path.ReadFile(p / vert);
+    auto _fPath = path.ReadFileString(p / frag);
+    auto _vPath = path.ReadFileString(p / vert);
 
-    auto s = std::make_unique<Shader>(_vPath,_fPath);
-    m_shaders[idKey] = std::move(s);
+    m_shaders[idKey] = std::move(std::make_unique<Shader>(_vPath,_fPath));
   }
 
   Shader* ShaderManager::Get(const std::string& idKey)

@@ -7,6 +7,7 @@
 #include "Engine/Render/Batching/RenderEntry.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 /// | ------------------------------------ |
+#include <string>
 #include <vector>
 /// | ------------------------------------ |
 
@@ -28,6 +29,8 @@ namespace APP
       bool mousePressed;
       ENG::ObjectPool pool;
       std::vector<ENG::RenderEntry> renderQueue;
+
+      std::string m_text;
   };
 }
 

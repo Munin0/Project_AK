@@ -63,7 +63,7 @@ namespace ENG
     AtlasData data;
     try
     {
-      std::string jsonContent = Path::Get().ReadFile(jsonPath);
+      std::string jsonContent = Path::Get().ReadFileString(jsonPath);
       nlohmann::json j = nlohmann::json::parse(jsonContent);
 
       data.name        = j.at("name").get<std::string>();

@@ -1,9 +1,10 @@
 // | -------------------------------
 #include "Engine/Services/CSVManager.hpp"
 // | -------------------------------
-#include "Engine/Extern/rapidcsv.h"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
+// | -------------------------------
+#include "Engine/Extern/rapidcsv.h"
 // | -------------------------------
 #include <cstddef>
 #include <exception>
@@ -23,6 +24,11 @@ namespace ENG
 
   void CSVManager::Load(const std::string& path, const std::string& key, int colID, int rowID)
   {
+    if(m_csv.contains(key))
+    {
+      // LOG_ERROR(" | << CSV already loaded: " + key + " | " + path);
+      return;
+    }
     auto p = Path::Get().AssetsPath / path;
     m_csv[key] = std::move(std::make_unique<rapidcsv::Document>(p.string(), rapidcsv::LabelParams(colID, rowID)));
   }
@@ -32,7 +38,7 @@ namespace ENG
     auto it = m_csv.find(key);
     if (it == m_csv.end())
     {
-      LOG_ERROR(" | << Key not found: " + key);
+      LOG_ERROR(" | << CSV not found >GetDoc(): " + key);
       return nullptr;
     }
     return it->second.get();

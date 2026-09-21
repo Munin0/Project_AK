@@ -64,7 +64,7 @@ namespace ENG
   void Object::Update(float dt)
   {
     for (auto& bb : boundingBoxes)
-      bb.Update(this->GetTransform().position);
+      bb.Update(this->GetTransform().m_position);
 
     if(auto* anim = this->GetComponent<IAnimator>())
     {
@@ -76,19 +76,19 @@ namespace ENG
 
   void Object::SetPosition(float x, float y)
   {
-    transform.prev_position = transform.position;
-    transform.position.x = x;
-    transform.position.y = y;
+    transform.m_prev_position = transform.m_position;
+    transform.m_position.x = x;
+    transform.m_position.y = y;
   }
 
   void Object::SetPosition(const Vector2& new_pos)
   {
-    this->transform.position = new_pos;
+    this->transform.m_position = new_pos;
   }
 
   const Vector2& Object::GetPosition(void) const
   {
-    return this->transform.position;
+    return this->transform.m_position;
   }
 
   Vector2 Object::GetSizeSprite() const
@@ -107,20 +107,20 @@ namespace ENG
     // ITransform
     auto& t = this->GetTransform();
     state.m_tData = {
-      .m_position = t.position,
-      .m_velocity = t.velocity,
-      .m_direction = t.direction,
-      .m_angle = t.angle
+      .m_position   = t.m_position,
+      .m_velocity   = t.m_velocity,
+      .m_direction  = t.m_direction,
+      .m_angle      = t.m_angle
     };
 
     // IStats
     auto& s = GetStats();
     state.m_sData = {
-      .m_hp = s.hp,
-      .m_hp_max = s.hp_max,
-      .m_str = s.str,
-      .m_def = s.def,
-      .m_agi = s.agi
+      .m_hp       = s.m_hp,
+      .m_hp_max   = s.m_hp_max,
+      .m_str      = s.m_str,
+      .m_def      = s.m_def,
+      .m_agi      = s.m_agi
     };
 
     // ISprite
@@ -171,17 +171,17 @@ namespace ENG
     this->layer = state.m_layer;
 
     auto& t = GetTransform();
-    t.position  = state.m_tData.m_position;
-    t.velocity  = state.m_tData.m_velocity;
-    t.direction = state.m_tData.m_direction;
-    t.angle     = state.m_tData.m_angle;
+    t.m_position  = state.m_tData.m_position;
+    t.m_velocity  = state.m_tData.m_velocity;
+    t.m_direction = state.m_tData.m_direction;
+    t.m_angle     = state.m_tData.m_angle;
 
     auto& s = GetStats();
-    s.hp     = state.m_sData.m_hp;
-    s.hp_max = state.m_sData.m_hp_max;
-    s.str    = state.m_sData.m_str;
-    s.def    = state.m_sData.m_def;
-    s.agi    = state.m_sData.m_agi;
+    s.m_hp     = state.m_sData.m_hp;
+    s.m_hp_max = state.m_sData.m_hp_max;
+    s.m_str    = state.m_sData.m_str;
+    s.m_def    = state.m_sData.m_def;
+    s.m_agi    = state.m_sData.m_agi;
 
     if(state.m_spData)
     {
@@ -217,7 +217,7 @@ namespace ENG
     if(state.m_txData)
     {
       auto* f = Services::Fonts().GetFont(state.m_txData->m_fontKey);
-      auto& t = AddComponent<IText>();
+      auto& t = AddComponent<IText>("");
       t.SetText(state.m_txData->m_text);
       t.SetFontSize(state.m_txData->m_fontSize);
       t.SetFont(f);

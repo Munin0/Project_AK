@@ -3,6 +3,22 @@
 Compact record of engine changes and versions.
 
 `Version.. | feature, bug, change > Descripción`
+
+
+---
+
+## Alpha 0.04e
+
+`Alpha 0.04e | bug > Solved memory leak with sdl_mixer.`
+
+`Alpha 0.04e | change > Now have more verifications before used something from ENG::Service().`
+
+`Alpha 0.04e | added > Valgrind version build, can use ./valgrindTest.sh to create the Valgrind version. `
+
+`Alpha 0.04e | bug > Some undefinded behavior solved. `
+
+`Alpha 0.04e | added > Now all Headers have comments.` 
+
 ---
 
 ## Alpha 0.04d
@@ -27,7 +43,7 @@ Compact record of engine changes and versions.
 
 `Alpha 0.04b | update > update data/, now having something.`
 
-`Alpha 0.04b | adding > THIRD_PARTY_NOTICIES, for libraries copyrigth`
+`Alpha 0.04b | added > THIRD_PARTY_NOTICIES, for libraries copyrigth`
 
 ---
 

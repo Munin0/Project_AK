@@ -67,11 +67,26 @@ add_executable(Project_AK)
 
 add_subdirectory(src)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  target_compile_options(Project_AK PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-  target_link_options(Project_AK PRIVATE -fsanitize=address)
+option(ENABLE_SANITIZERS "Compile with ASan/UBSan (disable for Valgrind builds)" ON)
+if(MSVC)
+  if(ENABLE_SANITIZERS)
+    target_compile_options(Project_AK PRIVATE
+      $<$<CONFIG:Debug>:/fsanitize=address>
+    )
+    string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  endif()
+else()
+  if(ENABLE_SANITIZERS)
+    target_compile_options(Project_AK PRIVATE
+      $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+      $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
+      $<$<CONFIG:Debug>:-fno-sanitize-recover=all>
+    )
+    target_link_options(Project_AK PRIVATE
+      $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+    )
+  endif()
 endif()
-
 message("-- Libraries linked: ")
 message("--   - « SDL3 »")
 message("--   - « SDL3 Image »")

@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <string_view>
 // | -------------------------------
 
 namespace ENG
@@ -37,10 +38,7 @@ namespace ENG
   void AssetsManager::LoadAtlas(const std::string& path, const std::string& idkey)
   {
     if(m_atlases.contains(idkey))
-    {
-      LOG_ERROR(" | << ERROR: Atlas already exist " + idkey);
       return;
-    }
 
     auto jsonPath = Path::Get().AssetsPath / path;
     AtlasData data = ParseAtlasJSON(jsonPath.string());
@@ -64,9 +62,10 @@ namespace ENG
 
   std::shared_ptr<RImage> AssetsManager::GetTexture(const std::string& keyName)
   {
-    if(m_mapImages.contains(keyName))
-      return m_mapImages[keyName];
-   return nullptr;
+    auto it = m_mapImages.find(std::string_view{keyName});
+    if(it == m_mapImages.end())
+      return nullptr;
+    return it->second;
   }
 
   const AtlasData* AssetsManager::GetAtlas(const std::string& key) const

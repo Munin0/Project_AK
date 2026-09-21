@@ -1,5 +1,7 @@
 # Build directories
 build/
+build-valgrind/
 
+# Archives
 CLAUDE.md
 AGENTS.md

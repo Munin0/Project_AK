@@ -2,8 +2,6 @@
 #include "Game.hpp"
 /// | ------------------------------------ |
 #include "Engine/Inputs/PollEvent.hpp"
-#include "Engine/Modules/BakerFont.hpp"
-#include "Engine/Modules/LanguageRanges.hpp"
 #include "Engine/Render/Batching/RAPIBatch.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Text/Font/Font.hpp"
@@ -25,24 +23,22 @@ namespace APP
 {
   Game::Game()
   {
-    IsAppEnd = false;
+    m_gameRunning = true;
   }
 
   void Game::OnInit(void)
   {
     LOG_INFO(" | << Game application Init Succesfully");
-
     /// Baking fonts
     // ENG::BakerFont baker("Font/TTF/CabinBold.ttf");
     // baker.Bake( {ENG::Language::English, ENG::Language::Spanish} );
     // baker.SaveToDisk("assets/Font/","CabinBold");
-    
     /// Load All Fonts
     ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("PottaOne"));
     ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("Cabin"));
     ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("CabinItalic"));
     /// Load All Atlas 
-    // ENG::Services::Assets().Load("Player/Player.png", "Player");
+
     /// Adding Shaders
     ENG::Services::Shaders().Load("mono.fs","mono.vs","Mono");
     /// Adding Scenes
@@ -55,12 +51,12 @@ namespace APP
   void Game::OnDestroy(void)
   {
     LOG_INFO(" | << Destroying Game, waiting...");
-    IsAppEnd = true;
+    m_gameRunning = false;
   }
 
   bool Game::IsRunning(void)
   {
-    return !IsAppEnd;
+    return m_gameRunning;
   }
 
   void Game::OnInputs(float dt)
@@ -69,15 +65,11 @@ namespace APP
      
     if(pollEvent.IsKeyPress(SDL_SCANCODE_ESCAPE))
     {
-      IsAppEnd = !IsAppEnd;
+      m_gameRunning = !m_gameRunning;
     }
-    if(pollEvent.IsKeyPress(SDL_SCANCODE_F3))
-      debugDraw = !debugDraw;
-
     if(pollEvent.IsKeyPress(SDL_SCANCODE_F1))
     {
-      auto& tF = ENG::Render::Get()._toggleFullscreen;
-      tF = !tF;
+      ENG::Render::Get().ToggleFullscreen();
     }
     ENG::Services::Scenes().GetCurrent()->Inputs(dt);
   }
