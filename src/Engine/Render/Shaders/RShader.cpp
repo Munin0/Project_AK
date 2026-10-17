@@ -10,7 +10,7 @@ namespace ENG
 {
   int Shader::countShaders = 0;
 
-  Shader::Shader(const std::string& vert, const std::string& frag)
+  Shader::Shader(const std::string& frag, const std::string& vert)
     : _vert{vert}, _frag{frag}
   {
     bool result = this->CompileShader();

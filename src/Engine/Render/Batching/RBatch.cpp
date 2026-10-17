@@ -2,6 +2,7 @@
 #include "RBatch.hpp"
 /// | ------------------------------------ |
 #include "Engine/Render/Camera/Camera2D.hpp"
+#include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Render/Render.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Image/RImage.hpp"
@@ -204,7 +205,11 @@ namespace ENG
     m_proj = glm::ortho(0.0f, wS.x,wS.y,0.0f, -1.0f, 1.0f);
 
     /// Load Matrix
-    const glm::mat4 proj = m_camera ? m_camera->GetViewProjectionMatrix() : m_proj;
+    glm::mat4 proj = m_proj;
+    if(m_camera != nullptr)
+    {
+      proj = m_camera->GetViewProjectionMatrix();
+    }
 
     // Get default Shader, if we have a MaterialShader in coming, we change drawing
     Shader* activeShader = shader;
@@ -480,6 +485,12 @@ namespace ENG
 
     m_VertexCount += 4;
     m_IndexCount  += 6;
+  }
+
+  void Batcher::DrawAtlasIsometric(int atlasLayer, const UVRect& rect, const glm::vec2& pos, const glm::vec2& size, float offset)
+  {
+    glm::vec2 drawPos = pos - glm::vec2(0.0f, offset);
+    DrawAtlasSprite(drawPos, size, atlasLayer, rect.uvMin, rect.uvMax);
   }
 
   void Batcher::DrawCircle(const glm::vec2& center, float radius, const glm::vec4& color, uint32_t segments)

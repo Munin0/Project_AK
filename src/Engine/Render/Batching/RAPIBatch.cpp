@@ -110,7 +110,7 @@ namespace ENG
 
   void Drawer::DrawTriangleOutline(const Vector2& pointA, const Vector2& pointB, const Vector2& pointC, const Color& _color, float thickness)
   {
-    auto b = Render::Get().GetBatcher();
+    auto& b = Render::Get().GetBatcher();
     glm::vec2 pA = {pointA.x, pointA.y};
     glm::vec2 pB = {pointB.x, pointB.y};
     glm::vec2 pC = {pointC.x, pointC.y};
@@ -137,7 +137,7 @@ namespace ENG
 
   void Drawer::DrawPolygonOutline(const std::vector<Vector2>& _points, const Color& _color, float thickness)
   {
-    auto b = Render::Get().GetBatcher();
+    auto& b = Render::Get().GetBatcher();
     std::vector<glm::vec2> points;
     glm::vec4 color = {_color.r,_color.g,_color.b,_color.a};
     for(auto& p : _points)

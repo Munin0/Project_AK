@@ -19,8 +19,9 @@ cmake --build build --config Debug --target Project_AK -- -j 8
 echo "Compilacion terminada! "
 
 # En Windows (MSVC/Ninja) el binario sale con extension .exe; en Linux/Mac, sin ella.
-export ASAN_OPTIONS="malloc_context_size=50:fast_unwind_on_malloc=0"
-export LSAN_OPTIONS="suppressions=$(pwd)/lsan_suppressions.txt"
+# Nota: el leak de SDL3/Wayland esta suprimido dentro del binario (main.cpp,
+# __lsan_default_suppressions + __asan_default_options), no hace falta
+# exportar ASAN_OPTIONS/LSAN_OPTIONS aqui.
 
 EXE="build/Debug/Project_AK"
 if [ -f "build/Debug/Project_AK.exe" ]; then

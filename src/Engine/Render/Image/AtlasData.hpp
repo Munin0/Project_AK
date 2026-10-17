@@ -14,12 +14,16 @@ namespace ENG
    */
   struct AnimationRegion
   {
-    /// @brief Column of the grid cell where the animation starts.
-    int col;
-    /// @brief Row of the grid cell where the animation starts.
-    int row;
-    /// @brief Number of frames of the animation.
-    int frameCount;
+    /// @brief Position X of the grid cell of the tile.
+    int x = 0;
+    /// @brief Position Y of the grid cell of the tile.
+    int y = 0;
+    /// @brief Width of the grid cell of the tile.
+    int w = 0;
+    /// @brief Height of the grid cell of the tile.
+    int h = 0;
+    /// @brief frameCount of the animation.
+    int frameCount = 0;
   };
 
   /**
@@ -27,12 +31,16 @@ namespace ENG
    */
   struct TileRegion
   {
-    /// @brief Column of the grid cell of the tile.
-    int col;
-    /// @brief Row of the grid cell of the tile.
-    int row;
+    /// @brief Position X of the grid cell of the tile.
+    int x = 0;
+    /// @brief Position Y of the grid cell of the tile.
+    int y = 0;
+    /// @brief Width of the grid cell of the tile.
+    int w = 0;
+    /// @brief Height of the grid cell of the tile.
+    int h = 0;
     /// @brief Numeric ID of the tile (in Tiled terms: GID - firstgid).
-    int id;
+    int id = 0;
   };
 
   /**
@@ -52,11 +60,13 @@ namespace ENG
     /// @brief Actual size of the atlas image, in pixels.
     ///        Populated when UploadLayer() is called.
     int atlasWidth = 0, atlasHeight = 0;
-    /// @brief Size of each grid cell, in pixels.
-    int tileSize;
+    /// @brief Width of the tile to Draw
+    int tileWidth = 0;
+    /// @brief Height of the tile to Draw
+    int tileHeight = 0;
     /// @brief Layer of the TextureArray where the atlas was uploaded.
     ///        Populated when UploadLayer() is called; not loaded from the JSON.
-    int atlasLayer;
+    int atlasLayer = -1;
     /// @brief Actual size of the layer in the TextureArray, in pixels.
     ///        It is the base used to normalize the UV coordinates.
     int containerWidth = 0, containerHeight = 0;
@@ -78,6 +88,12 @@ namespace ENG
     glm::vec2 uvMin;
     /// @brief UV coordinates of the opposite corner of the rectangle (maximum values).
     glm::vec2 uvMax;
+    /// @brief
+    glm::vec2 pixelSize;
+
+    UVRect() : uvMin(0.0f), uvMax(0.0f), pixelSize(0.0f) {}
+    UVRect(glm::vec2 min, glm::vec2 max, glm::vec2 size)
+      : uvMin{min}, uvMax{max}, pixelSize{size} {}
   };
 
   /**

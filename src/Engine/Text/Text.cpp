@@ -25,9 +25,8 @@ namespace ENG
 
   void Text::Draw(Batcher& b) const
   {
-    const auto font = Services::Fonts().GetFont("PottaOne"); 
     const auto color =this->GetComponent<ENG::IColor>()->GetColor();
-    TextAPI::Get().DrawTextEx(*font,this->GetPosition(),this->m_text.GetText(), this->m_text.GetFontSize(), color);
+    TextAPI::Get().DrawTextEx(*this->m_text.GetFont(),this->GetPosition(),this->m_text.GetText(), this->m_text.GetFontSize(), color);
   }
 
   void Text::Update(float dt)
@@ -72,7 +71,7 @@ namespace ENG
     // IAnimator
     if (auto* an = GetComponent<IAnimator>())
     {
-      state.m_anData = {.m_key = an->GetName(),
+      state.m_anData = {.m_key = an->GetKeyAnimation(),
         .m_frames = an->GetFrames(),
         .m_step = an->GetStep(),
         .m_speed = an->GetSpeed(),
@@ -126,7 +125,7 @@ namespace ENG
     {
       AddComponent<IAnimator>(
           state.m_anData->m_key,
-          state.m_anData->m_frames,
+          state.m_anData->m_keyAtlas,
           state.m_anData->m_speed,
           state.m_anData->m_step,
           state.m_anData->m_scale

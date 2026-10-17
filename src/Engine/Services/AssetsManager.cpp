@@ -7,10 +7,13 @@
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
 // | -------------------------------
+#include <exception>
 #include <filesystem>
+#include <format>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 // | -------------------------------
 
 namespace ENG
@@ -35,29 +38,84 @@ namespace ENG
     m_mapImages[keyName] = img;
   }
 
-  void AssetsManager::LoadAtlas(const std::string& path, const std::string& idkey)
+  bool AssetsManager::LoadAtlas(const std::string& path, const std::string& idkey)
   {
-    if(m_atlases.contains(idkey))
-      return;
+    if (m_atlases.contains(idkey))
+      return true;
 
-    auto jsonPath = Path::Get().AssetsPath / path;
-    AtlasData data = ParseAtlasJSON(jsonPath.string());
+    const auto jsonPath = Path::Get().AssetsPath / path;
 
-    auto texturePath = jsonPath.parent_path() / data.texturePath;
+    AtlasData data;
+    try
+    {
+      data = ParseAtlasJSON(jsonPath.string());
+    }
+    catch (const std::exception& e)
+    {
+      LOG_ERROR(std::format("Atlas '{}': JSON invalido: {}", idkey, e.what()));
+      return false;
+    }
+
+    const auto texturePath = jsonPath.parent_path() / data.texturePath;
     ImagePixels img = LoadImagePixels(texturePath.string());
     if (!img.data)
-      return;
+    {
+      LOG_ERROR(std::format("Atlas '{}': no se pudo cargar la imagen {}", idkey, texturePath.string()));
+      return false;
+    }
 
-    int layer = m_textureArray.UploadLayer(img.data, img.width, img.height); // RAM → VRAM
+    if (data.tileWidth > 0 && data.tileHeight > 0 &&
+        (img.width % data.tileWidth != 0 || img.height % data.tileHeight != 0))
+    {
+      LOG_ERROR(std::format("Atlas '{}': imagen {}x{} no es multiplo de la celda {}x{}",
+            idkey, img.width, img.height, data.tileWidth, data.tileHeight));
+    }
+
+    // Una region es valida si es no vacia y cabe dentro de la imagen
+    const auto fits = [&](int x, int y, int w, int h)
+    {
+      return w > 0 && h > 0 &&
+        x >= 0 && y >= 0 &&
+        x + w <= img.width &&
+        y + h <= img.height;
+    };
+
+    for (const auto& [animName, a] : data.animations)
+    {
+      // Los frames avanzan en horizontal: el ancho total es frameCount * w
+      if (a.frameCount <= 0 || !fits(a.x, a.y, a.frameCount * a.w, a.h))
+      {
+        LOG_ERROR(std::format("Atlas '{}': animacion '{}' fuera del atlas (x={}, y={}, frame={}x{}, frames={}, imagen={}x{})",
+              idkey, animName, a.x, a.y, a.w, a.h, a.frameCount, img.width, img.height));
+        return false;
+      }
+    }
+
+    for (const auto& [tileName, t] : data.tiles)
+    {
+      if (!fits(t.x, t.y, t.w, t.h))
+      {
+        LOG_ERROR(std::format("Atlas '{}': tile '{}' fuera del atlas (x={}, y={}, {}x{}, imagen={}x{})",
+              idkey, tileName, t.x, t.y, t.w, t.h, img.width, img.height));
+        return false;
+      }
+    }
+
+    const int layer = m_textureArray.UploadLayer(img.data, img.width, img.height);
     if (layer < 0)
-      return;
+    {
+      LOG_ERROR(std::format("Atlas '{}': UploadLayer fallo (TextureArray lleno o imagen mayor al contenedor)", idkey));
+      return false;
+    }
 
     data.atlasLayer      = layer;
     data.atlasWidth      = img.width;
     data.atlasHeight     = img.height;
     data.containerWidth  = m_textureArray.GetWidth();
     data.containerHeight = m_textureArray.GetHeight();
-    m_atlases[idkey] = data;
+
+    m_atlases.emplace(idkey, std::move(data));
+    return true;
   }
 
   std::shared_ptr<RImage> AssetsManager::GetTexture(const std::string& keyName)

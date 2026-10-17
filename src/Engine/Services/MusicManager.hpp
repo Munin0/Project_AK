@@ -57,6 +57,12 @@ namespace ENG
        * @param[in] key Key the music was loaded with.
        */
       void PlayMusic(const std::string& key);
+
+      //Resume
+
+      //Pause
+
+
       /**
        * @brief Stops a music track that is playing.
        *
@@ -115,10 +121,14 @@ namespace ENG
       {
         m_mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
       }
+
+      std::string GetCurrentMusic(void) const { return this->m_current;}
     private:
       /// @brief SDL_mixer mixer used to play the music. nullptr until Init() is called.
       MIX_Mixer* m_mixer = nullptr;
       /// @brief Loaded music tracks, indexed by key.
       std::unordered_map<std::string, MusicTrack, StringHash, std::equal_to<>> m_music;
+      /// @brief Current music on play
+      std::string m_current = "";
   };
 }

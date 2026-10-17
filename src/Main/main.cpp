@@ -22,6 +22,25 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "Engine/Extern/stb_truetype.h"
 // | -------------------------------
+#if defined(__has_feature)
+#  if __has_feature(address_sanitizer)
+#    define AK_IS_ASAN 1
+#  endif
+#elif defined(__SANITIZE_ADDRESS__)
+#  define AK_IS_ASAN 1
+#endif
+// | -------------------------------
+#ifdef AK_IS_ASAN
+extern "C" const char* __lsan_default_suppressions()
+{
+  return "leak:Wayland_VideoInit\n";
+}
+extern "C" const char* __asan_default_options()
+{
+  return "fast_unwind_on_malloc=0:print_suppressions=0";
+}
+#endif
+// | -------------------------------
 
 int main(void)
 {

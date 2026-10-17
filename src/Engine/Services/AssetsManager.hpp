@@ -55,7 +55,7 @@ namespace ENG
        * @param[in] path Path of the atlas to load.
        * @param[in] key  Key used to retrieve the atlas later with GetAtlas().
        */
-      void LoadAtlas(const std::string& path, const std::string& key);
+      bool LoadAtlas(const std::string& path, const std::string& key);
       /**
        * @brief Returns a previously loaded texture.
        *

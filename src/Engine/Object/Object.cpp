@@ -53,10 +53,12 @@ namespace ENG
     if(sprite->IsAtlas())
     {
       const UVRect& uv = sprite->GetUV();
+      glm::vec2 size = this->GetSizeSprite() * sprite->GetScale();
       b.DrawAtlasSprite(pos, size, sprite->GetAtlasLayer(), uv.uvMin, uv.uvMax, color);
     }
     else
     {
+      glm::vec2 size = this->GetSizeSprite() * sprite->GetScale();
       b.DrawTexture(pos, size, sprite->GetImage(), color);
     }
   }
@@ -70,7 +72,7 @@ namespace ENG
     {
       anim->Advance(dt);
       if(auto* sprite = this->GetComponent<ISprite>())
-        sprite->SetFrame(anim->GetCurrentFrame());
+        sprite->SetFrame(anim->GetKeyAnimation(),anim->GetCurrentFrame());
     }
   }
 
@@ -79,11 +81,23 @@ namespace ENG
     transform.m_prev_position = transform.m_position;
     transform.m_position.x = x;
     transform.m_position.y = y;
+    const auto& box = this->GetComponent<ENG::IBoundingBox>();
+    if(box){
+      box->Update(transform.m_position);
+    }
+    for (auto& bb : boundingBoxes)
+      bb.Update(transform.m_position);
   }
 
   void Object::SetPosition(const Vector2& new_pos)
   {
     this->transform.m_position = new_pos;
+    const auto& box = this->GetComponent<ENG::IBoundingBox>();
+    if(box){
+      box->Update(transform.m_position);
+    }
+    for (auto& bb : boundingBoxes)
+      bb.Update(transform.m_position);
   }
 
   const Vector2& Object::GetPosition(void) const
@@ -132,7 +146,7 @@ namespace ENG
     // IAnimator
     if (auto* an = GetComponent<IAnimator>())
     {
-      state.m_anData = {.m_key = an->GetName(),
+      state.m_anData = {.m_key = an->GetKeyAnimation(),
         .m_frames = an->GetFrames(),
         .m_step = an->GetStep(),
         .m_speed = an->GetSpeed(),
@@ -192,7 +206,7 @@ namespace ENG
     {
       AddComponent<IAnimator>(
           state.m_anData->m_key,
-          state.m_anData->m_frames,
+          state.m_anData->m_keyAtlas,
           state.m_anData->m_speed,
           state.m_anData->m_step,
           state.m_anData->m_scale

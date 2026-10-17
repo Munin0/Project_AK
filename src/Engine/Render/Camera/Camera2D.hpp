@@ -85,10 +85,6 @@ namespace ENG
       {
         if(m_target != nullptr)
           m_position = m_target->m_position;
-        if(m_target_bb != nullptr)
-        {
-          m_position = m_target_bb->GetCenter();
-        }
       }
 
       /**

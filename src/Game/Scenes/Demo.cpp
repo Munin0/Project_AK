@@ -1,36 +1,37 @@
 /// | ------------------------------------ |
 #include "Demo.hpp"
 /// | ------------------------------------ |
-#include "Engine/Utils/Log.hpp"
-#include "Game/Game.hpp"
+#include "Engine/Component/Component.hpp"
+#include "Engine/Render/Batching/RAPIBatch.hpp"
+#include "Engine/Render/Camera/Camera2D.hpp"
+#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Render.hpp"
 /// | ------------------------------------ |
 #include "Engine/Layer/Scene.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Object/ObjectPool.hpp"
 #include "Engine/Map/TileMap/TileMap.hpp"
 #include "Engine/Inputs/PollEvent.hpp"
-#include "Engine/Render/Batching/RAPIBatch.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
-#include "Engine/Render/Camera/Camera2D.hpp"
-#include "Engine/Render/Color/RColor.hpp"
-#include "Engine/Render/Geometry/RGeometry.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | ------------------------------------ |
+#include "Game/Systems/Systems.hpp"
 #include "SDL3/SDL_properties.h"
 #include "SDL3/SDL_scancode.h"
 #include "SDL3_mixer/SDL_mixer.h"
 /// | ------------------------------------ |
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 /// | ------------------------------------|
+#define PLAYER 1
+/// | ------------------------------------|
 
 namespace APP
 {
-  DemoScene::DemoScene(ENG::SceneID id) : ENG::Scene{}
+  DemoScene::DemoScene(const std::string& id) : ENG::Scene{}
   {
     sceneID = id;
   }
@@ -44,28 +45,33 @@ namespace APP
     // Objects  
     // Configuration of the Object entities 
     // ###############################
-
+    auto idPlayer = pool.Add(std::make_unique<ENG::Object>("Player"));
+    auto objPlayer = pool.Get(idPlayer);
+    objPlayer->SetPosition(ENG::Vector2{500,500});
+    objPlayer->GetTransform().m_velocity = {100,100};
+    objPlayer->AddComponent<ENG::IBoundingBox>(ENG::Vector2{16,16});
+    
     // ###############################
     // Tilemap 
     // Configuration of the Tilemaps
     // ###############################
     // Tile map (Tiled JSON export, atlas resolved by tile "id" == gid - firstgid)
-    ENG::Services::Assets().LoadAtlas("Atlas/Scenario1/atlasInfo.json", "Scenario1");
-    for (auto& mapLayer : ENG::TileMap::LoadTiledMap("Scenario1", "Map/Scenes/Escena2.json"))
+    ENG::Services::Assets().LoadAtlas("Atlas/Isometrico/CaveMap.json", "I_CaveMap");
+    for (auto& mapLayer : ENG::TileMap::LoadTiledMap("I_CaveMap", "Map/Scenes/expIsometrico.json"))
     {
-      mapLayer.SetLayer(mapLayer.GetLayerNum(mapLayer.GetName()));
-      mapLayer.SetPosition({0.0f, 0.0f});
       AddTileMap(std::move(mapLayer));
     }
+
     // ###############################
     // Camera  
     // Configuration of the camera
     // ###############################
-    // camera = std::make_unique<ENG::Camera2D>(1280.0f, 720.0f);
-    // camera->SetTarget(player->GetSolidBox());
-    // camera->SetPosition(player->GetTransform().position);
-    // camera->SetZoom(2.0f);
-    // ENG::Render::Get().GetBatcher().SetCamera2D(camera.get());
+    auto r = ENG::Render::Get().GetScreenSize();
+    cam = std::make_unique<ENG::Camera2D>(r.x, r.y);
+    cam->SetTarget(&objPlayer->GetTransform());
+    cam->SetPosition(objPlayer->GetPosition());
+    cam->SetZoom(1.0f);
+    ENG::Render::Get().GetBatcher().SetCamera2D(cam.get());
    
     // ###############################
     //  audio
@@ -82,7 +88,7 @@ namespace APP
 
     ENG::Services::SFX().LoadSFX("SFX/Shot_Gun.mp3", "GunShot", 2);
     ENG::Services::SFX().SetVolume("GunShot", 10.0f);
-
+    
     // ###############################
     // Final
     // Final configurations
@@ -99,11 +105,11 @@ namespace APP
     if (pollEvent.IsKeyPress(SDL_SCANCODE_P))
     {
       isRunning = false;
-      ENG::Services::Scenes().PeddingScene(ENG::SCENE_MENU);
+      ENG::Services::Scenes().PedingScene("MainMenu");
       ENG::Services::Music().StopMusic("Marine");
     }
 
-    if (pollEvent.IsKeyPress(SDL_SCANCODE_T))
+    if (pollEvent.IsKeyPress(SDL_SCANCODE_F1))
     {
       ENG::Services::SFX().PlaySFX("GunShot");
     }
@@ -124,37 +130,43 @@ namespace APP
       m.SetVolume("Marine", v);
     }
 
-    // if (pollEvent.IsKeyDown(SDL_SCANCODE_W))
-    // {
-    //   pool.Get(PLAYER)->GetTransform().direction.y -= 1.0f;
-    // }
-    // if (pollEvent.IsKeyDown(SDL_SCANCODE_S))
-    // {
-    //   pool.Get(PLAYER)->GetTransform().direction.y += 1.0f;
-    // }
-    // if (pollEvent.IsKeyDown(SDL_SCANCODE_A))
-    // {
-    //   pool.Get(PLAYER)->GetTransform().direction.x -= 1.0f;
-    // }
-    // if (pollEvent.IsKeyDown(SDL_SCANCODE_D))
-    // {
-    //   pool.Get(PLAYER)->GetTransform().direction.x += 1.0f;
-    // }
-
-    float wheel = pollEvent.GetMouseWheel();
-    if (wheel != 0.0f)
+    if (pollEvent.IsKeyDown(SDL_SCANCODE_W))
     {
-      float zoom = camera->GetZoom() + wheel * 0.1f;
-      camera->SetZoom(std::clamp(zoom, 2.0f, 3.0f));
+      pool.Get(PLAYER)->GetTransform().m_direction.y -= 1.0f;
     }
+    if (pollEvent.IsKeyDown(SDL_SCANCODE_S))
+    {
+      pool.Get(PLAYER)->GetTransform().m_direction.y += 1.0f;
+    }
+    if (pollEvent.IsKeyDown(SDL_SCANCODE_A))
+    {
+      pool.Get(PLAYER)->GetTransform().m_direction.x -= 1.0f;
+    }
+    if (pollEvent.IsKeyDown(SDL_SCANCODE_D))
+    {
+      pool.Get(PLAYER)->GetTransform().m_direction.x += 1.0f;
+    }
+
+    // float wheel = pollEvent.GetMouseWheel();
+    // if (wheel != 0.0f)
+    // {
+    //   float zoom = camera->GetZoom() + wheel * 0.1f;
+    //   camera->SetZoom(std::clamp(zoom, 2.0f, 3.0f));
+    // }
   }
 
   void DemoScene::Update(float dt)
   {
     for (auto& o : pool.GetAllIDs())
     {
-      pool.Get(o)->Update(dt);
+      auto obj = pool.Get(o);
+      if(obj->GetName() == "Player")
+      {
+        System_PlayerMovement(*obj, dt);
+      }
+      obj->Update(dt);
     }
+    cam->Update(dt);
   }
 
   void DemoScene::UpdateFixed(float dt)
@@ -165,7 +177,7 @@ namespace APP
   void DemoScene::Render(ENG::Batcher& b)
   {
     // auto camRect = camera->GetRectCamera();
-    RenderTileMaps(b, LAYER_BACKGROUND, LAYER_PLAYER);      /// Layer back of the player
+    RenderTileMaps(b, LAYER_GROUND, LAYER_PLAYER);      /// Layer back of the player
     for (auto& entry : renderQueue)
     {
       auto* obj = pool.Get(entry.id);
@@ -173,9 +185,9 @@ namespace APP
     }
     RenderTileMaps(b, LAYER_PLAYER, LAYER_MAX);    /// Layer front of the player
 
-    ENG::Drawer::DrawCircle({150.0f, 150.0f}, 30.0f, ENG::Color::Green, 64);
-    ENG::Drawer::DrawCircleOutLine({150.0f, 150.0f}, 30.0f, ENG::Color::Yellow, 64);
-
+    ENG::Drawer::DrawRectangle({0,0,100,100},ENG::Color::Blue);
+    // ENG::Drawer::DrawCircleOutLine({150.0f, 150.0f}, 30.0f, ENG::Color::Yellow, 64);
+    
   }
 
   void DemoScene::Destroy()
@@ -191,4 +203,4 @@ namespace APP
   {
     return isRunning;
   }
-} // namespace APP
+} // namespace APPProperties for the layer of the map

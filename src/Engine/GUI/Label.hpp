@@ -109,7 +109,7 @@ namespace ENG
        *
        * @param[in] bgColor New background color.
        */
-      void SetBackgoundColor(const Color& bgColor);
+      void SetBackgroundColor(const Color& bgColor);
 
       /**
        * @brief Sets a texture for the background of the label.

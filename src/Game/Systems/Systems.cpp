@@ -12,5 +12,6 @@ namespace APP
     pPos.m_direction.Normalize();
 
     pPos.m_position += pPos.m_direction * pPos.m_velocity * dt;
+    pPos.m_direction = {0,0};
   }
 }

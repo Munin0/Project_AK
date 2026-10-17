@@ -30,10 +30,10 @@ namespace ENG
        * Both parameters are GLSL source code, not file paths. An empty
        * string means that the corresponding stage is skipped.
        *
-       * @param[in] vert GLSL source code of the vertex shader.
        * @param[in] frag GLSL source code of the fragment shader.
+       * @param[in] vert GLSL source code of the vertex shader.
        */
-      Shader(const std::string& vert, const std::string& frag);
+      Shader(const std::string& frag, const std::string& vert);
       /**
        * @brief Default destructor.
        *

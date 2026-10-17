@@ -8,7 +8,6 @@
 #include <cassert>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 // | -------------------------------
 
@@ -35,14 +34,14 @@ namespace ENG
 
   void ScenesManager::ChangeScene(void)
   { 
-    if(!m_arePedding)
+    if(!m_arePeding)
     {
         LOG_ERROR(" | << ChangeScene called with no pending scene");
         return;
     }
     if(!m_scenesMap.contains(m_pedding))
     {
-      LOG_ERROR(" | << Scene is not in the Manager: ID[" + std::to_string(m_pedding)+"]");
+      LOG_ERROR(" | << Scene is not in the Manager: ID[" + m_pedding +"]");
       return;
     }
     Render::Get().GetBatcher().SetCamera2D(nullptr);
@@ -50,18 +49,23 @@ namespace ENG
     if(it == m_scenesMap.end())
       return;
     m_s_current = it->second.get();
-    m_arePedding = false;
+    m_arePeding = false;
   }
 
-  void ScenesManager::PeddingScene(SceneID idPedding)
+  void ScenesManager::PedingScene(const std::string& id)
   {
-    if(idPedding == m_pedding)
+    if(id == m_pedding)
     {
       LOG_INFO(" | << Pedding change: Scene current is equals the pedding");
       return;
     }
-    m_pedding = idPedding;
-    m_arePedding = true;
+    m_pedding.clear();
+    m_pedding = id;
+    m_arePeding = true;
   }
 
+  bool ScenesManager::ArePeddingScene(void) const
+  {
+    return m_arePeding; 
+  }
 }

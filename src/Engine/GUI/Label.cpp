@@ -65,7 +65,7 @@ namespace ENG
     this->m_text.SetFontSize(size);
   }
 
-  void Label::SetBackgoundColor(const Color& bgColor)
+  void Label::SetBackgroundColor(const Color& bgColor)
   {
     this->m_bgColor.ChangeColor(bgColor);
   }

@@ -2,6 +2,7 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
+#include "Engine/Map/TileMap/TileMap.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
@@ -9,6 +10,24 @@
 
 namespace ENG
 {
+  /**
+   * @brief Checks whether an object collides with a tile map (isometric).
+   *
+   * Samples the footprint (solid bounding box) of @p object against the
+   * occupied cells of @p map. A cell is occupied when the layer holds a tile
+   * at that position (for example, a wall on the "World" layer).
+   *
+   * @param[in,out] object     Object to test. If @p resolution is true and a
+   *                           collision is found, it is moved back to its
+   *                           previous position.
+   * @param[in]     map        Tile map to test against.
+   * @param[in]     resolution true to resolve the collision, false to only
+   *                           detect it.
+   * @return true if the object collides with an occupied cell, false
+   *         otherwise.
+   */
+  [[maybe_unused]] bool CollisionTileMapIsometric(Object& object, const TileMap& map, bool resolution);
+
   /**
    * @brief Checks whether two objects collide using their AABBs, and can
    *        optionally resolve the collision.
@@ -35,6 +54,17 @@ namespace ENG
    */
   [[maybe_unused]] bool CollisionAABB(const IBoundingBox& source, const IBoundingBox& target);
 
+/**
+   * @brief Checks whether two rectangle's overlap.
+   *
+   * Only detects the collision: it does not modify the rects.
+   *
+   * @param[in] source First rectangle.
+   * @param[in] target Second rectangle.
+   * @return true if the rectangle's overlap, false otherwise.
+   */
+  [[maybe_unused]] bool CollisionAABB(const Rectangle& a, const Rectangle& b);
+
   /**
    * @brief Checks whether a point is inside a rectangle.
    *
@@ -54,11 +84,14 @@ namespace ENG
   [[maybe_unused]] bool CollisionCircle(const Circle& a, const Circle& b);
 
   /**
-   * @brief Checks whether two rectangles overlap.
+   * @brief Checks A Tilemap of Collisions vs a Entity->ICircleBox.
    *
-   * @param[in] a First rectangle: position { x, y } and size { w, h }.
-   * @param[in] b Second rectangle: position { x, y } and size { w, h }.
-   * @return true if the rectangles overlap, false otherwise.
+   * @param[in] TileMap, Collisions map.
+   * @param[in] Entity ICircleBox.
+   * @return true if has a collision and resolver, false otherwise.
    */
-  [[maybe_unused]] bool RectIntersects(const Rectangle& a, const Rectangle& b);
+  [[maybe_unused]] bool CollisionTileToCircle(const TileMap& map, const ICircleBox& circleBox);
+
+  [[maybe_unused]] bool CollisionRectTriangle(const ENG::Rectangle& rect, const ENG::Triangle& triangle);
+
 }

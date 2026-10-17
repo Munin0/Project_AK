@@ -7,6 +7,7 @@
 #include "nlohmann/json.hpp"
 // | -------------------------------
 #include <cmath>
+#include <string>
 // | -------------------------------
 
 namespace ENG
@@ -81,28 +82,28 @@ namespace ENG
        * After the call the vector has a length of 1 and keeps its direction.
        * A zero-length vector is left unchanged.
        */
-      void Normalize()
+      Vector2 Normalize()
       {
-        float length = std::sqrt(this->x * this->x + this->y * this->y);
+        float length = Length();
         if(length != 0.0f)
         {
           this->x /= length;
           this->y /= length;
         }
+        return *this;
       }
       /**
-       * @brief Returns the length (magnitude) of the given vector.
+       * @brief Returns the length (magnitude) of ~this vector.
        *
        * @warning Despite being a member function, it does not use this
-       *          vector: it computes the length of @p v only, not the
-       *          distance between this vector and @p v.
+       *          vector: it computes the length of @p ~this only, not the
+       *          distance between this vector and @p ~this.
        *
-       * @param[in] v Vector whose length is computed.
-       * @return The length of @p v, that is sqrt(v.x^2 + v.y^2).
+       * @return The length of @p ~this, that is sqrt(~this.x^2 + ~thisy^2).
        */
-      float Length(const Vector2& v)
+      float Length() const
       {
-        return std::sqrt(v.x*v.x + v.y*v.y);
+        return std::sqrt(this->x*this->x + this->y*this->y);
       }
       /**
        * @brief Implicit conversion to glm::vec2.
@@ -171,8 +172,13 @@ namespace ENG
       {
         if(value == 0)
             return {0.0f,0.0f};
-        if(this->x == 0.0f || this->y == 0.0f)
-            return {0.0f, 0.0f};
+        if(this->x == 0.0f && this->y != 0.0f)
+          return {0.0f, this->y / value};
+        if(this->x != 0.0f && this->y == 0.0f)
+          return {this->x / value, 0.0f};
+        if(this->x == 0 && this->y == 0)
+          return {0.0f, 0.0f};
+
         return {this->x/value, this->y/value};
       }
       /**
@@ -222,17 +228,12 @@ namespace ENG
       /**
        * @brief Inequality comparison.
        *
-       * @warning This is not the negation of operator==: it returns true
-       *          only when both x and y differ. Vectors that share one
-       *          component (e.g. { 1, 2 } and { 1, 3 }) are reported as
-       *          "not different".
-       *
        * @param[in] v Vector to compare with.
-       * @return true if x differs from v.x and y differs from v.y.
+       * @return true if either x or y differs from v.
        */
       bool operator!=(const Vector2& v) const
       {
-        return (this->x != v.x && this->y != v.y);
+        return !(*this == v);
       }
       /**
        * @brief Component-wise "less than".
@@ -323,6 +324,32 @@ namespace ENG
         return *this;
       }
       /**
+       * @brief Multiplies this vector component-wise by another vector.
+       *
+       * @param[in] v Vector to multiply by.
+       * @return Reference to this vector.
+       */
+      Vector2& operator*=(const Vector2& v)
+      {
+        this->x *= v.x;
+        this->y *= v.y;
+        return *this;
+      }
+      /**
+       * @brief Divides this vector component-wise by another vector.
+       *
+       * @param[in] v Vector to divide by.
+       * @return Reference to this vector.
+       */
+      Vector2& operator/=(const Vector2& v)
+      {
+        if (v.x != 0.0f)
+          this->x /= v.x;
+        if (v.y != 0.0f)
+          this->y /= v.y;
+        return *this;
+      }
+      /**
        * @brief Subtracts another vector from this vector, component by component.
        *
        * @param[in] v Vector to subtract.
@@ -335,6 +362,11 @@ namespace ENG
         return *this;
       }
       /// @}
+      
+      std::string ToString(void) const
+      {
+        return std::to_string(this->x) + " " + std::to_string(this->y);
+      }
     public:
       /// @brief Horizontal component.
       float x;

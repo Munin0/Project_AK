@@ -29,10 +29,12 @@ namespace APP
   void Game::OnInit(void)
   {
     LOG_INFO(" | << Game application Init Succesfully");
+    
     /// Baking fonts
-    // ENG::BakerFont baker("Font/TTF/CabinBold.ttf");
+    // ENG::BakerFont baker("Font/TTF/Roboto.ttf");
     // baker.Bake( {ENG::Language::English, ENG::Language::Spanish} );
-    // baker.SaveToDisk("assets/Font/","CabinBold");
+    // baker.SaveToDisk("assets/Font/","Roboto");
+
     /// Load All Fonts
     ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("PottaOne"));
     ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("Cabin"));
@@ -42,8 +44,8 @@ namespace APP
     /// Adding Shaders
     ENG::Services::Shaders().Load("mono.fs","mono.vs","Mono");
     /// Adding Scenes
-    ENG::Services::Scenes().AddScene(std::make_unique<MainMenu>(ENG::SCENE_MENU));
-    ENG::Services::Scenes().AddScene(std::make_unique<DemoScene>(ENG::SCENE_DEMO));
+    ENG::Services::Scenes().AddScene(std::make_unique<MainMenu>("MainMenu"));
+    ENG::Services::Scenes().AddScene(std::make_unique<DemoScene>("DemoScene"));
     /// Start firts scene
     ENG::Services::Scenes().GetCurrent()->Init();
   }
@@ -71,6 +73,7 @@ namespace APP
     {
       ENG::Render::Get().ToggleFullscreen();
     }
+    // Aqui consume escena
     ENG::Services::Scenes().GetCurrent()->Inputs(dt);
   }
 

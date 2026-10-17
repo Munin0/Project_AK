@@ -12,6 +12,7 @@
 // | -------------------------------
 #include <cstdint>
 #include <string>
+#include <sys/types.h>
 #include <type_traits>
 #include <vector>
 // | -------------------------------
@@ -81,7 +82,21 @@ namespace ENG
       template<typename T, typename... Args>
       T& AddComponent(Args&&... args)
       {
-        return components.Emplace<T>(std::forward<Args>(args)...);
+        T& component = components.Emplace<T>(std::forward<Args>(args)...);
+        if constexpr (std::is_same_v<T, IBoundingBox>)
+        {
+          /// Centra la caja en el sprite (si ya existe): asi una caja mas
+          /// pequena que el frame queda en el centro en vez de en la esquina.
+          if (auto* sprite = GetComponent<ISprite>())
+          {
+            const Vector2 frame{(float)sprite->GetWidth(), (float)sprite->GetHeight()};
+            const Vector2 boxSize = component.GetSize();
+            component.SetOffset({(frame.x - boxSize.x) * 0.5f,
+                                 (frame.y - boxSize.y) * 0.5f});
+          }
+          component.Update(GetTransform().m_position);
+        }
+        return component;
       }
 
       /**
@@ -250,6 +265,16 @@ namespace ENG
        */
       const Vector2& GetPosition(void) const;
 
+      void SetClass(const std::string& c)
+      {
+        this->_class = c;
+      }
+
+      const std::string GetClass(void) const
+      {
+        return this->_class;
+      }
+
       /**
        * @brief Returns the size of the object's sprite.
        * @return The size of the sprite: { width, height }.
@@ -316,6 +341,7 @@ namespace ENG
 
       /// @brief Name of the object.
       std::string name;
+      std::string _class;
 
       /// @brief Stats of the object (health, strength, etc.).
       IStats stats;

@@ -5,6 +5,7 @@
 #include "Engine/Services/Services.hpp"
 /// | ------------------------------------ |
 #include <any>
+#include <string>
 /// | ------------------------------------ |
 
 
@@ -12,9 +13,10 @@ namespace APP
 {
   void ChangeSceneButton(std::any _)
   {
-    if(auto* idScene = std::any_cast<ENG::SceneID>(&_))
+    if(auto* idScene = std::any_cast<std::string>(&_))
     {
-      ENG::Services::Scenes().PeddingScene(*idScene);
+      ENG::Services::Scenes().PedingScene(*idScene);
     }
   }
+  
 }

@@ -7,6 +7,7 @@
 // | -------------------------------
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 // | -------------------------------
 
@@ -97,7 +98,7 @@ namespace ENG
        * @brief Returns the ID of the scene.
        * @return The identifier of the scene.
        */
-      uint8_t GetSceneID(void) const
+      std::string GetSceneID(void) const
       {
         return this->sceneID;
       }
@@ -111,6 +112,8 @@ namespace ENG
        * @param[in] map Tile map to add.
        */
       void AddTileMap(TileMap map);
+
+      const TileMap* GetTileMap(uint8_t layer) const;
 
       /**
        * @brief Draws the tile maps that belong to a range of layers.
@@ -133,7 +136,7 @@ namespace ENG
       bool isInit = false;
 
       /// @brief Identifier of the scene. Returned by GetSceneID().
-      uint8_t sceneID;
+      std::string sceneID;
 
       /// @brief Camera of the scene. Owned by the scene.
       std::unique_ptr<Camera2D> camera;

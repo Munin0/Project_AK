@@ -42,6 +42,7 @@ namespace ENG
       Vector2 m_prev_position;    //! The prev position of the Object (1 Frame behind).
       Vector2 m_velocity;         //! Velocity from the object, (X, Y).
       Vector2 m_direction;        //! Direction from the object, (X , Y).
+      Vector2 m_prev_direction;   //! Prev direction from the object, (X , Y).
       float   m_angle;            //! Rotation of the object (NOT WORKING RIGHT NOW)
   };
 
@@ -54,8 +55,7 @@ namespace ENG
   {
     public:
       ~IStats() override {}
-      /*
-       * | Why using uint8_t.
+      /* | Why using uint8_t.
        * > Caps the stat to only 1 byte (8 bits), so only 0 to 255 point of life.
        */
       uint8_t m_hp;
@@ -97,7 +97,7 @@ namespace ENG
       const UVRect& GetUV(void) const {return this->m_uv;}
 
       //! Set the actual frame form the animation to draw and Update the UVRect to draw.
-      void SetFrame(int frameIndex);
+      void SetFrame(const std::string& animKey, int frameIndex);
     private:
       std::string             m_keyTexture; //! String Key to take the original texture from the Service::Assets().
       std::shared_ptr<RImage> m_image;      //! Shared_ptr.
@@ -120,9 +120,9 @@ namespace ENG
   {
     public:
       //! Constructor "Defatult", this create automatic the rectangles to draw.
-      IAnimator(std::string key, int frames, float speed, int step = 1, float scale = 1.0f);
+      IAnimator(const std::string& atlas, const std::string& key, float speed, int step = 1, float scale = 1.0f);
       //! Constructor needs the rectables to manage the animation.
-      IAnimator(std::string key, std::vector<ENG::Rectangle> _rects, float speed, int step = 1, float scale = 1.0f);
+      IAnimator(const std::string& atlas, const std::string& key, std::vector<ENG::Rectangle> _rects, float speed, int step = 1, float scale = 1.0f);
       //! Defatult destructor.
       ~IAnimator() override {}
 
@@ -140,8 +140,13 @@ namespace ENG
       //! GetThe current frame where is playin the animation.
       int GetCurrentFrame(void) const {return this->m_currentFrame;}
 
+      //! Set New animation.
+      void SetAnimation(const std::string& keyAnim)
+      {
+        this->m_keyAnimation = keyAnim;
+      }
       //! Get the name from the animation
-      const std::string& GetName(void)const {return this->m_keyAnimation;}
+      const std::string& GetKeyAnimation(void)const {return this->m_keyAnimation;}
       //! Get the amount of frames to pass.
       int GetFrames(void) const  { return this->m_frames;  }
       //! Get how many frames need to pass (If step is 1.0f, pass frame per frame).
@@ -152,7 +157,8 @@ namespace ENG
       float GetScale(void) const { return this->m_scale;   }
 
     private:
-      std::string m_keyAnimation;                 //! Key to get the texture, from the Service::Assets().
+      std::string m_keyAnimation;                 //! Key to get the animation, from the Service::Assets().
+      std::string m_keyAtlas;                     //! Key to get the texture, from the Service::Assets().
       std::vector<ENG::Rectangle> m_rectangles;   //! Rectangles of the animation.
       int         m_frames        = 0;            //! Amount of animation to draw.
       int         m_step          = 1;            //! How many frames advance.
@@ -177,9 +183,10 @@ namespace ENG
 
       //! Position is the same anchor Object/Batcher::DrawQuad use to draw a sprite (its
       //! bottom-left corner), not the box's center -- this keeps the box aligned with what's
-      //! actually drawn on screen.
-      void Update(const Vector2& _position)   { this->m_position = _position; };
-      void Update(float x, float y)           { this->m_position = {x,y};     };
+      //! actually drawn on screen. The offset is added on top so a box smaller than the
+      //! sprite can stay centered on it.
+      void Update(const Vector2& _position)   { this->m_position = _position + this->m_offset; };
+      void Update(float x, float y)           { this->m_position = Vector2{x,y} + this->m_offset; };
       //! Change the dimention from the IBoundingBox.
       void ChangeSize(const Vector2& dim)     { this->m_size = dim;     }
       //! Get the actual size from the IBoundingBox.
@@ -188,6 +195,15 @@ namespace ENG
       const Vector2& GetPosition(void) const  { return this->m_position;}
       //! Get the center from the IBoundingBox.
       Vector2 GetCenter(void) const           { return this->m_position + this->m_size / 2.0f;}
+      //! Get box rectangle
+      Rectangle GetRectangleBB(void) const
+      {
+        return {this->m_position.x, this->m_position.y, this->m_size.x, this->m_size.y};
+      }
+      //! Offset added on top of the object position when Update is called. Used
+      //! to keep a smaller box centered on the sprite it belongs to.
+      void SetOffset(const Vector2& _offset)  { this->m_offset = _offset; }
+      const Vector2& GetOffset(void) const    { return this->m_offset;   }
 
       //! Validate if the IBoundingBox was created for be a TriggerBox. 
       bool IsTrigger(void) const {return this->m_isTrigger;}
@@ -196,6 +212,36 @@ namespace ENG
     private:
       Vector2 m_position;
       Vector2 m_size;
+      Vector2 m_offset{0.0f, 0.0f};
+      bool    m_isTrigger;
+  };
+
+  class ICircleBox : public IComponents
+  {
+    public:
+      //! Unique constructor, Raidus and if isTrigger (Defatult is solid).
+      //! explicit because, you always need to pass a ICircleBox.
+      explicit ICircleBox(float radius, bool isTrigger = false);
+      ~ICircleBox() override {}
+      //! Position is the same anchor Object/Batcher::DrawQuad use to draw a sprite (its
+      //! bottom-left corner), not the box's center -- this keeps the box aligned with what's
+      //! actually drawn on screen.
+      void Update(const Vector2& position) {this->m_position = position;}
+      void Update(float x, float y) {this->m_position = {x,y};}
+
+      //! Get actual position
+      Vector2 GetPosition(void) const {return this->m_position;}
+      //! Change the Radius of the ICircleBox.
+      void ChangeRadius(float radius) {this->m_radius = radius;}
+      //! Get the actual radius.
+      float GetRadius(void) const {return this->m_radius;}
+      //! Validate if the ICircleBox was created for be a TriggerBox.
+      bool IsTrigger(void) const {return this->m_isTrigger;}
+      //! Can chenge the resolution for the ICircleBox.
+      void SetTrigger(bool status) {this->m_isTrigger = status;}
+    private:
+      Vector2 m_position;
+      float   m_radius;
       bool    m_isTrigger;
   };
 

@@ -3,17 +3,6 @@
 /// | ------------------------------------ |
 #include "Engine/Layer/GameLayer.hpp"
 /// | ------------------------------------ |
-#define PLAYER 1
-/// | ------------------------------------ |
-#define LAYER_BACKGROUND  0
-#define LAYER_WOLRD       10
-#define LAYER_PLAYER      20
-#define LAYER_MIDDLE      25
-#define LAYER_FRONT       30
-#define LAYER_FX          40
-#define LAYER_UI          50
-#define LAYER_MAX         255
-/// | ------------------------------------ |
 
 namespace APP
 {

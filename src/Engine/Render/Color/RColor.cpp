@@ -1,23 +1,18 @@
 /// | ------------------------------------ |
 #include "RColor.hpp"
 /// | ------------------------------------ |
-#include <algorithm>
 #include <cstdint>
 /// | ------------------------------------ |
 
 namespace ENG 
 { 
-  void Color::From255(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a)
+  void Color::From255(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
   {
-    auto clamp = [](int value) -> float
-    {
-      return std::clamp(value, 0, 255);
-    };
-
-    this->r = (float) clamp(_r) / 255;
-    this->g = (float) clamp(_g) / 255;
-    this->b = (float) clamp(_b) / 255;
-    this->a = (float) clamp(_a) / 255;
+  constexpr float k = 1.0f / 255.0f;
+  this->r = r * k;
+  this->g = g * k;
+  this->b = b * k;
+  this->a = a * k;
   }
 
   const Color Color::Red    {1.0f, 0.0f,  0.0f,  1.0f};

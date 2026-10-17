@@ -78,7 +78,7 @@ namespace ENG
     LOG_INFO(" | << GameEngine Application is Running");
 
     // Create DeltaTime
-    auto clock = Services::Clock();
+    auto& clock = Services::Clock();
     while (m_game->IsRunning())
     {
       clock.Tick();

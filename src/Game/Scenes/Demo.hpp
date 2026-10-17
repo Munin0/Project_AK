@@ -5,8 +5,10 @@
 #include "Engine/Object/ObjectPool.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Batching/RenderEntry.hpp"
-#include "Engine/Services/ScenesManager.hpp"
+#include "Engine/Render/Camera/Camera2D.hpp"
 /// | ------------------------------------ |
+#include <memory>
+#include <string>
 #include <vector>
 /// | ------------------------------------ |
 
@@ -15,7 +17,7 @@ namespace APP
   class DemoScene : public ENG::Scene
   {
     public:
-      DemoScene(ENG::SceneID id);
+      DemoScene(const std::string& name);
 
       void Init(void)               override;
       void Destroy(void)            override;
@@ -28,5 +30,6 @@ namespace APP
     private:
       ENG::ObjectPool pool;
       std::vector<ENG::RenderEntry> renderQueue;
+      std::unique_ptr<ENG::Camera2D> cam;
   };
 }

@@ -16,7 +16,7 @@ namespace APP
   class MainMenu : public ENG::Scene
   {
     public:
-      MainMenu(ENG::SceneID id);
+      MainMenu(const std::string& name);
 
       void Init(void) override;
       void Destroy(void)    override;
@@ -29,8 +29,6 @@ namespace APP
       bool mousePressed;
       ENG::ObjectPool pool;
       std::vector<ENG::RenderEntry> renderQueue;
-
-      std::string m_text;
   };
 }
 

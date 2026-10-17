@@ -40,7 +40,6 @@ namespace ENG
     return !keyMap.contains(key) && prevkeyMap.contains(key);
   }
 
-
   /// | --------------------- Mouse Part
   bool PollEvent::IsMouseButtonPress(SDL_MouseButton button)
   {

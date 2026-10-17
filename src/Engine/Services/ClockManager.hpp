@@ -56,6 +56,12 @@ namespace ENG
        * @return Time elapsed since the clock was initialized, in seconds.
        */
       float GetTime() const;
+      /**
+       * @brief Returns the local frame per second.
+       *
+       * @return return the FPS.
+       */
+      float GetFPS() const;
     private:
       /// @brief Raw delta time of the last frame, before any adjustment.
       float m_rawDeltaTime;
@@ -69,5 +75,12 @@ namespace ENG
       float m_deltaTime;
       /// @brief Total elapsed time returned by GetTime(), in seconds.
       float m_totalTime;
+
+      /// @brief frame per seconds controller. 
+      float m_fps;
+      /// @brief Acumulator for fps.
+      float m_fpsAccum;
+      /// @brief Total frames.
+      int   m_fpsFrames;
   };
 }

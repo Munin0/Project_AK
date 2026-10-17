@@ -81,7 +81,7 @@ namespace ENG
        *
        * @param[in] _ Value given to the callback.
        */
-      void Action(std::any _);
+      void Action(void);
 
       /**
        * @brief Sets a texture for the button.

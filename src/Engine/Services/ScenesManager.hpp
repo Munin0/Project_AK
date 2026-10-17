@@ -2,11 +2,13 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Layer/Scene.hpp"
+#include "Engine/Services/KeyHash.hpp"
 // | -------------------------------
 #include <cstdint>
 #include <functional>
-#include <map>
 #include <memory>
+#include <string>
+#include <unordered_map>
 // | -------------------------------
 
 namespace ENG
@@ -62,18 +64,27 @@ namespace ENG
       /**
        * @brief Requests a change to another scene.
        *
-       * The change is not applied immediately: it is applied the next time
+       * The change is not applied immediately: it is applied the next frame 
        * ChangeScene() is called.
        *
        * @param[in] idPedding ID of the scene to change to.
        */
-      void PeddingScene(SceneID idPedding);
+      void PedingScene(const std::string& id);
+      /**
+       * @brief Requests a change to another scene.
+       *
+       * The change is not applied immediately: it is applied the next frame 
+       * ChangeScene() is called.
+       *
+       * @param[in] idPedding ID of the scene to change to.
+       */
+      bool ArePeddingScene(void) const;
       /**
        * @brief Destroys a scene.
        *
        * @param[in] id ID of the scene to destroy.
        */
-      void DestroyScene(SceneID id);
+      void DestroyScene(const std::string& id);
       /**
        * @brief Destroys every scene stored in the manager.
        */
@@ -82,10 +93,10 @@ namespace ENG
       /// @brief Current scene. nullptr if there is none. Owned by m_scenesMap.
       Scene* m_s_current = nullptr;
       /// @brief ID of the scene requested by PeddingScene().
-      SceneID m_pedding = 1;
+      std::string m_pedding = "";
       /// @brief Whether a scene change is waiting to be applied by ChangeScene().
-      bool m_arePedding = false;
+      bool m_arePeding = false;
       /// @brief Scenes owned by the manager, indexed by ID.
-      std::map<SceneID, std::unique_ptr<Scene>, std::less<>> m_scenesMap;
+      std::unordered_map<std::string, std::unique_ptr<Scene>, StringHash, std::equal_to<>> m_scenesMap;
   };
 }

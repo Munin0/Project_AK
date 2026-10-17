@@ -5,6 +5,7 @@
 #include "Engine/Object/Object.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Services/WorldSaver.hpp"
+#include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Vector2.hpp"
 /// | -------------------------------
 /// | -------------------------------
@@ -67,6 +68,14 @@ namespace ENG
         this->m_text.SetFontSize(newFontSize);
       }
       /**
+       *
+       *
+       */
+      void SetFont(Font* font)
+      {
+        this->m_text.SetFont(font);
+      }
+      /**
        * @brief Serializes the current state of the text object.
        *
        * @return An ObjectState describing this object, suitable for
@@ -81,5 +90,6 @@ namespace ENG
       void Load(const ObjectState& state) override;
     private:
       IText m_text; /// @brief Underlying text data (content, font size, etc.) that this object renders.
+      
   };
 }

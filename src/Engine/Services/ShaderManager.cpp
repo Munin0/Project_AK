@@ -29,7 +29,7 @@ namespace ENG
     auto _fPath = path.ReadFileString(p / frag);
     auto _vPath = path.ReadFileString(p / vert);
 
-    m_shaders[idKey] = std::move(std::make_unique<Shader>(_vPath,_fPath));
+    m_shaders[idKey] = std::move(std::make_unique<Shader>(_fPath, _vPath));
   }
 
   Shader* ShaderManager::Get(const std::string& idKey)

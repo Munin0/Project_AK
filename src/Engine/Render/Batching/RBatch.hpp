@@ -3,11 +3,11 @@
 // | -------------------------------
 #include "Engine/Render/Camera/Camera2D.hpp"
 #include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Render/Image/RImage.hpp"
 #include "Engine/Render/Shaders/RVertex.hpp"
 #include "Engine/Render/Shaders/RShader.hpp"
 // | -------------------------------
-#include "glm/detail/qualifier.hpp"
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float4.hpp>
@@ -150,6 +150,8 @@ namespace ENG
        *                       Defaults to 0 (normal).
        */
       void DrawAtlasSprite(const glm::vec2& pos, const glm::vec2& size, int layer, const glm::vec2& uvMin, const glm::vec2& uvMax, const glm::vec4& tint = {1,1,1,1}, float effectMode = 0.0f);
+
+      void DrawAtlasIsometric(int atlasLayer, const UVRect& rect, const glm::vec2& pos, const glm::vec2& size, float offset);
 
       /**
        * @brief Draws a solid-color quad.

@@ -101,18 +101,18 @@ namespace ENG
       void SetFontSize(float size);
 
       /**
-       * @brief Sets the color of the text.
-       *
-       * @param[in] color New text color.
-       */
-      void SetTextColor(const Color& color);
-
-      /**
        * @brief Sets the font of the text.
        *
        * @param[in] font Font to use.
        */
       void SetFont(Font& font);
+
+      /**
+       * @brief Sets the color of the text.
+       *
+       * @param[in] color New text color.
+       */
+      void SetTextColor(const Color& color);
 
       /**
        * @brief Returns the text stored in the text box.
@@ -152,12 +152,20 @@ namespace ENG
       void SetDelimiter(const char& delimiter);
       /// @}
 
+      /**
+       * @brief Set if the TextBox was pressed.
+       *
+       * @param[in] Bool true or false.
+       */
+      void SetInteraction(bool _);
+      /// @}
+
     private:
       /// @brief Delimiter character. Defaults to '|'.
       char m_crDelimiter = '|';
 
       /// @brief Text stored in the text box.
-      std::string m_textStorage;
+      std::string m_textStorage = "";
 
       /// @brief Text as it is displayed.
       IText m_text;
@@ -190,5 +198,8 @@ namespace ENG
 
       /// @brief Whether the text box is currently pressed.
       bool m_isPressed = false;
+
+      /// @brief Whether the text box is currently pressed.
+      bool m_ConfigComplete = false;
   };
 }

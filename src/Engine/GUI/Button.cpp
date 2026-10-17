@@ -6,7 +6,6 @@
 #include "Engine/Render/Batching/RAPIBatch.hpp"
 #include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Color/RColor.hpp"
-#include "Engine/Render/Geometry/RGeometry.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Text/Font/Font.hpp"
@@ -71,11 +70,11 @@ namespace ENG
     }
   }
 
-  void Button::Action(std::any _)
+  void Button::Action()
   {
     if(m_callback == nullptr)
       return;
-    this->m_callback(_);
+    this->m_callback(this->m_data);
   }
 
   void Button::SetBackgroundColor(const Color& color)

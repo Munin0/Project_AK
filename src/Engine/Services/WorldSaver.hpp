@@ -63,6 +63,8 @@ namespace ENG
   {
     /// @brief Key of the animation.
     std::string m_key;
+    /// @brief Key of the atlas.
+    std::string m_keyAtlas;
     /// @brief Number of frames of the animation.
     int m_frames;
     /// @brief Step between frames of the animation.
@@ -95,7 +97,7 @@ namespace ENG
   /**
    * @brief Serializable gameplay stats of an object.
    *
-   * All the stats are unsigned 8-bit values (0 to 255).
+   * All the stats are unsigned 8-bit and 32-bit values (0 to 255 and 0 to 4294967295 respectively).
    */
   struct IStatsData
   {

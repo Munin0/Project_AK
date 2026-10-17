@@ -40,11 +40,10 @@ namespace ENG
       LOG_ERROR("ISprite: atlas not found: " + atlasKey);
       return;
     }
-
-    m_uv = GetFrameUV(*atlas, animName, frameIndex);
-    m_atlasLayer = atlas->atlasLayer;
-    m_width  = atlas->tileSize;
-    m_height = atlas->tileSize;
+    m_uv          = GetFrameUV(*atlas, animName, frameIndex);
+    m_atlasLayer  = atlas->atlasLayer;
+    m_width       = atlas->animations.at(m_animationKey).w;
+    m_height      = atlas->animations.at(m_animationKey).h;
   }
 
   ISprite::ISprite(const std::string& atlasKey, const std::string& tileID, float scale)
@@ -59,29 +58,35 @@ namespace ENG
 
     m_uv = GetTileUV(*atlas, tileID);
     m_atlasLayer = atlas->atlasLayer;
-    m_width  = atlas->tileSize;
-    m_height = atlas->tileSize;
+    m_width  = atlas->atlasWidth;
+    m_height = atlas->atlasHeight;
   }
 
-  void ISprite::SetFrame(int frameIndex)
+  void ISprite::SetFrame(const std::string& animKey, int frameIndex)
   {
     if(!m_isAtlas)
       return;
-
+    
     const AtlasData* atlas = Services::Assets().GetAtlas(m_keyTexture);
+    auto anm = atlas->animations.at(m_animationKey);
     if(!atlas)
       return;
-
-    m_uv = GetFrameUV(*atlas, m_animationKey, frameIndex);
+      
+    m_width = static_cast<float>(anm.w);
+    m_height = static_cast<float>(anm.h);
+    m_uv = GetFrameUV(*atlas, animKey, frameIndex);
   }
 
-  IAnimator::IAnimator(std::string key, int frames, float speed, int step, float scale)
-    : IComponents{}, m_keyAnimation{key}, m_frames{frames}, m_speed{speed}, m_step{step}, m_scale{scale}
-  {}
-        
-  IAnimator::IAnimator(std::string key, std::vector<ENG::Rectangle> _rects, float speed, int step, float scale)
-    : IComponents{}, m_keyAnimation{key}, m_rectangles{_rects}, m_speed{speed}, m_step{step}, m_scale{scale}
-  {}
+  IAnimator::IAnimator(const std::string& atlas, const std::string& key,  float speed, int step, float scale)
+    : IComponents{}, m_keyAnimation{key}, m_keyAtlas{atlas}, m_frames{0}, m_speed{speed}, m_step{step}, m_scale{scale}
+  {
+    m_frames = Services::Assets().GetAtlas(m_keyAtlas)->animations.at(m_keyAnimation).frameCount;
+  }
+
+  IAnimator::IAnimator(const std::string& atlas,const std::string& key, std::vector<ENG::Rectangle> _rects, float speed, int step, float scale)
+    : IComponents{}, m_keyAnimation{key}, m_keyAtlas{atlas}, m_rectangles{_rects}, m_speed{speed}, m_step{step}, m_scale{scale}
+  {
+  }
 
   void IAnimator::Play(void)
   {
@@ -109,8 +114,9 @@ namespace ENG
 
   void IAnimator::Advance(float dt)
   {
-    if(!m_playing || m_frames <= 0 || m_speed <= 0.0f)
-      return;
+    m_frames = Services::Assets().GetAtlas(m_keyAtlas)->animations.at(m_keyAnimation).frameCount;
+
+    if(!m_playing || m_frames <= 0 || m_speed <= 0.0f) return;
 
     float m_frameDuration = 1.0f / m_speed;
     m_elapsed += dt;
@@ -123,15 +129,15 @@ namespace ENG
   }
 
   IBoundingBox::IBoundingBox(const Vector2& dim, bool isTrigger)
-    : IComponents{}, m_size(dim), m_isTrigger(isTrigger)
+    : IComponents{}, m_position(0.0f, 0.0f), m_size(dim), m_isTrigger(isTrigger)
   {}
 
   IColor::IColor(const Color& c)
-    : IComponents{}, m_color(c)
+    : IComponents{}, m_color{c}
   {}
 
   IColor::IColor(float r, float g, float b, float a)
-    : IComponents(), m_color(r,g,b,a)
+    : IComponents{}, m_color{r,g,b,a}
   {}
 
   void IColor::ChangeColor(const Color& _color)
@@ -145,6 +151,7 @@ namespace ENG
   }
 
   IMaterial::IMaterial(const std::string& idKey)
+    : IComponents{}
   {
     if(auto* shader = Services::Shaders().Get(idKey))
       this->m_shader = shader;

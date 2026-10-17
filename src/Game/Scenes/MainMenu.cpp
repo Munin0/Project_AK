@@ -3,23 +3,22 @@
 /// | ------------------------------------ |
 #include "Engine/Component/Component.hpp"
 #include "Engine/GUI/Button.hpp"
-#include "Engine/GUI/Label.hpp"
+#include "Engine/GUI/TextBox.hpp"
+#include "Engine/Inputs/Mouse.hpp"
 #include "Engine/Layer/Scene.hpp"
+#include "Engine/Map/TileMap/TileMap.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Physics/Collision.hpp"
+#include "Engine/Render/Batching/RBatch.hpp"
 #include "Engine/Render/Color/RColor.hpp"
 #include "Engine/Render/Render.hpp"
 #include "Engine/Text/Text.hpp"
-#include "Engine/Text/TextAPI.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Inputs/Mouse.hpp"
-#include "Engine/Utils/Path.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Object/ObjectPool.hpp"
 #include "Engine/Inputs/PollEvent.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
-#include "Engine/Render/Geometry/RGeometry.hpp"
   /// | ------------------------------------ |
 #include "Game/Game.hpp"
 #include "Game/Systems/Functions.hpp"
@@ -33,7 +32,7 @@
 
   namespace APP
   {
-    MainMenu::MainMenu(ENG::SceneID id)
+    MainMenu::MainMenu(const std::string& id)
       : ENG::Scene{}
     {
       sceneID = id;
@@ -59,9 +58,8 @@
       // ###############################
       ENG::ObjectID btStartID = pool.Add(std::make_unique<ENG::Button>("StartGame", ENG::Vector2{100,50} ));
       auto startBT = static_cast<ENG::Button*>(pool.Get(btStartID));
-
       startBT->SetPosition({100,100});
-      startBT->SetData(static_cast<ENG::SceneID>(ENG::SCENE_DEMO));
+      startBT->SetData(std::string("DemoScene"));
       startBT->SetFunction(ChangeSceneButton);
       startBT->SetLayer(LAYER_UI);
       startBT->SetFont(*f_CabinItalic);
@@ -69,13 +67,21 @@
       startBT->SetTextSize(24);
       startBT->SetTextColor(ENG::Color::Black);
 
+      ENG::ObjectID txtBoxID = pool.Add(std::make_unique<ENG::TextBox>("TextBoxOptions", "Ingresa nombre", ENG::Vector2{200,100}));
+      auto txtBox = static_cast<ENG::TextBox*>(pool.Get(txtBoxID));
+      txtBox->SetTextColor(ENG::Color::Gray);
+      txtBox->SetFontSize(32);
+      txtBox->SetFont(*f_CabinItalic);
+      txtBox->SetPosition({500,500});
+
       // ###############################
       // Objects Text
       // Configuration of the Object Text
       // ###############################
-      // ENG::ObjectID textID = pool.Add(std::make_unique<ENG::Text>(ENG::Vector2{100,100}, 120.0f, "TEXTO DE PRUEBA"));
-      // auto textObj = static_cast<ENG::Text*>(pool.Get(textID));
-      // textObj->AddComponent<ENG::IColor>(ENG::Color::Black);
+      ENG::ObjectID textID = pool.Add(std::make_unique<ENG::Text>(ENG::Vector2{100,100}, 120.0f, "TEXTO DE PRUEBA"));
+      auto* textObj = static_cast<ENG::Text*>(pool.Get(textID));
+      textObj->SetFont(f_CabinItalic);
+      textObj->AddComponent<ENG::IColor>(ENG::Color::Black);
 
       // ###############################
       // Objects Label
@@ -107,7 +113,6 @@
       renderQueue.clear();
       isInit = false;
       isRunning = false;
-      m_text = "";
     }
 
     bool MainMenu::IsRunning()
@@ -123,25 +128,12 @@
       {   
         mousePressed = false;
         isRunning = false;
-        ENG::Services::Scenes().PeddingScene(ENG::SCENE_DEMO);
+        ENG::Services::Scenes().PedingScene("DemoScene");
       }
 
       if(pollEvent.IsMouseButtonPress(SDL_BUTTON_LEFT))
       {
         mousePressed = true;
-      }
-
-      if(pollEvent.IsKeyPress(SDL_SCANCODE_T))
-      {
-        m_text = ENG::Services::CSV().GetText("eng","DIALOG_2", "Dialogos");
-        LOG_INFO(" | << Dialog: " + m_text);
-      }
-
-      if(pollEvent.IsKeyPress(SDL_SCANCODE_Y))
-      {
-        auto text = ENG::Services::CSV().GetRangeText("esp","DIALOG_2", "DIALOG_4", "Dialogos");
-        for(auto& t : text)
-          LOG_INFO(" | << TEXT: " + t);
       }
     }
 
@@ -155,7 +147,7 @@
         {
           if(ENG::CollisionPointRect(ENG::GetMousePosition(), b->GetRect()) && mousePressed)
           {
-            b->Action(b->GetData());
+            b->Action();
             isRunning = false;
             mousePressed = false;
           }
@@ -175,9 +167,5 @@
       {
         pool.Get(entry.id)->Draw(b);
       }
-
-
-      ENG::TextAPI::Get().DrawText(*ENG::Services::Fonts().GetFont("CabinItalic"), 500.f, 500.f, 64, m_text);
     }
-
   }
