@@ -4,6 +4,21 @@ Compact record of engine changes and versions.
 
 `Version.. | feature, bug, change > Descripción`
 
+---
+
+## Alpha 0.04f
+
+`Alpha 0.04f | feature > Isometric render, load and logic.`
+
+`Alpha 0.04f | feature > Now has more optimization on the engine-logic.`
+
+`Alpha 0.04f | feature > On Service::Clock, added the function GetFPS(), returning a float with the total fps.`
+
+`Alpha 0.04f | bugfix > When a textAPI was render, take a copy of the Batcher, not the reference.`
+
+`Alpha 0.04f | bugfix > Object update, now the IBoundingBox update correctly the position.`
+
+`Alpha 0.04f | bugfix > On Service::Clock, the GetDeltaTime, was not giving the right information. Now returns the right data.`
 
 ---
 
@@ -13,11 +28,11 @@ Compact record of engine changes and versions.
 
 `Alpha 0.04e | change > Now have more verifications before used something from ENG::Service().`
 
-`Alpha 0.04e | added > Valgrind version build, can use ./valgrindTest.sh to create the Valgrind version. `
+`Alpha 0.04e | featue > Valgrind version build, can use ./valgrindTest.sh to create the Valgrind version. `
 
 `Alpha 0.04e | bug > Some undefinded behavior solved. `
 
-`Alpha 0.04e | added > Now all Headers have comments.` 
+`Alpha 0.04e | feature > Now all Headers have comments.` 
 
 ---
 
@@ -27,7 +42,7 @@ Compact record of engine changes and versions.
 
 `Alpha 0.04d | change > Now Rects are Rectangle, in the archive Utils/RawGeometry.hpp`
 
-`Alpha 0.04d | added > Added Circle, Triangle to the archive Utils/RawGeometry.hpp`
+`Alpha 0.04d | feature > Added Circle, Triangle to the archive Utils/RawGeometry.hpp`
 
 ---
 
@@ -43,7 +58,7 @@ Compact record of engine changes and versions.
 
 `Alpha 0.04b | update > update data/, now having something.`
 
-`Alpha 0.04b | added > THIRD_PARTY_NOTICIES, for libraries copyrigth`
+`Alpha 0.04b | feature > THIRD_PARTY_NOTICIES, for libraries copyrigth`
 
 ---
 
