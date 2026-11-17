@@ -2,9 +2,10 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
+#include "Engine/GUI/TextReveal.hpp"
 #include "Engine/Object/Object.hpp"
-#include "Engine/Render/Batching/RBatch.hpp"
-#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
+#include "Engine/Render/Color/Color.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Vector2.hpp"
@@ -126,6 +127,22 @@ namespace ENG
        */
       void SetTextAlign(AlignText position);
 
+      /**
+       * @brief Sets the text and reveals it little by little (typewriter effect).
+       *
+       * The effect advances in Update(). SetText() shows a text at once.
+       *
+       * @param[in] text           UTF-8 text.
+       * @param[in] charsPerSecond Speed of the effect. <= 0 shows it at once.
+       */
+      void StartReveal(const std::string& text, float charsPerSecond);
+
+      /// @brief Shows the rest of the text being revealed at once.
+      void FinishReveal(void);
+
+      /// @brief Whether the whole text is visible (true when there is no effect running).
+      bool IsRevealDone(void) const;
+
     private:
       /// @brief Text of the label.
       IText m_text;
@@ -138,7 +155,7 @@ namespace ENG
 
       /// @brief Bounding box of the label, stored in the object's list of
       ///        boxes. Not owned.
-      const IBoundingBox* m_box;
+      IBoundingBox* m_box = nullptr;
 
       /// @brief Background color.
       IColor m_bgColor;
@@ -155,5 +172,8 @@ namespace ENG
 
       /// @brief Offset applied to the position of the text.
       Vector2 m_offset;
+
+      /// @brief Visible part of the text (all of it unless StartReveal() is running).
+      TextReveal m_reveal;
   };
 }

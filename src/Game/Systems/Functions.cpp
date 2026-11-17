@@ -1,6 +1,7 @@
 /// | ------------------------------------ |
 #include "Functions.hpp"
 /// | ------------------------------------ |
+#include "Engine/Inputs/PollEvent.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
 /// | ------------------------------------ |
@@ -15,8 +16,14 @@ namespace APP
   {
     if(auto* idScene = std::any_cast<std::string>(&_))
     {
-      ENG::Services::Scenes().PedingScene(*idScene);
+      ENG::Services::Scenes().SetPedingScene(*idScene);
     }
+  }
+
+  void QuitGameButton(std::any _)
+  {
+    (void)_;
+    ENG::PollEvent::s_statusApp = true;
   }
   
 }

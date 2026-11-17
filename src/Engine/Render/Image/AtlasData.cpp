@@ -43,33 +43,51 @@ namespace ENG
 
   UVRect RegionToUV(const AtlasData& atlas, int x, int y, int w, int h)
   {
-    const float cw = static_cast<float>(atlas.containerWidth);
-    const float ch = static_cast<float>(atlas.containerHeight);
+    const float cw = static_cast<float>(atlas.m_containerWidth);
+    const float ch = static_cast<float>(atlas.m_containerHeight);
 
     return UVRect{
       glm::vec2(x / cw,         y / ch),
-        glm::vec2((x + w) / cw,   (y + h) / ch),
-        glm::vec2(static_cast<float>(w), static_cast<float>(h))
+      glm::vec2((x + w) / cw,   (y + h) / ch),
+      glm::vec2(static_cast<float>(w), static_cast<float>(h))
     };
   }
 
   UVRect GetFrameUV(const AtlasData& atlas, const std::string& animName, int frameIndex)
   {
-    const AnimationRegion& a = atlas.animations.at(animName);
-    const int frame = frameIndex % a.frameCount;   // frameCount > 0, validated on load.
-    return RegionToUV(atlas, a.x + frame * a.w, a.y, a.w, a.h);
+    auto it = atlas.m_animations.find(animName);
+    if(it == atlas.m_animations.end())
+    {
+      LOG_ERROR("GetFrameUV: frame of animation not found: " + animName);
+      return {{0,0},{0,0},{0,0}};
+    }
+    const AnimationRegion& a = it->second;
+    const int frame = frameIndex % a.m_frameCount;   // frameCount > 0, validated on load.
+    return RegionToUV(atlas, a.m_x + frame * a.m_w, a.m_y, a.m_w, a.m_h);
   }
 
   UVRect GetTileUV(const AtlasData& atlas, const std::string& tileID)
   {
-    const TileRegion& t = atlas.tiles.at(tileID);
-    return RegionToUV(atlas, t.x, t.y, t.w, t.h);
+    auto it = atlas.m_tiles.find(tileID);
+    if(it == atlas.m_tiles.end())
+    {
+      LOG_ERROR("GetTileUV: tile (ID String) not found");
+      return {{0,0},{0,0},{0,0}};
+    }
+    const auto& t = it->second;
+    return RegionToUV(atlas, t.m_x, t.m_y, t.m_w, t.m_h);
   }
 
   UVRect GetTileUV(const AtlasData& atlas, int tileID)
   {
-    const TileRegion& t = atlas.tilesById.at(tileID);
-    return RegionToUV(atlas, t.x, t.y, t.w, t.h);
+    auto it = atlas.m_tilesById.find(tileID);
+    if(it == atlas.m_tilesById.end())
+    {
+      LOG_ERROR("GetTileUV: tile (ID Number) not found");
+      return {{0,0},{0,0},{0,0}};
+    }
+    const auto& t = it->second;
+    return RegionToUV(atlas, t.m_x, t.m_y, t.m_w, t.m_h);
   }
 
   AtlasData ParseAtlasJSON(const std::string& jsonPath)
@@ -78,25 +96,26 @@ namespace ENG
     try
     {
       const std::string jsonContent = Path::Get().ReadFileString(jsonPath);
-      const nlohmann::json j = nlohmann::json::parse(jsonContent);
+      // ignore_comments = true: atlas files may carry // comments (e.g. Scenario1)
+      const nlohmann::json j = nlohmann::json::parse(jsonContent, nullptr, true, true);
 
-      data.name        = j.value("name", std::string{});
-      data.texturePath = j.at("texture").get<std::string>();
+      data.m_name        = j.value("name", std::string{});
+      data.m_texturePath = j.at("texture").get<std::string>();
 
       //! "tileSize", only for square cells
       //! Irregular like GUI, not need this 3 options
       //! If the JSON doesnt have 'tileSize' | 'tileWidth' | 'tileHeight', they are going to be zero.
       //! Because, the atlas cells are defined by pixels.
       const int ts    = j.value("tileSize", 0);
-      data.tileWidth  = j.value("tileWidth",  ts);
-      data.tileHeight = j.value("tileHeight", ts);
+      data.m_tileWidth  = j.value("tileWidth",  ts);
+      data.m_tileHeight = j.value("tileHeight", ts);
 
       if (j.contains("animations"))
       {
         for (const auto& [animName, animJson] : j.at("animations").items())
         {
-          const PixelRect r = ReadRect(animJson, data.tileWidth, data.tileHeight);
-          data.animations[animName] = {
+          const PixelRect r = ReadRect(animJson, data.m_tileWidth, data.m_tileHeight);
+          data.m_animations[animName] = {
             r.x, r.y, r.w, r.h,
             animJson.at("frameCount").get<int>()
           };
@@ -107,15 +126,15 @@ namespace ENG
       {
         for (const auto& [tileName, tileJson] : j.at("tiles").items())
         {
-          const PixelRect r = ReadRect(tileJson, data.tileWidth, data.tileHeight);
+          const PixelRect r = ReadRect(tileJson, data.m_tileWidth, data.m_tileHeight);
           const TileRegion region{ r.x, r.y, r.w, r.h, tileJson.value("id", -1) };
 
-          data.tiles[tileName] = region;
+          data.m_tiles[tileName] = region;
 
           // Insert by id, only one.
-          if (region.id >= 0 && !data.tilesById.emplace(region.id, region).second)
+          if (region.m_id >= 0 && !data.m_tilesById.emplace(region.m_id, region).second)
           {
-            LOG_ERROR(" | << Atlas JSON: id de tile duplicado (" +std::to_string(region.id) + ") en '" + tileName + "'");
+            LOG_ERROR(" | << Atlas JSON: id de tile duplicado (" +std::to_string(region.m_id) + ") en '" + tileName + "'");
           }
         }
       }

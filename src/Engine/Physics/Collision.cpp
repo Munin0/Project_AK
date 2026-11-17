@@ -2,7 +2,7 @@
 #include "Collision.hpp"
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
-#include "Engine/Map/TileMap/TileMap.hpp"
+#include "Engine/Map/CollisionGrid.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
@@ -12,12 +12,13 @@
 // | -------------------------------
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 // | -------------------------------
 
 namespace ENG
 {
-  bool CollisionTileMapIsometric(Object& object, const TileMap& map, bool resolution)
+  bool CollisionObjectGrid(Object& object, const CollisionGrid& grid, bool resolution)
   {
     IBoundingBox* box = object.GetComponent<ENG::IBoundingBox>();
     if (!box) return false;
@@ -45,7 +46,7 @@ namespace ENG
         {x, y + footHeight}, {x + footWidth, y + footHeight}
       };
       for (const auto& p : s)
-        if (map.IsBlockedAtWorld(p)) return true;
+        if (grid.IsBlockedAtWorld(p)) return true;
       return false;
     };
 
@@ -72,9 +73,19 @@ namespace ENG
   bool CollisionAABB(Object& source, Object& target, bool resolution)
   {
     Vector2 posA = source.GetPosition(), posB = target.GetPosition();
-    auto dimA = source.GetSolidBox()->GetSize();
-    auto dimB = target.GetSolidBox()->GetSize(); // If vaalidation
-   bool r = (posA.x <= dimB.x && dimA.x >= posB.x) && (posA.y <= dimB.y && dimA.y >= posB.y);
+    auto* boxA = source.GetComponent<IBoundingBox>();
+    auto* boxB = target.GetComponent<IBoundingBox>();
+
+    if (!boxA || !boxB)
+      return false;
+
+    auto dimA = boxA->GetSize();
+    auto dimB = boxB->GetSize();
+    bool r = (posA.x < posB.x + dimB.x &&
+              posA.x + dimA.x > posB.x &&
+              posA.y < posB.y + dimB.y &&
+              posA.y + dimA.y > posB.y
+    );
 
     if(r && resolution)
     {
@@ -89,16 +100,19 @@ namespace ENG
   {
     const Vector2 posA  = source.GetPosition();
     const Vector2 posB  = target.GetPosition();
-    const Vector2 sizeA = source.GetSize();
-    const Vector2 sizeB = target.GetSize();
+    const Vector2 dimA = source.GetSize();
+    const Vector2 dimB = target.GetSize();
 
-    return (posA.x <= posB.x + sizeB.x && posA.x + sizeA.x >= posB.x) &&
-           (posA.y <= posB.y + sizeB.y && posA.y + sizeA.y >= posB.y);
+    
+    return (posA.x < posB.x + dimB.x &&
+            posA.x + dimA.x > posB.x &&
+            posA.y < posB.y + dimB.y &&
+            posA.y + dimA.y > posB.y);
   }
 
   bool CollisionAABB(const Rectangle& a, const Rectangle& b)
   {
-    return (a.x <= b.w && a.w >= b.x) && (a.y <= b.h && a.h >= b.y);
+    return (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y);
   }
 
   bool CollisionPointRect(const Vector2 &point, const Rectangle &rect)
@@ -114,7 +128,7 @@ namespace ENG
     return distSq <= (radiusSum * radiusSum);
   }
 
-  bool CollisionTileToCircle(const TileMap& map, const ICircleBox& circleBox)
+  bool CollisionTileToCircle(const CollisionGrid& grid, const ICircleBox& circleBox)
   {
     Vector2 pos = circleBox.GetPosition();
     float r = circleBox.GetRadius();
@@ -125,7 +139,7 @@ namespace ENG
     {
       for (int col = c0; col <= c1; ++col)
       {
-        if (!map.IsSolid(col, row)) continue;
+        if (!grid.IsSolid(col, row)) continue;
 
         float cx = std::clamp(pos.x, (float)col, (float)col + 1.0f);
         float cy = std::clamp(pos.y, (float)row, (float)row + 1.0f);

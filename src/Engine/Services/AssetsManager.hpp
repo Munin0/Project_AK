@@ -3,7 +3,7 @@
 // | -------------------------------
 #include "Engine/Render/Batching/TextureArray.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
-#include "Engine/Render/Image/RImage.hpp"
+#include "Engine/Render/Image/Image.hpp"
 // | -------------------------------
 #include <functional>
 #include <map>
@@ -77,8 +77,8 @@ namespace ENG
        * @brief Finds a loaded atlas by the file name of its texture.
        *
        * Looks for a loaded atlas whose texture file name matches the given
-       * path (basename only). This allows Tiled tilesets, which reference an
-       * image, to be linked to an atlas that is already loaded.
+       * path (basename only). This lets map importers, whose tilesets reference an
+       * image, link them to an atlas that is already loaded.
        *
        * @param[in] texturePath Path of the texture image. Only the file name
        *                        is compared.

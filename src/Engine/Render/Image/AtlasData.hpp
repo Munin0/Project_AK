@@ -15,15 +15,15 @@ namespace ENG
   struct AnimationRegion
   {
     /// @brief Position X of the grid cell of the tile.
-    int x = 0;
+    int m_x = 0;
     /// @brief Position Y of the grid cell of the tile.
-    int y = 0;
+    int m_y = 0;
     /// @brief Width of the grid cell of the tile.
-    int w = 0;
+    int m_w = 0;
     /// @brief Height of the grid cell of the tile.
-    int h = 0;
+    int m_h = 0;
     /// @brief frameCount of the animation.
-    int frameCount = 0;
+    int m_frameCount = 0;
   };
 
   /**
@@ -32,15 +32,15 @@ namespace ENG
   struct TileRegion
   {
     /// @brief Position X of the grid cell of the tile.
-    int x = 0;
+    int m_x = 0;
     /// @brief Position Y of the grid cell of the tile.
-    int y = 0;
+    int m_y = 0;
     /// @brief Width of the grid cell of the tile.
-    int w = 0;
+    int m_w = 0;
     /// @brief Height of the grid cell of the tile.
-    int h = 0;
-    /// @brief Numeric ID of the tile (in Tiled terms: GID - firstgid).
-    int id = 0;
+    int m_h = 0;
+    /// @brief Numeric ID of the tile. Map importers resolve their own tile ids to this one.
+    int m_id = 0;
   };
 
   /**
@@ -54,29 +54,29 @@ namespace ENG
   struct AtlasData
   {
     /// @brief Name of the atlas.
-    std::string name;
+    std::string m_name;
     /// @brief Path of the texture image of the atlas.
-    std::string texturePath;
+    std::string m_texturePath;
     /// @brief Actual size of the atlas image, in pixels.
     ///        Populated when UploadLayer() is called.
-    int atlasWidth = 0, atlasHeight = 0;
+    int m_atlasWidth = 0, m_atlasHeight = 0;
     /// @brief Width of the tile to Draw
-    int tileWidth = 0;
+    int m_tileWidth = 0;
     /// @brief Height of the tile to Draw
-    int tileHeight = 0;
+    int m_tileHeight = 0;
     /// @brief Layer of the TextureArray where the atlas was uploaded.
     ///        Populated when UploadLayer() is called; not loaded from the JSON.
-    int atlasLayer = -1;
+    int m_atlasLayer = -1;
     /// @brief Actual size of the layer in the TextureArray, in pixels.
     ///        It is the base used to normalize the UV coordinates.
-    int containerWidth = 0, containerHeight = 0;
+    int m_containerWidth = 0, m_containerHeight = 0;
     /// @brief Animations of the atlas, indexed by animation name.
-    std::unordered_map<std::string, AnimationRegion> animations;
+    std::unordered_map<std::string, AnimationRegion> m_animations;
     /// @brief Tiles of the atlas, indexed by tile name.
-    std::unordered_map<std::string, TileRegion> tiles;
+    std::unordered_map<std::string, TileRegion> m_tiles;
     /// @brief Reverse lookup of the tiles, indexed by TileRegion::id
-    ///        (Tiled GID - firstgid).
-    std::unordered_map<int, TileRegion> tilesById;
+    ///        (the id used by ENG::TileLayerData::m_tiles).
+    std::unordered_map<int, TileRegion> m_tilesById;
   };
 
   /**
@@ -85,15 +85,15 @@ namespace ENG
   struct UVRect
   {
     /// @brief UV coordinates of one corner of the rectangle (minimum values).
-    glm::vec2 uvMin;
+    glm::vec2 m_uvMin;
     /// @brief UV coordinates of the opposite corner of the rectangle (maximum values).
-    glm::vec2 uvMax;
-    /// @brief
-    glm::vec2 pixelSize;
+    glm::vec2 m_uvMax;
+    /// @brief Size of the region, in pixels (width, height).
+    glm::vec2 m_pixelSize;
 
-    UVRect() : uvMin(0.0f), uvMax(0.0f), pixelSize(0.0f) {}
+    UVRect() : m_uvMin(0.0f), m_uvMax(0.0f), m_pixelSize(0.0f) {}
     UVRect(glm::vec2 min, glm::vec2 max, glm::vec2 size)
-      : uvMin{min}, uvMax{max}, pixelSize{size} {}
+      : m_uvMin{min}, m_uvMax{max}, m_pixelSize{size} {}
   };
 
   /**
@@ -118,7 +118,7 @@ namespace ENG
   /**
    * @brief Returns the UV rectangle of a tile, looked up by numeric ID.
    *
-   * Looks up a tile by its numeric id (as used by Tiled: GID - firstgid).
+   * Looks up a tile by its numeric id (TileRegion::id, as used by ENG::TileLayerData).
    *
    * @param[in] atlas  Atlas that contains the tile.
    * @param[in] tileID Numeric ID of the tile, as indexed in AtlasData::tilesById.

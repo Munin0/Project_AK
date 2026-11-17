@@ -153,7 +153,7 @@ namespace ENG
        * @param[in] _ Manager to register. Passing nullptr unregisters it
        *              (no initialization is done).
        */
-      static void ProvideClockSaver(ClockManager* _)
+      static void ProvideClock(ClockManager* _)
       {
         m_clock = _;
         if(m_clock)

@@ -1,8 +1,8 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Render/Batching/RBatch.hpp"
-#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
+#include "Engine/Render/Color/Color.hpp"
 #include "Engine/Utils/Config.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
@@ -156,7 +156,7 @@ namespace ENG
       void RenderColor(const Color& c);
     protected:
       /// @brief Screen width (wW) and height (wH), in pixels.
-      float wW, wH;
+      float m_windowsWidth, m_windowsHeight;
     private:
       /// @brief Whether the window is currently in fullscreen mode.
       bool              m_fullscreen;
@@ -167,7 +167,7 @@ namespace ENG
       /// @brief OpenGL context of the window. nullptr until it is created.
       SDL_GLContext     m_glContext = nullptr;
       /// @brief Pointer to the display IDs reported by SDL.
-      SDL_DisplayID*    m_displayID = 0;
+      SDL_DisplayID*    m_displayId = 0;
       /// @brief Display mode of the display the window is shown on.
       const SDL_DisplayMode* m_display;
     private:

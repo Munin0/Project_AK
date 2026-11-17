@@ -1,10 +1,11 @@
 // | -------------------------------
 #include "Label.hpp"
 // | -------------------------------
+#include "Engine/Component/Component.hpp"
 #include "Engine/Object/Object.hpp"
-#include "Engine/Render/Batching/RAPIBatch.hpp"
-#include "Engine/Render/Batching/RBatch.hpp"
-#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Batching/Drawer.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
+#include "Engine/Render/Color/Color.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Text/Font/Font.hpp"
@@ -21,7 +22,7 @@ namespace ENG
   Label::Label(const std::string& name, const Vector2& dimention)
     : Object(name), m_text{""}, m_colorText{Color::Black}, m_bgColor{Color::White}, m_outlineColor{Color::Black}
   {
-    this->m_box = &AddBoundingBox(dimention);
+    this->m_box = &AddComponent<IBoundingBox>(dimention);
   }
 
   void Label::Draw(Batcher& b) const
@@ -29,25 +30,50 @@ namespace ENG
     /// Sprite option
     if(m_sprite != nullptr)
     {
-      b.DrawAtlasSprite(transform.m_position, m_box->GetSize(), m_sprite->atlasLayer, m_textureRect.uvMin, m_textureRect.uvMax, m_colorText.GetColor());
+      b.DrawAtlasSprite(
+          m_transform.m_position,
+          m_box->GetSize(),
+          m_sprite->m_atlasLayer,
+          m_textureRect.m_uvMin, m_textureRect.m_uvMax,
+          m_colorText.GetColor()
+      );
     }
     else
     {
-      Rectangle rect = {transform.m_position.x, transform.m_position.y,m_box->GetSize().x,m_box->GetSize().y};
+      Rectangle rect = {m_transform.m_position.x, m_transform.m_position.y,m_box->GetSize().x,m_box->GetSize().y};
       Drawer::DrawRectangle(rect,this->m_bgColor.GetColor());
       Drawer::DrawRectangleOutline(rect,this->m_outlineColor.GetColor());
     }
-    TextAPI::Get().DrawTextEx(*this->m_text.GetFont(), this->m_fontPosition, this->m_text.GetText(), this->m_text.GetFontSize(), this->m_colorText.GetColor());
+    if(const Font* font = this->m_text.GetFont())
+      TextAPI::Get().DrawTextEx(*font, this->m_fontPosition, std::string(m_reveal.GetVisible()), this->m_text.GetFontSize(), this->m_colorText.GetColor());
   }
 
   void Label::Update(float dt)
   {
-    
+    m_reveal.Update(dt);
   }
 
   void Label::SetText(const std::string& text)
   {
-    this->m_text = text;
+    // SetText keeps the font and size (assigning a string would build a new IText without font).
+    this->m_text.SetText(text);
+    this->m_reveal.Show(text);
+  }
+
+  void Label::StartReveal(const std::string& text, float charsPerSecond)
+  {
+    this->m_text.SetText(text);   // full text: alignment / measures use it
+    this->m_reveal.Start(text, charsPerSecond);
+  }
+
+  void Label::FinishReveal(void)
+  {
+    this->m_reveal.Finish();
+  }
+
+  bool Label::IsRevealDone(void) const
+  {
+    return this->m_reveal.IsDone();
   }
 
   void Label::SetFont(Font& font)
@@ -91,8 +117,8 @@ namespace ENG
       case AlignText::TEXT_ALIGN_UPL:
       {
         this->m_fontPosition = {
-          this->transform.m_position.x + this->m_offset.x, 
-          this->transform.m_position.y + this->m_text.GetFontSize() / 2.0f + this->m_offset.y
+          this->m_transform.m_position.x + this->m_offset.x, 
+          this->m_transform.m_position.y + this->m_text.GetFontSize() / 2.0f + this->m_offset.y
         };
         break;
       }
@@ -101,8 +127,8 @@ namespace ENG
         auto size = this->m_box->GetSize();
         auto textSize = TextAPI::Get().GetMeasureTextEx(this->m_text.GetFont(),this->m_text.GetText(), this->m_text.GetFontSize());
         this->m_fontPosition = {
-          (this->transform.m_position.x + size.x) - textSize.x - this->m_offset.x,
-          (this->transform.m_position.y + this->m_offset.y) + textSize.y / 2.0f
+          (this->m_transform.m_position.x + size.x) - textSize.x - this->m_offset.x,
+          (this->m_transform.m_position.y + this->m_offset.y) + textSize.y / 2.0f
         };
         break;
       }
@@ -111,8 +137,8 @@ namespace ENG
         auto size = this->m_box->GetSize();
         auto textSize = TextAPI::Get().GetMeasureTextEx(this->m_text.GetFont(),this->m_text.GetText(), this->m_text.GetFontSize());
         this->m_fontPosition = {
-          this->transform.m_position.x + this->m_offset.x, 
-          this->transform.m_position.y + size.y - this->m_offset.y
+          this->m_transform.m_position.x + this->m_offset.x, 
+          this->m_transform.m_position.y + size.y - this->m_offset.y
         };
         break;
       }
@@ -121,8 +147,8 @@ namespace ENG
         auto size = this->m_box->GetSize();
         auto textSize = TextAPI::Get().GetMeasureTextEx(this->m_text.GetFont(),this->m_text.GetText(), this->m_text.GetFontSize());
         this->m_fontPosition = {
-          (this->transform.m_position.x + size.x) - textSize.x - this->m_offset.x ,
-          (this->transform.m_position.y + size.y) - this->m_offset.y
+          (this->m_transform.m_position.x + size.x) - textSize.x - this->m_offset.x ,
+          (this->m_transform.m_position.y + size.y) - this->m_offset.y
         };
         break;
       }
@@ -131,8 +157,8 @@ namespace ENG
         auto size = this->m_box->GetSize();
         auto textSize = TextAPI::Get().GetMeasureTextEx(this->m_text.GetFont(),this->m_text.GetText(), this->m_text.GetFontSize());
         this->m_fontPosition = {
-          (this->transform.m_position.x + size.x / 2.0f) - (textSize.x / 2.0f),
-          (this->transform.m_position.y + size.y / 2.0f) + (textSize.y / 4.0f)
+          (this->m_transform.m_position.x + size.x / 2.0f) - (textSize.x / 2.0f),
+          (this->m_transform.m_position.y + size.y / 2.0f) + (textSize.y / 4.0f)
          };
         break;
       }

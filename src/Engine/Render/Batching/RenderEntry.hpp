@@ -1,7 +1,8 @@
 /// | ------------------------------------ |
 #pragma once
 /// | ------------------------------------ |
-#include "Engine/Render/Shaders/RShader.hpp"
+#include "Engine/Render/RenderSpace.hpp"
+#include "Engine/Render/Shaders/Shader.hpp"
 /// | ------------------------------------ |
 #include <cstdint>
 /// | ------------------------------------ |
@@ -20,12 +21,15 @@ namespace ENG
   struct RenderEntry
   {
     /// @brief Identifier of the object to draw.
-    uint32_t id;
+    uint32_t m_id;
 
     /// @brief Layer the object is drawn on.
-    uint8_t layer;
+    uint8_t m_layer;
+
+    /// @brief World (moves with the camera) or Screen (fixed on screen).
+    RenderSpace m_space;
 
     /// @brief Shader used to draw the object. Not owned by the entry.
-    Shader* shader;
+    Shader* m_shader;
   };
 }

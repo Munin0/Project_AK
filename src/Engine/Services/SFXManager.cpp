@@ -17,8 +17,11 @@ namespace ENG
   {
     auto it = m_sfx.find(key);
     if (it == m_sfx.end())
+    {
       LOG_ERROR(" | << SFX not found >PlaySFX(): " + key);
-    auto p = it->second;
+      return;
+    }
+    auto& p = it->second;
 
     auto track = GetTrackFreeOrNew(p);
 
@@ -42,8 +45,8 @@ namespace ENG
       LOG_ERROR(std::string(" | << MIX_LoadAudio failed: ") + SDL_GetError());
     
     SFXPool p;
-    p.audio = audio;
-    p.maxTracksMemory = _maxTracksMemory;
+    p.m_audio = audio;
+    p.m_maxTracksMemory = _maxTracksMemory;
     m_sfx[key] = p;
     LOG_INFO(" | <<    ->"+pathComplete.string());
   }
@@ -52,10 +55,12 @@ namespace ENG
   {
     auto it = m_sfx.find(key);
     if (it == m_sfx.end())
+    {
       LOG_ERROR(" | << SFX not found >GetVolume(): " + key);
-    auto p = it->second;
-
-    return p.volume;
+      return 0.0f;
+    }
+    auto& p = it->second;
+    return p.m_volume;
   }
 
   void SFXManager::SetVolume(const std::string& key, float volume)
@@ -68,9 +73,13 @@ namespace ENG
 
     auto it = m_sfx.find(key);
     if (it == m_sfx.end())
+    {
       LOG_ERROR(" | << SFX not found >SetVolume(): " + key);
+      return;
+    }
+
     auto& foo = it->second;
-    foo.volume = volume;
+    foo.m_volume = volume;
   }
 
   bool SFXManager::IsSFXLoaded(const std::string& key)
@@ -82,7 +91,7 @@ namespace ENG
   {
     for (auto& [key, pool] : m_sfx)
     {
-      for(auto* track : pool.tracksPool)
+      for(auto* track : pool.m_tracksPool)
         MIX_DestroyTrack(track);
     }
     MIX_DestroyMixer(m_mixer);
@@ -91,13 +100,13 @@ namespace ENG
 
   MIX_Track* SFXManager::GetTrackFreeOrNew(SFXPool& p)
   {
-    for (auto* track : p.tracksPool)
+    for (auto* track : p.m_tracksPool)
     {
       if (!MIX_TrackPlaying(track))
         return track; 
     }
 
-    if(p.tracksPool.size() < p.maxTracksMemory)
+    if(p.m_tracksPool.size() < p.m_maxTracksMemory)
     {
       auto track = MIX_CreateTrack(this->m_mixer);
       if (!track)
@@ -105,14 +114,14 @@ namespace ENG
         LOG_ERROR(std::string(" | << MIX_CreateTrack failed: ") + SDL_GetError());
         return nullptr;
       }
-      MIX_SetTrackAudio(track, p.audio);
-      MIX_SetTrackGain(track,p.volume);
-      p.tracksPool.push_back(track);
+      MIX_SetTrackAudio(track, p.m_audio);
+      MIX_SetTrackGain(track,p.m_volume);
+      p.m_tracksPool.push_back(track);
       return track;
     }
 
-    auto* stolen = p.tracksPool[p.nextIndex];
-    p.nextIndex = (p.nextIndex + 1) % p.tracksPool.size();
+    auto* stolen = p.m_tracksPool[p.m_nextIndex];
+    p.m_nextIndex = (p.m_nextIndex + 1) % p.m_tracksPool.size();
 
     MIX_StopTrack(stolen, 0);
     return stolen;  

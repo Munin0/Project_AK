@@ -1,171 +1,143 @@
 /// | ------------------------------------ |
 #include "MainMenu.hpp"
 /// | ------------------------------------ |
-#include "Engine/Component/Component.hpp"
 #include "Engine/GUI/Button.hpp"
+#include "Engine/GUI/Label.hpp"
 #include "Engine/GUI/TextBox.hpp"
 #include "Engine/Inputs/Mouse.hpp"
+#include "Engine/Inputs/PollEvent.hpp"
 #include "Engine/Layer/Scene.hpp"
-#include "Engine/Map/TileMap/TileMap.hpp"
-#include "Engine/Object/Object.hpp"
 #include "Engine/Physics/Collision.hpp"
-#include "Engine/Render/Batching/RBatch.hpp"
-#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Object/ObjectPool.hpp"
+#include "Engine/Object/PoolSystems.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
+#include "Engine/Render/Color/Color.hpp"
+#include "Engine/Render/Layers.hpp"
 #include "Engine/Render/Render.hpp"
-#include "Engine/Text/Text.hpp"
+#include "Engine/Services/FontManager.hpp"
+#include "Engine/Services/Services.hpp"
+#include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Vector2.hpp"
-#include "Engine/Object/ObjectPool.hpp"
-#include "Engine/Inputs/PollEvent.hpp"
-#include "Engine/Services/ScenesManager.hpp"
-#include "Engine/Services/Services.hpp"
-  /// | ------------------------------------ |
-#include "Game/Game.hpp"
+/// | ------------------------------------ |
 #include "Game/Systems/Functions.hpp"
-  /// | ------------------------------------ |
+/// | ------------------------------------ |
 #include "SDL3/SDL_mouse.h"
-#include "SDL3/SDL_scancode.h"
-  /// | ------------------------------------ |
+/// | ------------------------------------ |
+#include <any>
 #include <memory>
 #include <string>
-  /// | ------------------------------------ |
+#include <utility>
+/// | ------------------------------------ |
 
-  namespace APP
+namespace
+{
+  const ENG::Vector2     BUTTON_SIZE{220.0f, 60.0f};
+  constexpr float        BUTTON_GAP = 20.0f;
+}
+
+namespace APP
+{
+  MainMenu::MainMenu(const std::string& id) : ENG::Scene{}
   {
-    MainMenu::MainMenu(const std::string& id)
-      : ENG::Scene{}
-    {
-      sceneID = id;
-    }
-
-    void MainMenu::Init(void)
-    {
-      if(isInit)
-      {
-        LOG_INFO(" | << SCENE MAINMENU ALREADY INIT");
-        return;
-      }
-      // ###############################
-      /// Screen Size
-      auto sizeScreen = ENG::Render::Get().GetScreenSize();
-      auto f_CabinItalic = ENG::Services::Fonts().GetFont("CabinItalic");
-    
-      ENG::Services::CSV().Load("Dialogs/dialog.csv","Dialogos");
-
-      // ###############################
-      // Objects
-      // Configuration of the Object entities
-      // ###############################
-      ENG::ObjectID btStartID = pool.Add(std::make_unique<ENG::Button>("StartGame", ENG::Vector2{100,50} ));
-      auto startBT = static_cast<ENG::Button*>(pool.Get(btStartID));
-      startBT->SetPosition({100,100});
-      startBT->SetData(std::string("DemoScene"));
-      startBT->SetFunction(ChangeSceneButton);
-      startBT->SetLayer(LAYER_UI);
-      startBT->SetFont(*f_CabinItalic);
-      startBT->SetText("Start Game");
-      startBT->SetTextSize(24);
-      startBT->SetTextColor(ENG::Color::Black);
-
-      ENG::ObjectID txtBoxID = pool.Add(std::make_unique<ENG::TextBox>("TextBoxOptions", "Ingresa nombre", ENG::Vector2{200,100}));
-      auto txtBox = static_cast<ENG::TextBox*>(pool.Get(txtBoxID));
-      txtBox->SetTextColor(ENG::Color::Gray);
-      txtBox->SetFontSize(32);
-      txtBox->SetFont(*f_CabinItalic);
-      txtBox->SetPosition({500,500});
-
-      // ###############################
-      // Objects Text
-      // Configuration of the Object Text
-      // ###############################
-      ENG::ObjectID textID = pool.Add(std::make_unique<ENG::Text>(ENG::Vector2{100,100}, 120.0f, "TEXTO DE PRUEBA"));
-      auto* textObj = static_cast<ENG::Text*>(pool.Get(textID));
-      textObj->SetFont(f_CabinItalic);
-      textObj->AddComponent<ENG::IColor>(ENG::Color::Black);
-
-      // ###############################
-      // Objects Label
-      // Configuration of the Object Labels
-      // ###############################
-      // ENG::ObjectID labelID = pool.Add(std::make_unique<ENG::Label>("IniciarPrueba", ENG::Vector2{250,150}));
-      // auto labelObj = static_cast<ENG::Label*>(pool.Get(labelID));
-      // labelObj->SetFont(*f_CabinItalic);
-      // labelObj->SetText("Iniciar Partida");
-      // labelObj->SetPosition({sizeScreen.x/2.0f - 250/2.0f,sizeScreen.y/2.0f - 150/2.0f});
-      // labelObj->SetFontSize(64);
-      // labelObj->SetOffset({5.0f,5.0f});
-      // labelObj->SetTextAlign(ENG::AlignText::TEXT_ALIGN_CENTER);
-      // labelObj->SetColorText(ENG::Color::Black);
-      // labelObj->SetBackgoundColor(ENG::Color::White);
-
-      // ###############################
-      // Final configurations
-      // Final configurations for the GameLayer
-      // ###############################
-      isInit = true;
-      isRunning = true;
-      this->renderQueue = pool.Sort();
-    }
-
-    void MainMenu::Destroy(void)
-    {
-      pool.Clear();
-      renderQueue.clear();
-      isInit = false;
-      isRunning = false;
-    }
-
-    bool MainMenu::IsRunning()
-    {
-      return isRunning;
-    }
-
-    void MainMenu::Inputs(float dt)
-    {
-      auto& pollEvent = ENG::PollEvent::Get();
-      
-      if(pollEvent.IsKeyPress(SDL_SCANCODE_P))
-      {   
-        mousePressed = false;
-        isRunning = false;
-        ENG::Services::Scenes().PedingScene("DemoScene");
-      }
-
-      if(pollEvent.IsMouseButtonPress(SDL_BUTTON_LEFT))
-      {
-        mousePressed = true;
-      }
-    }
-
-    void MainMenu::Update(float dt)
-    {
-      for (auto& o : pool.GetAllIDs())
-      {
-        pool.Get(o)->Update(dt);
-
-        if(auto b = dynamic_cast<ENG::Button*>(pool.Get(o)))
-        {
-          if(ENG::CollisionPointRect(ENG::GetMousePosition(), b->GetRect()) && mousePressed)
-          {
-            b->Action();
-            isRunning = false;
-            mousePressed = false;
-          }
-        }
-      }
-      mousePressed = false;
-    }
-
-    void MainMenu::UpdateFixed(float dt)
-    {
-      (void)dt;
-    }
-
-    void MainMenu::Render(ENG::Batcher& b)
-    {
-      for(auto& entry : renderQueue)
-      {
-        pool.Get(entry.id)->Draw(b);
-      }
-    }
+    m_sceneId = id;
   }
+
+  void MainMenu::Init(void)
+  {
+    if (m_isInit)
+      return;
+
+
+    const ENG::Vector2 screen = ENG::Render::Get().GetScreenSize();
+    const float        cx     = screen.x * 0.5f;
+    ENG::Font*         font   = ENG::Services::Fonts().GetFont("CabinItalic");
+    if (!font)
+    {
+      LOG_ERROR(" | << MainMenu: font 'CabinItalic' not loaded");
+      return;
+    }
+
+    // ###############################
+    // Title (Label)
+    // ###############################
+    const ENG::Vector2 titleSize{600.0f, 120.0f};
+    auto* title = static_cast<ENG::Label*>(
+      m_pool.Get(m_pool.Add(std::make_unique<ENG::Label>("Title", titleSize))));
+    title->SetFont(*font);
+    title->SetText("Project AK");
+    title->SetFontSize(72);
+    title->SetColorText(ENG::Color::Black);
+    title->SetBackgroundColor(ENG::Color::White);
+    title->SetPosition({cx - titleSize.x * 0.5f, screen.y * 0.15f});
+    title->SetTextAlign(ENG::AlignText::TEXT_ALIGN_CENTER);   // after SetPosition: it uses it
+    title->SetLayer(LAYER_UI);
+
+    // ###############################
+    // Name field (TextBox)
+    // ###############################
+    const ENG::Vector2 boxSize{400.0f, 60.0f};
+    auto* nameBox = static_cast<ENG::TextBox*>(m_pool.Get(m_pool.Add(std::make_unique<ENG::TextBox>("NameBox", "Ingresa nombre", boxSize))));
+    nameBox->SetFont(*font);
+    nameBox->SetFontSize(28);
+    nameBox->SetTextColor(ENG::Color::Black);   // the placeholder is gray by default
+    nameBox->SetMaxLength(48);
+    nameBox->SetOnSubmit([](const std::string& name)
+    {
+      LOG_INFO(" | << MainMenu: player name '" + name + "'");
+    });
+    nameBox->SetPosition({cx - boxSize.x * 0.5f, screen.y * 0.40f});
+    nameBox->SetLayer(LAYER_UI);
+
+    // ###############################
+    // Buttons
+    // ###############################
+    const float buttonsY = screen.y * 0.40f + boxSize.y + 2.0f * BUTTON_GAP;
+    auto addButton = [&](const std::string& name, const std::string& text, float y, ENG::Button::ButtonCallback callback, std::any data)
+    {
+      auto* button = static_cast<ENG::Button*>(
+        m_pool.Get(m_pool.Add(std::make_unique<ENG::Button>(name, BUTTON_SIZE))));
+      button->SetPosition({cx - BUTTON_SIZE.x * 0.5f, y});
+      button->SetFont(*font);
+      button->SetText(text);
+      button->SetTextSize(28);
+      button->SetTextColor(ENG::Color::Black);
+      button->SetFunction(std::move(callback));
+      button->SetData(std::move(data));
+      button->SetLayer(LAYER_UI);
+    };
+
+    addButton("PlayButton", "Jugar", buttonsY, ChangeSceneButton, std::string("GameScene"));
+    addButton("QuitButton", "Salir", buttonsY + BUTTON_SIZE.y + BUTTON_GAP, QuitGameButton, {});
+
+    m_isInit = true;
+  }
+
+  void MainMenu::Destroy(void)
+  {
+    m_pool.Clear();
+    m_isInit  = false;
+  }
+
+  void MainMenu::Inputs(float dt)
+  {
+    (void)dt;
+    // buttons and text box take their clicks
+    ENG::DispatchPointer(m_pool);
+  }
+
+  void MainMenu::Update(float dt)
+  {
+    ENG::UpdateObjects(m_pool, dt);
+  }
+
+  void MainMenu::UpdateFixed(float dt)
+  {
+    (void)dt;
+  }
+
+  void MainMenu::Render(ENG::Batcher& b)
+  {
+    ENG::RenderObjects(m_pool, b);
+  }
+}

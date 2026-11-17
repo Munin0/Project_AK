@@ -3,7 +3,7 @@
 // | -------------------------------
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Render/Image/ImagePixel.hpp"
-#include "Engine/Render/Image/RImage.hpp"
+#include "Engine/Render/Image/Image.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/Path.hpp"
 // | -------------------------------
@@ -56,19 +56,19 @@ namespace ENG
       return false;
     }
 
-    const auto texturePath = jsonPath.parent_path() / data.texturePath;
+    const auto texturePath = jsonPath.parent_path() / data.m_texturePath;
     ImagePixels img = LoadImagePixels(texturePath.string());
-    if (!img.data)
+    if (!img.m_data)
     {
       LOG_ERROR(std::format("Atlas '{}': no se pudo cargar la imagen {}", idkey, texturePath.string()));
       return false;
     }
 
-    if (data.tileWidth > 0 && data.tileHeight > 0 &&
-        (img.width % data.tileWidth != 0 || img.height % data.tileHeight != 0))
+    if (data.m_tileWidth > 0 && data.m_tileHeight > 0 &&
+        (img.m_width % data.m_tileWidth != 0 || img.m_height % data.m_tileHeight != 0))
     {
-      LOG_ERROR(std::format("Atlas '{}': imagen {}x{} no es multiplo de la celda {}x{}",
-            idkey, img.width, img.height, data.tileWidth, data.tileHeight));
+      LOG_ERROR(std::format("Atlas '{}': img {}x{} no es multiplo de la celda {}x{}",
+            idkey, img.m_width, img.m_height, data.m_tileWidth, data.m_tileHeight));
     }
 
     // Una region es valida si es no vacia y cabe dentro de la imagen
@@ -76,43 +76,43 @@ namespace ENG
     {
       return w > 0 && h > 0 &&
         x >= 0 && y >= 0 &&
-        x + w <= img.width &&
-        y + h <= img.height;
+        x + w <= img.m_width &&
+        y + h <= img.m_height;
     };
 
-    for (const auto& [animName, a] : data.animations)
+    for (const auto& [animName, a] : data.m_animations)
     {
       // Los frames avanzan en horizontal: el ancho total es frameCount * w
-      if (a.frameCount <= 0 || !fits(a.x, a.y, a.frameCount * a.w, a.h))
+      if (a.m_frameCount <= 0 || !fits(a.m_x, a.m_y, a.m_frameCount * a.m_w, a.m_h))
       {
-        LOG_ERROR(std::format("Atlas '{}': animacion '{}' fuera del atlas (x={}, y={}, frame={}x{}, frames={}, imagen={}x{})",
-              idkey, animName, a.x, a.y, a.w, a.h, a.frameCount, img.width, img.height));
+        LOG_ERROR(std::format("Atlas '{}': animation '{}' our range (x={}, y={}, frame={}x{}, frames={}, img={}x{})",
+              idkey, animName, a.m_x, a.m_y, a.m_w, a.m_h, a.m_frameCount, img.m_width, img.m_height));
         return false;
       }
     }
 
-    for (const auto& [tileName, t] : data.tiles)
+    for (const auto& [tileName, t] : data.m_tiles)
     {
-      if (!fits(t.x, t.y, t.w, t.h))
+      if (!fits(t.m_x, t.m_y, t.m_w, t.m_h))
       {
         LOG_ERROR(std::format("Atlas '{}': tile '{}' fuera del atlas (x={}, y={}, {}x{}, imagen={}x{})",
-              idkey, tileName, t.x, t.y, t.w, t.h, img.width, img.height));
+              idkey, tileName, t.m_x, t.m_y, t.m_w, t.m_h, img.m_width, img.m_height));
         return false;
       }
     }
 
-    const int layer = m_textureArray.UploadLayer(img.data, img.width, img.height);
+    const int layer = m_textureArray.UploadLayer(img.m_data, img.m_width, img.m_height);
     if (layer < 0)
     {
       LOG_ERROR(std::format("Atlas '{}': UploadLayer fallo (TextureArray lleno o imagen mayor al contenedor)", idkey));
       return false;
     }
 
-    data.atlasLayer      = layer;
-    data.atlasWidth      = img.width;
-    data.atlasHeight     = img.height;
-    data.containerWidth  = m_textureArray.GetWidth();
-    data.containerHeight = m_textureArray.GetHeight();
+    data.m_atlasLayer      = layer;
+    data.m_atlasWidth      = img.m_width;
+    data.m_atlasHeight     = img.m_height;
+    data.m_containerWidth  = m_textureArray.GetWidth();
+    data.m_containerHeight = m_textureArray.GetHeight();
 
     m_atlases.emplace(idkey, std::move(data));
     return true;
@@ -141,7 +141,7 @@ namespace ENG
     const std::string texName = std::filesystem::path(texturePath).filename().string();
     for (const auto& [key, data] : m_atlases)
     {
-      if(std::filesystem::path(data.texturePath).filename().string() == texName)
+      if(std::filesystem::path(data.m_texturePath).filename().string() == texName)
         return &data;
     }
     return nullptr;

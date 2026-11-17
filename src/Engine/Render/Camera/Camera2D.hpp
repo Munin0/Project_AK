@@ -1,7 +1,6 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Component/Component.hpp"
 #include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
@@ -28,8 +27,9 @@ namespace ENG
    * to render the world and to convert screen coordinates to world
    * coordinates.
    *
-   * The camera can follow a target (an ITransform or an IBoundingBox) when
-   * Update() is called every frame.
+   * The camera does not keep a pointer to what it follows: the scene passes
+   * the position every frame with Follow(). So it can never dangle when the
+   * followed object is removed; the camera simply stays where it was.
    *
    * The world uses screen-like axes: X grows to the right and Y grows
    * downwards.
@@ -37,10 +37,10 @@ namespace ENG
    * Usage:
    * @code
    * ENG::Camera2D camera(1280.0f, 720.0f);
-   * camera.SetTarget(&playerTransform);
    * camera.SetZoom(2.0f);
-   * // every frame:
-   * camera.Update(dt);
+   * // every frame, while the player exists:
+   * if (ENG::Object* player = pool.Get(playerId))
+   *   camera.Follow(player->GetPosition(), dt);
    * glm::mat4 vp = camera.GetViewProjectionMatrix();
    * @endcode
    */
@@ -71,42 +71,20 @@ namespace ENG
       {}
 
       /**
-       * @brief Updates the camera once per frame.
+       * @brief Follows a point of the world (call it every frame).
        *
-       * If a target was set, the camera is centered on it. When both an
-       * ITransform target and an IBoundingBox target are set, the bounding
-       * box takes precedence. The camera follows the target instantly, with
-       * no smoothing.
+       * The camera is centered on @p target instantly, with no smoothing. The
+       * point is passed by value, so nothing the camera stores can dangle.
        *
-       * @param[in] dt Time elapsed since the previous frame, in seconds.
-       *               Currently unused.
+       * @param[in] target Point of the world to center the view on.
+       * @param[in] dt     Time elapsed since the previous frame, in seconds.
+       *                   Currently unused (reserved for smoothing).
        */
-      void Update(float dt)
+      void Follow(const Vector2& target, float dt)
       {
-        if(m_target != nullptr)
-          m_position = m_target->m_position;
+        (void)dt;
+        m_position = target;
       }
-
-      /**
-       * @brief Sets an ITransform for the camera to follow.
-       *
-       * The target is not owned by the camera and must outlive it (or be
-       * replaced before it is destroyed).
-       *
-       * @param[in] _target Transform to follow.
-       */
-      void SetTarget(const ITransform* _target) {m_target = _target;}
-
-      /**
-       * @brief Sets an IBoundingBox for the camera to follow.
-       *
-       * The camera centers on the center of the bounding box. The target is
-       * not owned by the camera and must outlive it (or be replaced before
-       * it is destroyed).
-       *
-       * @param[in] _target Bounding box to follow.
-       */
-      void SetTarget(const IBoundingBox* _target) {m_target_bb = _target;}
 
       /**
        * @brief Sets the position of the camera.
@@ -277,12 +255,6 @@ namespace ENG
       }
 
     private:
-      /// @brief Transform the camera follows. nullptr if none. Not owned.
-      const ITransform* m_target = nullptr;
-
-      /// @brief Bounding box the camera follows. nullptr if none. Not owned.
-      const IBoundingBox* m_target_bb = nullptr;
-
       /// @brief Position of the camera: the point of the world at the center of the view.
       Vector2 m_position;
 

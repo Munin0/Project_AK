@@ -1,3 +1,10 @@
+// This atlas is a Example for:
+// -> Regular JSON format to load.
+// -> "texture" is mandatory. ALWAYS ON ALL JSON
+// -> Can be two options, "animations" | "tiles", both defined for make 
+
+//! This format have tiles, defined tiles size for all tiles.
+
 {
   "name":"Escenario 1",
   "texture": "Escene1_Atlas.png",

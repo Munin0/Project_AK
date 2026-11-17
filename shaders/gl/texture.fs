@@ -48,8 +48,6 @@ void main()
         }
     }
 
-    FragColor = texColor * v_Color;
-    
     /// Effects with de DrawCall, its simple.
     switch(int(v_EffectMode))
     {
@@ -74,4 +72,5 @@ void main()
         default: // Not Effect == 0.0f
             break;
     }
+    FragColor = texColor * v_Color;
 }

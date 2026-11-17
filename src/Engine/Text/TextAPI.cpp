@@ -1,14 +1,16 @@
 // | -------------------------------
 #include "TextAPI.hpp"
 // | -------------------------------
-#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Color/Color.hpp"
 #include "Engine/Render/Render.hpp"
 #include "Engine/Text/Font/Font.hpp"
+#include "Engine/Text/Utf8.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
 #include "glm/ext/vector_float2.hpp"
 // | -------------------------------
 #include <cstdarg>
+#include <cstdint>
 #include <cstdio>
 #include <string>
 // | -------------------------------
@@ -84,16 +86,18 @@ namespace ENG
 
     glm::vec2 cursor = position;
     
-    for(unsigned char c : text)
+    // UTF-8: one glyph per codepoint ("ó" is two bytes but one glyph).
+    for(size_t i = 0; i < text.size();)
     {
+      const uint32_t c = Utf8::Next(text, i);
       if(c == '\n')
       {
         cursor.x = position.x;
-        cursor.y += font.GetLineHeight();
+        cursor.y += font.GetLineHeight() * scaleFactor;
         continue;
       }
-        
-      const Glyph* g = font.GetGlyphs((int)c);
+
+      const Glyph* g = font.GetGlyphs(static_cast<int>(c));
       if(!g) continue;
       
       glm::vec2 quadPos  = cursor + glm::vec2(g->xoff, g->yoff) * scaleFactor;
@@ -107,18 +111,8 @@ namespace ENG
 
   float TextAPI::GetMeasureText(const Font* font, const std::string& text, const float fontSize)
   {
-    float measure = 0.0f;
-    float scaleRender = 1.0f;
-    if(fontSize != 0)
-    {
-      float scaleWidth = fontSize / font->GetLineHeight();
-      scaleRender = font->GetLineHeight() * scaleWidth; 
-    }
-    for(auto& c : text)
-    {
-      measure += font->GetGlyphs(c)->xadvance; 
-    }
-    return measure * scaleRender;
+    // Same width as GetMeasureTextEx().x
+    return GetMeasureTextEx(font, text, fontSize).x;
   }
 
   // Return Vector2, X = FontSize Width, Y return scaleRender if the size of the font is > of GetLineHeight().
@@ -127,9 +121,11 @@ namespace ENG
   {
     float scale = fontSize != 0 ? fontSize / font->GetLineHeight() : 1.0f;
     float measure = 0.0f;
-    for(auto& c : text)
+    // UTF-8 codepoints; glyphs missing in the font are skipped (as DrawTextEx does).
+    for(size_t i = 0; i < text.size();)
     {
-      measure += font->GetGlyphs(c)->xadvance * scale;
+      if(const Glyph* g = font->GetGlyphs(static_cast<int>(Utf8::Next(text, i))))
+        measure += g->xadvance * scale;
     }
     float height = fontSize != 0 ? fontSize : font->GetLineHeight();
     return {measure, height};

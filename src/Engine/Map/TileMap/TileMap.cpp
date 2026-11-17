@@ -1,212 +1,161 @@
 // | -------------------------------
 #include "TileMap.hpp"
 // | -------------------------------
-#include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Map/MapData.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
 #include "Engine/Render/Camera/Camera2D.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Render/Render.hpp"
-#include "Engine/Services/Services.hpp"
 #include "Engine/Utils/Log.hpp"
-#include "Engine/Utils/Path.hpp"
-// | -------------------------------
 #include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
-#include "glm/ext/vector_float2.hpp"
-// | -------------------------------
-#include "nlohmann/json_fwd.hpp"
-#include "nlohmann/json.hpp"
+#include <glm/ext/vector_float2.hpp>
 // | -------------------------------
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <stdexcept>
+#include <limits>
 #include <string>
 #include <unordered_map>
-#include <utility>
-#include <vector>
+#include <unordered_set>
 // | -------------------------------
 
 namespace ENG
 {
-  std::vector<TileMap> TileMap::LoadTiledMap(const std::string& atlasKey, const std::string& mapPath, float scale)
+  TileMap TileMap::Build(const MapData& map, const TileLayerData& layer, const AtlasData& atlas,
+                         float scale)
   {
-    std::vector<TileMap> result;
+    TileMap tm;
+    tm.m_name        = layer.m_name;
+    tm.m_width       = layer.m_width;
+    tm.m_height      = layer.m_height;
+    tm.m_offset      = layer.m_offset;
+    tm.m_scale       = scale;
+    tm.m_tileSize    = map.m_tileSize;
+    tm.m_orientation = map.m_orientation;
+    tm.m_atlasLayer  = atlas.m_atlasLayer;
 
-    const AtlasData* atlas = Services::Assets().GetAtlas(atlasKey);
-    if (!atlas)
+    const size_t cellCount = static_cast<size_t>(layer.m_width) * static_cast<size_t>(layer.m_height);
+    if (layer.m_tiles.size() != cellCount)
     {
-      LOG_ERROR("TileMap: atlas not found: " + atlasKey);
-      return result;
+      LOG_ERROR(" | << TileMap: layer '" + layer.m_name + "' has " +
+                std::to_string(layer.m_tiles.size()) + " tiles, expected " + std::to_string(cellCount));
+      tm.m_width = tm.m_height = 0;
+      return tm;
     }
 
-    nlohmann::json j;
-    try
+    tm.m_cells.assign(cellCount, -1);
+    std::unordered_map<int32_t, int16_t> resolved;  // atlas tile id -> palette index
+    std::unordered_set<int32_t>          missing;   // ids already reported
+
+    for (size_t i = 0; i < cellCount; i++)
     {
-      auto jsonPath = Path::Get().AssetsPath / mapPath;
-      j = nlohmann::json::parse(Path::Get().ReadFile(jsonPath));
-    }
-    catch (const nlohmann::json::exception& e)
-    {
-      LOG_ERROR("TileMap: error parsing Tiled map JSON: " + mapPath + " - " + e.what());
-      return result;
-    }
-
-    // Only a single (possibly embedded) tileset per map is supported: every gid is resolved as
-    // (gid - firstgid) against atlasKey's own tile ids.
-    int firstGid = 1;
-    if (j.contains("tilesets") && !j.at("tilesets").empty())
-      firstGid = j.at("tilesets")[0].value("firstgid", 1);
-
-    /// Transform name to layer to draw
-    
-
-    /// MapTileSize 
-    glm::vec2 mapTileSize = {
-      j.value("tilewidth", 0),
-      j.value("tileheight", 0)
-    };
-
-    std::string orient = j.value("orientation","orthogonal");
-    TileOrientation mapOrientation = (orient == "isometric") ? TileOrientation::Isometric : TileOrientation::Orthogonal;
-
-    for (const auto& layerJson : j.at("layers"))
-    {
-      if (layerJson.value("type", "") != "tilelayer")
+      const int32_t id = layer.m_tiles[i];
+      if (id == EMPTY_TILE)
         continue;
 
-      TileMap map;
-      map.m_name            = layerJson.value("name", "");
-      map.m_layer           = map.GetLayerNum(map.m_name);
-      map.m_offsetLayer.x = layerJson.value("offsetx",0);
-      map.m_offsetLayer.y = layerJson.value("offsety",0);
-      map.m_width           = layerJson.at("width").get<int>();
-      map.m_height          = layerJson.at("height").get<int>();
-      map.m_scale           = scale;
-      map.m_atlasLayer      = atlas->atlasLayer;
-      map.m_tileSize        = mapTileSize;
-      map.m_orientation     = mapOrientation;
-      map.SetPosition({0.0f, 0.0f});
-
-      const auto& gids = layerJson.at("data");
-      map.m_cells.resize(gids.size());
-
-      std::unordered_map<int, int> resolved; // atlas tile id -> palette index
-      for (size_t i = 0; i < gids.size(); i++)
+      if (auto it = resolved.find(id); it != resolved.end())
       {
-        int gid = gids[i].get<int>();
-        if (gid == 0)
-        {
-          map.m_cells[i] = -1;
-          continue;
-        }
-
-        int id = gid - firstGid;
-        auto it = resolved.find(id);
-        if (it != resolved.end())
-        {
-          map.m_cells[i] = it->second;
-          continue;
-        }
-
-        try
-        {
-          int index = static_cast<int>(map.m_palette.size());
-          UVRect uv = GetTileUV(*atlas, id);
-          float offsetY = (uv.pixelSize.y - mapTileSize.y) * map.m_scale;
-          map.m_palette.push_back( {uv, offsetY});
-          resolved[id] = index;
-          map.m_cells[i] = index;
-        }
-        catch (const std::out_of_range&)
-        {
-          LOG_ERROR("TileMap: atlas '" + atlasKey + "' has no tile with id " + std::to_string(id) +
-                     " (gid " + std::to_string(gid) + ") referenced by layer '" + map.m_name + "'");
-          map.m_cells[i] = -1;
-        }
+        tm.m_cells[i] = it->second;
+        continue;
       }
 
-      result.push_back(std::move(map));
+      if (!atlas.m_tilesById.contains(id))
+      {
+        if (missing.insert(id).second)
+          LOG_ERROR(" | << TileMap: atlas '" + atlas.m_name + "' has no tile with id " +
+                    std::to_string(id) + " (layer '" + layer.m_name + "')");
+        continue;
+      }
+
+      if (tm.m_palette.size() >= static_cast<size_t>(std::numeric_limits<int16_t>::max()))
+      {
+        LOG_ERROR(" | << TileMap: layer '" + layer.m_name + "' uses too many distinct tiles");
+        break;
+      }
+
+      const UVRect uv = GetTileUV(atlas, id);
+      const auto index = static_cast<int16_t>(tm.m_palette.size());
+      tm.m_palette.push_back({uv, (uv.m_pixelSize.y - map.m_tileSize.y) * scale});
+      resolved[id]  = index;
+      tm.m_cells[i] = index;
     }
 
-    return result;
+    return tm;
   }
 
   void TileMap::Render(Batcher& b) const
   {
-    Rectangle rect;
-    auto cam = b.GetCamera2D();
-    if(cam)
+    if (m_cells.empty() || m_atlasLayer < 0)
+      return;
+
+    // View in world space, as { left, top, right, bottom } (same convention
+    // as Camera2D::GetRectCamera(): w/h hold the right/bottom edges).
+    Rectangle view;
+    if (const Camera2D* cam = b.GetCamera2D())
     {
-      rect = cam->GetRectCamera();
+      view = cam->GetRectCamera();
     }
     else
     {
-      auto r = Render::Get().GetScreenSize();
-      rect = Rectangle {
-        .x = 0.0f,
-        .y = 0.0f,
-        .w = r.x,
-        .h = r.y
-      };
+      const auto screen = Render::Get().GetScreenSize();
+      view = Rectangle{.x = 0.0f, .y = 0.0f, .w = screen.x, .h = screen.y};
     }
 
     if (m_orientation == TileOrientation::Isometric)
-      RenderIsometric(b, rect);
+      RenderIsometric(b, view);
     else
-      RenderOrthogonal(b, rect); 
+      RenderOrthogonal(b, view);
   }
 
-  void TileMap::RenderOrthogonal(Batcher& b, const Rectangle& rect) const
+  void TileMap::RenderOrthogonal(Batcher& b, const Rectangle& view) const
   {
-    glm::vec2 cell = m_tileSize * m_scale;
+    const glm::vec2 cell   = m_tileSize * m_scale;
+    const glm::vec2 origin = glm::vec2{m_position.x, m_position.y} + m_offset * m_scale;
+    if (cell.x <= 0.0f || cell.y <= 0.0f)
+      return;
 
-    int colStart = static_cast<int>(std::floor((rect.x - m_position.x) / cell.x));
-    int colEnd   = static_cast<int>(std::ceil ((rect.w - m_position.x) / cell.x));
-    int rowStart = static_cast<int>(std::floor((rect.y - m_position.y) / cell.y));
-    int rowEnd   = static_cast<int>(std::ceil ((rect.h - m_position.y) / cell.y));
-
-    colStart = std::max(colStart, 0);
-    rowStart = std::max(rowStart, 0);
-    colEnd   = std::min(colEnd, m_width);
-    rowEnd   = std::min(rowEnd, m_height);
+    const int colStart = std::max(static_cast<int>(std::floor((view.x - origin.x) / cell.x)), 0);
+    const int colEnd   = std::min(static_cast<int>(std::ceil((view.w - origin.x) / cell.x)), m_width);
+    const int rowStart = std::max(static_cast<int>(std::floor((view.y - origin.y) / cell.y)), 0);
+    const int rowEnd   = std::min(static_cast<int>(std::ceil((view.h - origin.y) / cell.y)), m_height);
 
     for (int row = rowStart; row < rowEnd; row++)
     {
       for (int col = colStart; col < colEnd; col++)
       {
-        int index = m_cells[row * m_width + col];
-        if (index < 0) continue;
+        const int index = m_cells[static_cast<size_t>(row) * m_width + col];
+        if (index < 0)
+          continue;
 
         const TilePaletteEntry& entry = m_palette[index];
-        glm::vec2 pos  = { m_position.x + col * cell.x, m_position.y + row * cell.y };
-        glm::vec2 size = entry.uv.pixelSize * m_scale;
-
-        b.DrawAtlasSprite(pos, size, m_atlasLayer, entry.uv.uvMin, entry.uv.uvMax);
+        const glm::vec2 pos  = origin + GridToScreen(col, row);
+        const glm::vec2 size = entry.m_uv.m_pixelSize * m_scale;
+        b.DrawAtlasSprite(pos, size, m_atlasLayer, entry.m_uv.m_uvMin, entry.m_uv.m_uvMax);
       }
     }
   }
 
-  void TileMap::RenderIsometric(Batcher& b, const Rectangle& rect) const
+  void TileMap::RenderIsometric(Batcher& b, const Rectangle& view) const
   {
-    glm::vec2 cell     = m_tileSize * m_scale;
-    glm::vec2 halfCell = cell * 0.5f;
+    const glm::vec2 halfCell = m_tileSize * m_scale * 0.5f;
+    const glm::vec2 origin   = glm::vec2{m_position.x, m_position.y} + m_offset * m_scale;
+    if (halfCell.x <= 0.0f || halfCell.y <= 0.0f)
+      return;
 
-    // sx = (col-row)*halfW, sy = (col+row)*halfH
-    auto ScreenToGrid = [&](glm::vec2 p) -> glm::vec2
+    // Inverse of GridToScreen(): sx = (col - row) * halfW, sy = (col + row) * halfH
+    auto screenToGrid = [&](glm::vec2 p) -> glm::vec2
     {
-      glm::vec2 local = {p.x - m_position.x, p.y - m_position.y};
-      float col = (local.x / halfCell.x + local.y / halfCell.y) * 0.5f;
-      float row = (local.y / halfCell.y - local.x / halfCell.x) * 0.5f;
-      return { col, row };
+      const glm::vec2 local = p - origin;
+      return {(local.x / halfCell.x + local.y / halfCell.y) * 0.5f,
+              (local.y / halfCell.y - local.x / halfCell.x) * 0.5f};
     };
 
-    glm::vec2 corners[4] = {
-      ScreenToGrid({ rect.x, rect.y }),
-      ScreenToGrid({ rect.w, rect.y }),
-      ScreenToGrid({ rect.x, rect.h }),
-      ScreenToGrid({ rect.w, rect.h }),
+    const glm::vec2 corners[4] = {
+      screenToGrid({view.x, view.y}), screenToGrid({view.w, view.y}),
+      screenToGrid({view.x, view.h}), screenToGrid({view.w, view.h}),
     };
 
     float minCol = corners[0].x, maxCol = corners[0].x;
@@ -219,101 +168,35 @@ namespace ENG
       maxRow = std::max(maxRow, corners[i].y);
     }
 
-    const int margin = 1;
-    int colStart = std::max(static_cast<int>(std::floor(minCol)) - margin, 0);
-    int colEnd   = std::min(static_cast<int>(std::ceil (maxCol)) + margin, m_width);
-    int rowStart = std::max(static_cast<int>(std::floor(minRow)) - margin, 0);
-    int rowEnd   = std::min(static_cast<int>(std::ceil (maxRow)) + margin, m_height);
+    // Margin for tiles taller than a cell, which stick out of their diamond.
+    const int margin   = 2;
+    const int colStart = std::max(static_cast<int>(std::floor(minCol)) - margin, 0);
+    const int colEnd   = std::min(static_cast<int>(std::ceil(maxCol)) + margin, m_width);
+    const int rowStart = std::max(static_cast<int>(std::floor(minRow)) - margin, 0);
+    const int rowEnd   = std::min(static_cast<int>(std::ceil(maxRow)) + margin, m_height);
 
-    // Row-major, top-to-bottom / left-to-right | painter's algorithm
+    // Row-major, top-to-bottom / left-to-right: painter's algorithm.
     for (int row = rowStart; row < rowEnd; row++)
     {
       for (int col = colStart; col < colEnd; col++)
       {
-        int index = m_cells[row * m_width + col];
-        if (index < 0) continue;
+        const int index = m_cells[static_cast<size_t>(row) * m_width + col];
+        if (index < 0)
+          continue;
 
         const TilePaletteEntry& entry = m_palette[index];
-        glm::vec2 basePos   = glm::vec2{m_position} + m_offsetLayer + GridToScreen(col,row);
-        glm::vec2 size      = entry.uv.pixelSize * m_scale;
-
-        b.DrawAtlasIsometric(m_atlasLayer, entry.uv, basePos, size, entry.offsetY);
+        const glm::vec2 pos  = origin + GridToScreen(col, row);
+        const glm::vec2 size = entry.m_uv.m_pixelSize * m_scale;
+        b.DrawAtlasIsometric(m_atlasLayer, entry.m_uv, pos, size, entry.m_offsetY);
       }
     }
   }
 
   glm::vec2 TileMap::GridToScreen(int col, int row) const
   {
-    auto cell = m_tileSize * m_scale;
-    switch (m_orientation)
-    {
-      case TileOrientation::Orthogonal:
-        return glm::vec2(col * cell.x, row * cell.y);
-
-      case TileOrientation::Isometric:
-        {
-          float halfW = cell.x * 0.5f;
-          float halfH = cell.y * 0.5f;
-          return glm::vec2( (col - row) * halfW,(col + row) * halfH );
-        }
-    }
-    return glm::vec2(0.0f);
-  }
-
-  bool TileMap::IsSolid(int col, int row) const
-  {
-    if (col < 0 || row < 0 || col >= m_width || row >= m_height)
-      return true;
-    return m_cells[row * m_width + col] >= 0;
-  }
-
-  uint8_t TileMap::GetLayerNum(const std::string& name)
-  {
-    if (name == "Ground") return LAYER_GROUND;
-    if (name == "World")      return LAYER_WORLD;
-    if (name == "Middle")     return LAYER_MIDDLE;
-    if (name == "Top")      return LAYER_TOP;
-    if (name == "Collision") return LAYER_COLLISION;
-    if (name == "FX")         return LAYER_FX;
-    if (name == "UI")         return LAYER_UI;
-    return LAYER_GROUND;
-  }
-
-  Vector2 TileMap::WorldToGrid(const Vector2& world) const
-  {
-    glm::vec2 cell = m_tileSize * m_scale;
-    glm::vec2 local = glm::vec2(world) - glm::vec2(m_position) - m_offsetLayer;
-
+    const glm::vec2 cell = m_tileSize * m_scale;
     if (m_orientation == TileOrientation::Isometric)
-    {
-      float halfW = cell.x * 0.5f;
-      float halfH = cell.y * 0.5f;
-      if (halfW == 0.0f || halfH == 0.0f)
-        return {0.0f, 0.0f};
-      local.x -= halfW;
-      float col = (local.x / halfW + local.y / halfH) * 0.5f;
-      float row = (local.y / halfH - local.x / halfW) * 0.5f;
-      return {col, row};
-    }
-
-    if (cell.x == 0.0f || cell.y == 0.0f)
-      return {0.0f, 0.0f};
-    return {local.x / cell.x, local.y / cell.y};
+      return {(col - row) * cell.x * 0.5f, (col + row) * cell.y * 0.5f};
+    return {col * cell.x, row * cell.y};
   }
-
-  bool TileMap::IsCellBlocked(int col, int row) const
-  {
-    if (col < 0 || row < 0 || col >= m_width || row >= m_height)
-      return true;
-    return m_cells[row * m_width + col] >= 0;
-  }
-
-  bool TileMap::IsBlockedAtWorld(const Vector2& world) const
-  {
-    Vector2 grid = WorldToGrid(world);
-    int col = static_cast<int>(std::floor(grid.x));
-    int row = static_cast<int>(std::floor(grid.y));
-    return IsCellBlocked(col, row);
-  }
-
 }

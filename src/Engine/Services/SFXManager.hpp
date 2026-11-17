@@ -27,16 +27,16 @@ namespace ENG
   struct SFXPool
   {
     /// @brief Audio data loaded from the sound effect file.
-    MIX_Audio* audio;
+    MIX_Audio* m_audio;
     /// @brief Tracks that can play the sound effect simultaneously.
-    std::vector<MIX_Track*> tracksPool;
+    std::vector<MIX_Track*> m_tracksPool;
     /// @brief Volume of the sound effect. 1.0 is the original volume.
-    float volume;
+    float m_volume;
     /// @brief Maximum number of tracks the pool can hold.
     ///        Defaults to MAX_TRACKS_MEMORY.
-    size_t maxTracksMemory = MAX_TRACKS_MEMORY;
+    size_t m_maxTracksMemory = MAX_TRACKS_MEMORY;
     /// @brief Index of the next track of the pool to use when the pool is full.
-    size_t nextIndex = 0;
+    size_t m_nextIndex = 0;
   };
 
   /**

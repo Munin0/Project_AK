@@ -56,7 +56,7 @@ namespace ENG
         auto key = std::type_index(typeid(T));
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         T &ref = *ptr;
-        _map[key] = std::move(ptr);
+        m_map[key] = std::move(ptr);
         return ref;
       }
 
@@ -70,8 +70,8 @@ namespace ENG
        */
       template <typename T> T *Get() const
       {
-        auto it = _map.find(std::type_index(typeid(T)));
-        if (it != _map.end())
+        auto it = m_map.find(std::type_index(typeid(T)));
+        if (it != m_map.end())
           return static_cast<T *>(it->second.get());
         return nullptr;
       }
@@ -85,12 +85,23 @@ namespace ENG
        */
       template <typename T> bool Has() const
       {
-        return _map.contains(std::type_index(typeid(T)));
+        return m_map.contains(std::type_index(typeid(T)));
+      }
+
+      /**
+       * @brief Calls @p fn with the type of every stored component.
+       *
+       * @param[in] fn Callable taking a std::type_index.
+       */
+      template <typename F> void ForEachType(F&& fn) const
+      {
+        for (const auto& [type, component] : m_map)
+          fn(type);
       }
 
     private:
       /// @brief Stored components, indexed by their exact type.
-      std::unordered_map<std::type_index, std::unique_ptr<IComponents>> _map;
+      std::unordered_map<std::type_index, std::unique_ptr<IComponent>> m_map;
   };
 
 }

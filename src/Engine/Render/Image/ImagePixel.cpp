@@ -13,9 +13,9 @@ namespace ENG
     ImagePixels img;
     stbi_set_flip_vertically_on_load(false);
 
-    img.data = stbi_load(path.c_str(), &img.width, &img.height, &img.channels, STBI_rgb_alpha);
+    img.m_data = stbi_load(path.c_str(), &img.m_width, &img.m_height, &img.m_channels, STBI_rgb_alpha);
 
-    if (!img.data)
+    if (!img.m_data)
     {
       LOG_ERROR("Failed to load image on ImagePixels: " + path + " - " + stbi_failure_reason());
     }

@@ -34,8 +34,8 @@ namespace ENG
    * the object is in the pool, even if other objects are added or removed.
    *
    * It also builds a render queue (see Sort()) with the objects ordered by
-   * layer and shader, so they can be drawn in the right order with few
-   * material changes.
+   * layer, render space and shader, so they can be drawn in the right order
+   * with few camera / material changes.
    *
    * Usage:
    * @code
@@ -92,15 +92,19 @@ namespace ENG
           for (ENG::ObjectID id : denseID)
           {
             auto obj = Get(id);
-            renderQueue.push_back({ id, obj->GetLayer(), obj->GetShader()});
+            renderQueue.push_back({ id, obj->GetLayer(), obj->GetRenderSpace(), obj->GetShader()});
           }
 
           std::stable_sort(renderQueue.begin(), renderQueue.end(),
             [](const ENG::RenderEntry& a, const ENG::RenderEntry& b)
           {
-            if(a.layer != b.layer)
-              return a.layer < b.layer;
-            return a.shader < b.shader;
+            // layer -> space -> shader: inside a layer, World and Screen objects are
+            // grouped, so the camera only changes (and flushes) once per group.
+            if(a.m_layer != b.m_layer)
+              return a.m_layer < b.m_layer;
+            if(a.m_space != b.m_space)
+              return a.m_space < b.m_space;
+            return a.m_shader < b.m_shader;
           });
           sortedQueue = true;
         }
@@ -195,16 +199,27 @@ namespace ENG
        * The ID counter is reset, so the next object added gets the ID 1
        * again.
        *
-       * @warning It does not reset the cached render queue: if Sort() was
-       *          called before, it keeps returning the old entries until an
-       *          object is added or removed.
+       * The cached render queue is emptied too.
        */
       void Clear()
       {
         dense.clear();
         denseID.clear();
         sparse.clear();
+        renderQueue.clear();
+        sortedQueue = false;
         nextID = 1;
+      }
+
+      /**
+       * @brief Forces the render queue to be rebuilt on the next Sort().
+       *
+       * Call it after changing the layer, the render space or the shader of an object that is
+       * already in the pool (Add/Remove/Clear invalidate it on their own).
+       */
+      void InvalidateQueue()
+      {
+        sortedQueue = false;
       }
 
       /**

@@ -53,7 +53,7 @@ namespace ENG
        *
        * @return true while the game is running, false once it is done.
        */
-      virtual bool IsRunning(void){return !gl_Done;};
+      virtual bool IsRunning(void){return !m_gameLayerDone;};
 
       /**
        * @brief Called to process the inputs of the game.
@@ -88,6 +88,6 @@ namespace ENG
     protected:
       /// @brief Set to true to tell the engine that the game is done and
       ///        must close. IsRunning() returns its opposite.
-      bool gl_Done;
+      bool m_gameLayerDone;
   };
 }

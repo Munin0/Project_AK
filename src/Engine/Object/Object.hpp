@@ -2,8 +2,9 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Component/ComponentStorage.hpp"
-#include "Engine/Render/Batching/RBatch.hpp"
-#include "Engine/Render/Shaders/RShader.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
+#include "Engine/Render/RenderSpace.hpp"
+#include "Engine/Render/Shaders/Shader.hpp"
 #include "Engine/Services/WorldSaver.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Component/Component.hpp"
@@ -14,7 +15,6 @@
 #include <string>
 #include <sys/types.h>
 #include <type_traits>
-#include <vector>
 // | -------------------------------
 
 namespace ENG
@@ -69,6 +69,30 @@ namespace ENG
       virtual void Update(float dt);
 
       /**
+       * @brief Receives the mouse position, for objects that react to the pointer.
+       *
+       * Called by ENG::DispatchPointer() (PoolSystems.hpp) once per frame on every visible
+       * object of the pool, from the top layer down (the reverse of the draw
+       * order), before the scene reads the mouse for the world. Does nothing by
+       * default; UI objects (Button, TextBox) override it.
+       *
+       * To take a click, check it is yours first and then consume it, so the
+       * objects below and the world do not get it:
+       * @code
+       * if (CollisionPointRect(mouse, rect) &&
+       *     PollEvent::Get().ConsumeMouseButtonPress(SDL_BUTTON_LEFT))
+       *   Action();
+       * @endcode
+       *
+       * @param[in] mouse Mouse position in this object's RenderSpace: screen
+       *                  pixels for Screen objects, world units (through the
+       *                  active camera) for World objects.
+       *
+       * @warning Do not add or remove objects of the pool from here.
+       */
+      virtual void OnPointer(const Vector2& mouse) { (void)mouse; }
+
+      /**
        * @brief Adds a component to the object.
        *
        * The component is constructed in place inside the object's component
@@ -109,7 +133,7 @@ namespace ENG
       template<typename T>
       T* GetComponent() const
       {
-        static_assert(std::is_base_of_v<IComponents, T>);
+        static_assert(std::is_base_of_v<IComponent, T>);
         return components.Get<T>();
       }
 
@@ -122,62 +146,8 @@ namespace ENG
       template<typename T>
       bool HasComponent() const
       {
-        static_assert(std::is_base_of_v<IComponents, T>);
+        static_assert(std::is_base_of_v<IComponent, T>);
         return components.Has<T>();
-      }
-
-      /**
-       * @brief Adds a bounding box to the object.
-       *
-       * @param[in] dim       Size of the bounding box: { width, height }.
-       * @param[in] isTrigger true if the box is a trigger (detects overlaps
-       *                      without blocking movement). Defaults to false.
-       * @return Reference to the new bounding box.
-       *
-       * @warning The reference (and any pointer to a bounding box of this
-       *          object) can become invalid when another bounding box is
-       *          added, because the boxes are stored in a std::vector.
-       */
-      IBoundingBox& AddBoundingBox(const Vector2& dim, bool isTrigger = false)
-      {
-        boundingBoxes.emplace_back(dim, isTrigger);
-        return boundingBoxes.back();
-      }
-
-      /**
-       * @brief Returns the bounding boxes of the object.
-       * @return Reference to the list of bounding boxes.
-       */
-      std::vector<IBoundingBox>& GetBoundingBoxes(void) { return boundingBoxes; }
-
-      /**
-       * @brief Tells whether the object has any bounding box.
-       * @return true if the object has at least one bounding box, false otherwise.
-       */
-      bool HasBoundingBoxes(void) const { return !boundingBoxes.empty(); }
-
-      /**
-       * @brief Returns the first solid (non-trigger) bounding box.
-       * @return Pointer to the box, or nullptr if the object has none.
-       */
-      IBoundingBox* GetSolidBox(void)
-      {
-        for (auto& bb : boundingBoxes)
-          if (!bb.IsTrigger())
-            return &bb;
-        return nullptr;
-      }
-
-      /**
-       * @brief Returns the first trigger bounding box.
-       * @return Pointer to the box, or nullptr if the object has none.
-       */
-      IBoundingBox* GetTriggerBox(void)
-      {
-        for (auto& bb : boundingBoxes)
-          if (bb.IsTrigger())
-            return &bb;
-        return nullptr;
       }
 
       /**
@@ -186,7 +156,7 @@ namespace ENG
        */
       static int GetCountObj()
       {
-        return countObject;
+        return s_countObject;
       }
 
       /**
@@ -196,7 +166,7 @@ namespace ENG
        */
       void SetName(const std::string& _name)
       {
-        this->name = _name;
+        this->m_name = _name;
       }
 
       /**
@@ -205,7 +175,7 @@ namespace ENG
        */
       const std::string& GetName(void)
       {
-        return this->name;
+        return this->m_name;
       }
 
       /**
@@ -214,16 +184,7 @@ namespace ENG
        */
       ITransform& GetTransform(void)
       {
-        return this->transform;
-      }
-
-      /**
-       * @brief Returns the stats of the object.
-       * @return Reference to the stats (health, strength, etc.).
-       */
-      IStats& GetStats(void)
-      {
-        return this->stats;
+        return this->m_transform;
       }
 
       /**
@@ -232,7 +193,7 @@ namespace ENG
        */
       const bool IsAlive(void)
       {
-        return stats.m_hp > 0;
+        return m_alive;
       }
 
       /**
@@ -265,14 +226,14 @@ namespace ENG
        */
       const Vector2& GetPosition(void) const;
 
-      void SetClass(const std::string& c)
+      void SetTag(const std::string& tag)
       {
-        this->_class = c;
+        this->m_tag = tag;
       }
 
-      const std::string GetClass(void) const
+      const std::string GetTag(void) const
       {
-        return this->_class;
+        return this->m_tag;
       }
 
       /**
@@ -286,13 +247,48 @@ namespace ENG
        *
        * @param[in] _layer New layer.
        */
-      void SetLayer(uint8_t _layer) { layer = _layer;}
+      void SetLayer(uint8_t _layer) { m_layer = _layer;}
 
       /**
        * @brief Returns the layer of the object.
        * @return The layer the object belongs to.
        */
-      uint8_t GetLayer() const { return layer; }
+      uint8_t GetLayer() const { return m_layer; }
+
+      /**
+       * @brief Sets whether the object moves with the camera or stays fixed on screen.
+       *
+       * World (default): world coordinates, affected by the scene Camera2D.
+       * Screen: screen pixels, the camera is ignored (HUD, menus, dialog boxes).
+       *
+       * @note Like SetLayer(), call it before the object is first drawn, or call
+       *       ObjectPool::InvalidateQueue() after changing it.
+       *
+       * @param[in] space New render space.
+       */
+      void SetRenderSpace(RenderSpace space) { m_renderSpace = space; }
+
+      /**
+       * @brief Returns the render space of the object.
+       * @return World or Screen.
+       */
+      RenderSpace GetRenderSpace() const { return m_renderSpace; }
+
+      /**
+       * @brief Shows or hides the object.
+       *
+       * A hidden object is not drawn (ENG::RenderObjects skips it) but it is
+       * still updated and stays in the pool, so it can be shown again at once.
+       *
+       * @param[in] visible true to draw it (default), false to hide it.
+       */
+      void SetVisible(bool visible) { m_visible = visible; }
+
+      /**
+       * @brief Whether the object is drawn.
+       * @return true if it is visible.
+       */
+      bool IsVisible() const { return m_visible; }
 
       /**
        * @brief Returns the shader of the object.
@@ -332,25 +328,31 @@ namespace ENG
       virtual void Load(const ObjectState& state);
 
     private:
+#ifndef NDEBUG
+      /// @brief Debug only: logs (once per type) the components of the object
+      ///        that are neither native, registered nor ignored, so they are
+      ///        not saved by Save(). See ComponentSerializers.
+      void WarnUnsavedComponents() const;
+#endif
+
       /// @brief Counter of the objects created.
-      static int countObject;
+      static int s_countObject;
 
     protected:
       /// @brief Layer the object belongs to.
-      uint8_t layer;
+      uint8_t m_layer;
+      /// @brief World (moves with the camera) or Screen (fixed on screen).
+      RenderSpace m_renderSpace = RenderSpace::World;
+      /// @brief Whether the object is drawn (it is updated anyway).
+      bool m_visible = true;
+      bool m_alive = false;
 
       /// @brief Name of the object.
-      std::string name;
-      std::string _class;
-
-      /// @brief Stats of the object (health, strength, etc.).
-      IStats stats;
+      std::string m_name;
+      std::string m_tag;
 
       /// @brief Transform of the object (position, velocity, etc.).
-      ITransform transform;
-
-      /// @brief Bounding boxes of the object.
-      std::vector<IBoundingBox> boundingBoxes;
+      ITransform m_transform;
 
       /// @brief Components attached to the object.
       ComponentStorage components;

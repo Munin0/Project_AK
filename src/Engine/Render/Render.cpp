@@ -1,8 +1,9 @@
 // | -------------------------------
 #include "Render.hpp"
+#include "Engine/Render/Camera/Camera2D.hpp"
 // | -------------------------------
-#include "Engine/Render/Color/RColor.hpp"
-#include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Render/Color/Color.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
 #include "Engine/Utils/Config.hpp"
 #include "Engine/Utils/Vector2.hpp"
 #include "Engine/Utils/Log.hpp"
@@ -34,9 +35,9 @@ namespace ENG
   {
     LOG_INFO(" | << Init Render context");
     int amountDisplays=0;
-    this->m_displayID = SDL_GetDisplays(&amountDisplays);
+    this->m_displayId = SDL_GetDisplays(&amountDisplays);
     LOG_INFO(" | << Amount of Displays: " + std::to_string(amountDisplays));
-    this->m_display = SDL_GetCurrentDisplayMode(this->m_displayID[0]);
+    this->m_display = SDL_GetCurrentDisplayMode(this->m_displayId[0]);
     LOG_INFO(" | << Display size; Width: " +std::to_string(this->m_display->w) + " Height: "+std::to_string(this->m_display->h));
     this->m_fullscreen = eConfig.m_eFullscreen;
     if(this->m_fullscreen)
@@ -120,22 +121,27 @@ namespace ENG
 
   void Render::UpdateRender(void)
   {
-    SDL_SetWindowFullscreen(this->m_window,m_fullscreen);
-    if(!m_fullscreen)
-    {
-      int w,h;
-      SDL_GetWindowSize(this->m_window, &w,&h);
-      this->wH = h;
-      this->wW = w;
-    }
-    if(m_fullscreen)
-    {
-      int w,h;
-      SDL_GetWindowSize(this->m_window, &w,&h);
-      this->wH = h;
-      this->wW = w;
-    }
-    glViewport(0,0,this->wW,this->wH);
+    // Only touch the window when the requested mode differs from the real one:
+    // calling SDL_SetWindowFullscreen every frame is wasteful and can flicker.
+    const bool isFullscreen = (SDL_GetWindowFlags(this->m_window) & SDL_WINDOW_FULLSCREEN) != 0;
+    if (isFullscreen != m_fullscreen)
+      SDL_SetWindowFullscreen(this->m_window, m_fullscreen);
+
+    // Logical size: used by the projections (screen and camera).
+    int w = 0, h = 0;
+    SDL_GetWindowSize(this->m_window, &w, &h);
+    this->m_windowsWidth  = static_cast<float>(w);
+    this->m_windowsHeight = static_cast<float>(h);
+
+    // Pixel size: what glViewport needs (differs from the logical size on HiDPI / scaled displays).
+    int pw = 0, ph = 0;
+    SDL_GetWindowSizeInPixels(this->m_window, &pw, &ph);
+    glViewport(0, 0, pw, ph);
+
+    // Keep the active camera's viewport in sync with the window, so changing
+    // the window size or toggling fullscreen does not stretch or cut the view.
+    if (Camera2D* cam = m_batch.GetCamera2D())
+      cam->Resize(this->m_windowsWidth, this->m_windowsHeight);
   }
 
   void Render::DestroyWindowSDLContext(void)
@@ -158,13 +164,13 @@ namespace ENG
 
   void Render::SetScreenSize(float w, float h)
   {
-    this->wW = w;
-    this->wH = h;
+    this->m_windowsWidth  = w;
+    this->m_windowsHeight = h;
   }
 
   Vector2 Render::GetScreenSize(void) const
   {
-    return {this->wW,this->wH};
+    return {this->m_windowsWidth,this->m_windowsHeight};
   }
 
   bool Render::GetFullscreen(void) const
@@ -180,7 +186,7 @@ namespace ENG
   // | ----------------------------------- Color Context
   void Render::RenderColor(const Color& c)
   {
-    glClearColor(c.r, c.g, c.b, c.a);
+    glClearColor(c.m_r, c.m_g, c.m_b, c.m_a);
     glClear(GL_COLOR_BUFFER_BIT);
   }
   //

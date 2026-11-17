@@ -1,14 +1,12 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Map/TileMap/TileMap.hpp"
-#include "Engine/Render/Batching/RBatch.hpp"
+#include "Engine/Object/ObjectPool.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
 #include "Engine/Render/Camera/Camera2D.hpp"
 // | -------------------------------
-#include <cstdint>
 #include <memory>
 #include <string>
-#include <vector>
 // | -------------------------------
 
 namespace ENG
@@ -22,17 +20,25 @@ namespace ENG
    * A game derives from Scene and overrides the hooks it needs. Only
    * Render() is mandatory.
    *
-   * A Scene can also hold tile maps, kept sorted by layer, and a camera.
+   * Scene is only the interface plus the data every scene has: its objects
+   * (m_pool), its main camera (m_camera) and its ID. Everything else is
+   * composed by the scene that needs it:
+   * - Run the objects: ENG::UpdateObjects / DispatchPointer / RenderObjects
+   *   on m_pool (Engine/Object/PoolSystems.hpp).
+   * - A map: an ENG::SceneMap member (Engine/Map/SceneMap.hpp).
    *
    * Scenes are stored and switched by the ScenesManager, using the ID
-   * returned by GetSceneID().
+   * returned by GetSceneID(). The batcher camera is cleared on every scene
+   * change; Init() activates m_camera (or another) if the scene uses one.
    *
    * Usage:
    * @code
    * class MenuScene : public ENG::Scene
    * {
    *   public:
-   *     void Render(ENG::Batcher& b) override { }
+   *     void Inputs(float dt) override        { ENG::DispatchPointer(m_pool); }
+   *     void Update(float dt) override        { ENG::UpdateObjects(m_pool, dt); }
+   *     void Render(ENG::Batcher& b) override { ENG::RenderObjects(m_pool, b); }
    * };
    * @endcode
    */
@@ -52,15 +58,10 @@ namespace ENG
       /**
        * @brief Called when the scene is destroyed.
        *
-       * Override it to release what the scene created.
+       * Override it to release what the scene created (usually m_pool.Clear()).
+       * It may be called twice (see ScenesManager::DestroyScene()).
        */
       virtual void Destroy(void){};
-
-      /**
-       * @brief Tells whether the scene is running.
-       * @return The value of the isRunning flag.
-       */
-      virtual bool IsRunning(void)  {return isRunning;}
 
       /**
        * @brief Called to process the inputs of the scene.
@@ -100,48 +101,20 @@ namespace ENG
        */
       std::string GetSceneID(void) const
       {
-        return this->sceneID;
+        return this->m_sceneId;
       }
 
     protected:
-      /**
-       * @brief Adds a tile map to the scene.
-       *
-       * Keeps the tile maps sorted by TileMap::GetLayer(), in ascending order.
-       *
-       * @param[in] map Tile map to add.
-       */
-      void AddTileMap(TileMap map);
+      /// @brief Objects of the scene. Owned by the scene.
+      ObjectPool m_pool;
 
-      const TileMap* GetTileMap(uint8_t layer) const;
-
-      /**
-       * @brief Draws the tile maps that belong to a range of layers.
-       *
-       * Draws the tile maps whose layer is in [minLayer, maxLayer), that is,
-       * including @p minLayer and excluding @p maxLayer. This lets a scene
-       * interleave tile map draws with its ObjectPool render queue by layer
-       * group.
-       *
-       * @param[in,out] b        Batcher that collects the draw data of this frame.
-       * @param[in]     minLayer First layer to draw (included).
-       * @param[in]     maxLayer Layer where the range ends (excluded).
-       */
-      void RenderTileMaps(Batcher& b, uint8_t minLayer, uint8_t maxLayer) const;
-
-      /// @brief Whether the scene is running. Returned by IsRunning(). Defaults to false.
-      bool isRunning = false;
-
-      /// @brief Whether the scene has been initialized. Defaults to false.
-      bool isInit = false;
+      /// @brief Main camera of the scene. Owned by the scene. nullptr if it has none.
+      std::unique_ptr<Camera2D> m_camera;
 
       /// @brief Identifier of the scene. Returned by GetSceneID().
-      std::string sceneID;
+      std::string m_sceneId;
 
-      /// @brief Camera of the scene. Owned by the scene.
-      std::unique_ptr<Camera2D> camera;
-
-      /// @brief Tile maps of the scene, sorted by layer in ascending order.
-      std::vector<TileMap> tileMaps;
+      /// @brief Whether the scene has been initialized. Defaults to false.
+      bool m_isInit = false;
   };
 }

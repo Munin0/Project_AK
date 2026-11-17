@@ -1,145 +1,181 @@
 # Project_AK
 
-**Alpha 0.04e**
+**Alpha 0.05**
 
-A 2D game engine built from scratch in **C++20**, with **OpenGL 4.6 Core (DSA)** rendering and window/input handling via **SDL3**.
+A 2D game engine built from scratch in **C++20**, with **OpenGL 4.6 Core (DSA)** rendering and window, input and audio through **SDL3**.
 
-The goal of this project isn't a one-off game, but to progressively build a **proper, reusable 2D engine that's fully understood end to end**: render pipeline, object/component system, scenes, asset management, and everything needed to support multiple games on top of the same foundation.
+The goal isn't a one-off game, but a **reusable 2D engine that is understood end to end**: render pipeline, object/component system, scenes, maps, UI, assets and everything needed to build more than one game on the same foundation. `src/Game` is the sample game that lives on top of the engine and is used to try every feature out.
 
-The engine's systems are largely in place; the primary goal now is reaching a **v1 release**, gated not by missing features but by validating everything working together in a real, complete game. The public API is fairly stable, with infrequent breaking changes.
+The main systems are in place. The road to **v1** is not about missing features but about validating them together in a small, complete game.
 
 ---
 
 ## Current state
 
-The engine already has a working foundation that's still being iterated on:
+### Rendering
+- **Batched renderer** (`Batcher`): quads, circles, triangles, lines, polygons and textured sprites go into one dynamic VAO/VBO/EBO and are drawn with one call per flush. Vertices are built in CPU arrays and uploaded with `glNamedBufferSubData`. View/projection, time and screen size live in a `std140` UBO; samplers are bound with `layout(binding=N)` in the shaders. Up to 16 texture slots plus a reserved `TextureArray` unit for atlas sprites. A per-object `IMaterial` can override the default shader, and a per-vertex effect mode drives shader effects.
+- **Draw order** (`RenderEntry`): objects are sorted by layer, then render space, then shader. The queue is cached and only rebuilt when objects are added or removed. Layer convention in `Render/Layers.hpp` (ground, collision, world, player, top, fx, UI).
+- **World and screen space** (`RenderSpace`): each object is drawn either with the camera (`World`) or in fixed screen pixels (`Screen`: HUD, menus), in the same scene.
+- **Camera** (`Camera2D`): position, zoom, smooth `Follow(position, dt)`, `ScreenToWorld`. A scene has a main camera and can switch to others.
+- **Text**: fonts baked with `stb_truetype` (`BakerFont`) and drawn through the batcher by `TextAPI`. Text is **UTF-8** (accents, ñ, ¿¡), decoded to codepoints (`Text/Utf8.hpp`).
 
-- **Batched renderer** (`Batcher`): a single draw call groups quads, circles, triangles, lines, polygons, and textured sprites. Built on **OpenGL 4.6 DSA**, with a persistent mapped, triple-buffered VBO (per-section `GLsync` fences to avoid GPU stalls), a `FrameDataGPU` UBO (`std140`) for view/projection, and a per-vertex `EffectMode` attribute. Sampler binding uses shader-side `layout(binding=N)` instead of string-based uniform lookups. Up to 16 simultaneous texture slots, plus a reserved `TextureArray` sampler unit for atlas-backed sprites. A per-object `IMaterial` can override the default shader for its own draws.
-- **Object + component system**: `Object` as the base entity with a lifecycle (`Update`/`Draw`) and a type-safe `ComponentStorage` (based on `std::type_index`). Components include `ITransform`, `IStats`, `ISprite`, `IAnimator`, `IBoundingBox`, `IColor`, and `IMaterial`.
-- **`ObjectPool`**: an object pool with a dense array + sparse map and `ObjectID` handles, designed for O(1) add/remove (swap-and-pop) without invalidating external references.
-- **Layered render queue** (`RenderEntry`): support for sorting draws by `layer` (then by shader), avoiding unnecessary full re-sorts every frame.
-- **2D collision system**: Using `AABB` System, can resolver using `IBoundingBox` or using `Rectangle`, `Point` and `Circle` collision.
-- **Atlas + TextureArray asset pipeline**: `AssetsManager` loads sprite sheets into a GPU `TextureArray` and parses their layout from a JSON atlas file (`AtlasData`/`ParseAtlasJSON`) into either named `animations` (frame strips, for `IAnimator`) or named `tiles` (single-cell lookups, for tilemaps and static atlas sprites).
-- **Animation**: `IAnimator` advances an atlas-backed `ISprite`'s frame over time (speed/step-controlled), driven by named animation regions from the atlas JSON.
-- **Tile maps**: `TileMap` (`Engine/Map/TileMap`) loads a tile grid + a tile-atlas JSON, resolving each cell to a UV once at load time; `Scene::AddTileMap`/`RenderTileMaps` let a scene keep tile maps sorted by layer and interleave their draws with the object render queue (e.g. background tiles before the player, foreground tiles after). Tiled layer names map to engine draw layers automatically (`TiledLayerToEngineLayer` in `Game.hpp`), so authoring a map in Tiled doesn't need per-map C++ wiring.
-- **Text rendering**: `stb_truetype` is wired up via `BakerFont` (glyph baking) and a `TextAPI` for drawing text through the batcher.
-- **GUI**: basic `Button` and `Label` widgets built on top of the rendering/input systems.
-- **Input**: keyboard, mouse (including wheel), and gamepad, all polled via `PollEvent`.
-- **Data**: `CSVManager` (rapidcsv/csv.h) for loading tabular data such as dialogue.
-- **Scene system**: a `Scene` interface (`Init`/`Update`/`Inputs`/`Render`) managed by a `ScenesManager`, each owning its own `Camera2D` and tile maps.
-- **Audio**: `MusicManager` and `SFXManager` (SDL3_mixer-backed) handle music tracks and pooled, overlapping sound effects respectively, each with per-key volume control.
-- **Timing**: `Services::Clock` (steady_clock-based), with a clamped delta time for gameplay/physics and an unclamped accumulator for time-driven shader effects.
-- **Service Locator** (`Services`): controlled global access to `AssetsManager`, `ScenesManager`, `ShaderManager`, `MusicManager`, and `SFXManager`.
-- **Application layer** (`GameLayer`): decouples the engine from the actual game; the current executable (`Game`).
-- **Asset loading**: `stb_image` and `stb_image_write` for textures; `stb_truetype` for baked fonts.
-- **Early serialization**: `Object::Save`/`Load` via `ObjectState`, the base for a world-saving system (`WorldSaver`).
-- **CI/CD**: multi-platform GitHub Actions coverage (Ubuntu with GCC + Clang, Windows with MSVC).
+### Objects and components
+- **`Object`**: base entity with `Update`/`Draw`, a transform, a layer, a render space and a visibility flag (hidden objects keep updating but are not drawn).
+- **Components** in a type-safe `ComponentStorage` (`std::type_index`): `ITransform`, `ISprite`, `IAnimator`, `IBoundingBox`, `ICircleBox`, `IColor`, `IMaterial`, `IText`. Games add their own by deriving from `IComponent`.
+- **`ObjectPool`**: dense array + sparse map with `ObjectID` handles, O(1) add/remove (swap-and-pop). Game code keeps `ObjectID`s, not raw pointers.
+- **Pool systems** (`Object/PoolSystems.hpp`): free functions that run a pool: `UpdateObjects`, `DispatchPointer` (mouse, top layer first) and `RenderObjects` (all, or a layer range).
+- **Serialization**: `Object::Save`/`Load` round-trip through `ObjectState`, covering every native component. Game components are registered with `ComponentSerializers::Register<T>("key")` (the engine never names them); runtime-only ones are marked with `Ignore<T>()`. `WorldSaver` writes the result as CBOR.
+
+### Scenes
+- **`Scene`** is only the interface (`Init`/`Destroy`/`Inputs`/`Update`/`UpdateFixed`/`Render`) plus its pool, main camera and ID. Everything else is composed by the scene that needs it.
+- **`ScenesManager`**: scenes keyed by ID, with deferred changes. An unknown ID is reported and ignored; the current scene is only destroyed when the change succeeds. Scenes can also be removed for good (`DestroyScene`).
+
+### Maps
+- **Importer pipeline**: the engine never knows Tiled. `IMP::TiledLoader` (`src/Importers/`) turns Tiled JSON into a format-neutral `ENG::MapData`.
+- **`SceneMap`**: builds the drawable `TileMap`s (orthogonal and isometric, UVs resolved once) and a `CollisionGrid` from `MapData`. What each layer means is data, not code: a `MapLayerRules` table keyed by the layer's Tiled class or name, with per-layer overrides.
+- Tile layers and objects are interleaved by layer range (background tiles, objects, foreground tiles, UI).
+
+### Input and UI
+- **`PollEvent`**: keyboard, mouse (buttons, wheel) and Press/Down/Release queries per frame.
+  - **Click consumption**: an object that takes a click claims it until release, so objects below and the world don't see it.
+  - **Text input**: SDL-composed UTF-8 text (keyboard layout, accents), editing keys with OS repeat and modifiers; the keyboard is captured while typing.
+- **Widgets** (`GUI/`), living in the scene pool like any object:
+  - `Button`: detects and consumes its own click, runs a callback.
+  - `TextBox`: focus, placeholder, caret with ←/→/Home/End, Backspace/Delete by character, Ctrl+A select all, horizontal scroll, max length, submit callback on Enter.
+  - `Label`: text with alignment, background and a letter-by-letter reveal (`TextReveal`).
+
+### Physics
+- Free collision functions (`Physics/Collision.hpp`): AABB, circle, point/rectangle, and object vs. `CollisionGrid` for tile maps.
+
+### Services and utilities
+- **Service locator** (`Services`): `AssetsManager` (images into a GPU `TextureArray` + atlas JSON with animations and tiles), `FontManager`, `ShaderManager`, `ScenesManager`, `MusicManager` and `SFXManager` (SDL3_mixer, pooled overlapping effects), `ClockManager` (delta time clamped to 0.05 s, total time, FPS), `CSVManager` (rapidcsv; used for dialog texts, one column per language), `WorldSaver`.
+- **Application layer** (`GameLayer`): the only seam between the engine and a game.
+- **Utilities**: `Vector2`, `Log` (`LOG_INFO`/`LOG_DEBUG`/`LOG_ERROR`/`LOG_FATAL`), `Path` (everything relative to the executable), interpolation, Bézier.
+
+### Sample game (`src/Game`)
+- **MainMenu**: title, name `TextBox`, "Jugar" and "Salir" buttons.
+- **GameScene**: an isometric Tiled map with collisions, a player that moves on the grid, a following camera, a dialog box (E) fed from `assets/Dialogs/dialog.csv`, and a collision debug view (G).
+
+---
+
 ## Where it's headed
 
-The primary goal right now is completing a small but complete **demo/integration game** — a menu plus two levels with collisions — designed to exercise as many engine systems together as possible. This demo is the main gate before considering a v1 release; the gap isn't missing systems, it's that no full game has been built with them yet, only isolated demos and tests.
+The next milestone is a small but **complete game** (menu plus a couple of levels) that exercises the systems together; it is the gate before v1. Open work, tracked in [`docs/Diagnostico.md`](./docs/Diagnostico.md) (Spanish):
 
-Open integration risks being worked through as part of the demo:
+- A real fixed time step for `UpdateFixed`, pause, and UI anchors when the window is resized.
+- Physics clean-up: a single rule for moving objects (always through `SetPosition`) and the remaining collision fixes.
+- Gamepad support (the `PollEvent` gamepad queries are still stubs) and remappable input.
+- Clipboard and mouse selection in `TextBox`.
+- Tests for the GL-free parts (`ObjectPool`, collisions, `CollisionGrid`, UTF-8, serialization, importer) and a Debug job in CI with sanitizers.
+- Later: more map tooling, editor/inspection tools, asset hot-reload.
 
-- Scene transition cleanup (`ObjectPool` reset behavior, audio/asset cache state across scenes).
-- Initialization order from menu to level, ensuring systems come up in the right sequence.
-- `CSVManager` + `TileMap` + Collision running together in a real game context for the first time.
-Beyond the demo/v1 push:
+---
 
-- Expanding `TileMap` (multi-atlas maps, more editor-friendly authoring).
-- Remappable input (beyond the current `PollEvent` polling).
-- Editor or support tooling (object inspection, asset hot-reload).
-- Improving the world save/load system started in `WorldSaver`.
-- 3D support and multi-camera work (at which point a deferred `ForceFlush()` becomes relevant).
 ## Tech stack
 
 | Component | Technology |
 |---|---|
 | Language | C++20 |
-| Rendering | OpenGL 4.6 Core (DSA) |
-| Shading | GLSL 4.60 |
+| Rendering | OpenGL 4.6 Core (DSA), GLSL 4.60 |
 | Window / Input / Platform | SDL3 (fetched via `FetchContent`) |
 | Audio | SDL3_mixer (fetched via `FetchContent`) |
-| GL function loading | GLAD (vendored in `external/glad`) |
-| Images / fonts | stb_image, stb_image_write, stb_truetype (via `BakerFont`) |
-| Data | rapidcsv/csv.h |
-| Math | GLM |
-| JSON | nlohmann_json (fetched via `FetchContent`) |
+| GL loading | GLAD (vendored in `external/glad`) |
+| Images / fonts | stb_image, stb_image_write, stb_truetype |
+| Data | rapidcsv |
+| Math | GLM (fetched via `FetchContent`) |
+| JSON / CBOR | nlohmann_json (fetched via `FetchContent`) |
+| Maps | Tiled (JSON export), read by `IMP::TiledLoader` |
 | Build system | CMake 3.25+ (Ninja Multi-Config) |
+
+---
 
 ## Repository structure
 
 ```
-Project_AK/              # Root folder of the project.
-├── assets/              # Game resources (sprite atlases, tile maps, etc.).
-│   └── Atlas/           # Atlas textures + JSON layouts (animations and/or tiles).
+Project_AK/
+├── assets/              # Game resources: Atlas/, Font/, Map/ (Tiled), Dialogs/ (CSV), Music/, SFX/...
+├── config/              # eng.json: window title, size, fullscreen.
+├── docs/                # Diagnostico.md: project review, open bugs and roadmap (Spanish).
 ├── external/glad/       # Vendored OpenGL loader.
-├── shaders/             # GLSL shaders (texture.vs / texture.fs), And all you shaders.
+├── shaders/             # GLSL shaders.
 ├── src/
-│   ├── Main/            # Entry point (main.cpp).
-│   ├── Engine/          # The engine itself,
-│   │   ├── Component/   # Components and storage (ECS-like).
-│   │   ├── Extern/      # Vendored third-party headers (stb, rapidcsv).
-│   │   ├── GUI/         # Button, Label, TextBox, Scissors, Scroll.
-│   │   ├── Inputs/      # Event/input handling, Mouse.
+│   ├── Main/            # Entry point (main.cpp): reads config, runs the Engine with the Game.
+│   ├── Engine/          # The engine.
+│   │   ├── Component/   # Components, ComponentStorage, ComponentSerializers.
+│   │   ├── Extern/      # Vendored headers (stb, rapidcsv).
+│   │   ├── GUI/         # Button, Label, TextBox, TextReveal.
+│   │   ├── Inputs/      # PollEvent, Mouse.
 │   │   ├── Layer/       # GameLayer and Scene (base interfaces).
-│   │   ├── Map/         # TileMap: tile-grid loading and rendering.
-│   │   ├── Modules/     # Bakers and others stuff for the engine. 
-│   │   ├── Object/      # Object and ObjectPool.
-│   │   ├── Physics/     # Collision: IBoundingBox broad-phase + resolution.
-│   │   ├── Render/      # Batcher, Shader, Image, AtlasData, TextureArray, Color, Vertex...
-│   │   ├── Services/    # AssetsManager, ScenesManager, ShaderManager, MusicManager, SFXManager, WorldSaver, Clock, CSVManager.
-│   │   ├── Text/        # BakerFont, TextAPI (stb_truetype-backed text rendering).
-│   │   └── Utils/       # Vector2, Rects, Config, Log, Path.
-│   └── Game/            # Game layer on top of the engine.
-│       ├── Scenes/      # MainMenu, Demo.
-│       ├── GameWrapper/ # Communication to the engine, to render. (Game.cpp & Game.hpp).
-│       └── Systems/     # Logic for you game.
-├── CMakeLists.txt       # Root CMakeLists, config everything and download all libraries.
-├── runner.sh            # Quick build + run.
-└── commands.cmd         # Reference CMake commands.
+│   │   ├── Map/         # MapData, SceneMap, TileMap, CollisionGrid, MapLayerRules.
+│   │   ├── Modules/     # BakerFont (font baking).
+│   │   ├── Object/      # Object, ObjectPool, PoolSystems.
+│   │   ├── Physics/     # Collision functions.
+│   │   ├── Render/      # Render, Batcher, Camera2D, shaders, images, atlases, layers.
+│   │   ├── Services/    # Service locator and managers.
+│   │   ├── Text/        # Font, TextAPI, UTF-8 helpers.
+│   │   └── Utils/       # Vector2, Log, Path, Config, interpolation.
+│   ├── Importers/       # Format importers outside the engine (Tiled).
+│   └── Game/            # Sample game: Game (GameLayer), Scenes, Components, Map, Dialog, Systems.
+├── CMakeLists.txt       # Root CMake: options, dependencies (FetchContent), post-build copy.
+├── CHANGELOG.md         # Version history.
+├── CLAUDE.md            # Architecture notes for contributors and AI tools.
+├── runner.sh            # Configure (if needed), build Debug and run, logging to logs/.
+└── valgrindTest.sh      # Separate build without sanitizers, run under Valgrind.
 ```
+
+---
 
 ## Building
 
 ### Requirements
 
-Common to all platforms:
-
 - CMake 3.25 or higher
 - Ninja
-- A C++20-capable compiler
-- Drivers with OpenGL 4.6 support
-SDL3, SDL3_mixer, GLM, and nlohmann_json are downloaded and built automatically via `FetchContent`, so there's no need to install them separately.
+- A C++20 compiler
+- A GPU driver with OpenGL 4.6
+
+SDL3, SDL3_mixer, GLM and nlohmann_json are downloaded and built automatically via `FetchContent`.
 
 Per platform:
 
-- **Linux**: GCC or Clang, plus X11 development headers (needed for SDL3's X11 video driver). On Debian/Ubuntu:
-```bash
- sudo apt-get install build-essential cmake ninja-build \
-   libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
-   libwayland-dev libxkbcommon-dev libdrm-dev libgbm-dev \
-   libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev \
-   libasound2-dev libpulse-dev libdbus-1-dev libibus-1.0-dev libudev-dev
-```
-- **Windows**: MSVC (Visual Studio Build Tools or Visual Studio with the "Desktop development with C++" workload), plus CMake and Ninja (both installable via the Visual Studio installer, `winget`, or standalone). The root `CMakeLists.txt` statically links the MSVC runtime, so the built `.exe` doesn't need the VC++ Redistributable installed on the target machine.
-- **macOS**: Xcode Command Line Tools (`xcode-select --install`) for Clang and the system SDK, plus CMake and Ninja (e.g. `brew install cmake ninja`). Note: macOS's OpenGL driver stack tops out at 4.1 Core — running Project_AK's OpenGL 4.6 DSA path on macOS is not currently supported. (Thinking to add Metal)
+- **Linux**: GCC or Clang, plus the X11/Wayland development headers SDL3 needs. On Debian/Ubuntu:
+  ```bash
+  sudo apt-get install build-essential cmake ninja-build \
+    libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+    libwayland-dev libxkbcommon-dev libdrm-dev libgbm-dev \
+    libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev \
+    libasound2-dev libpulse-dev libdbus-1-dev libibus-1.0-dev libudev-dev
+  ```
+- **Windows**: MSVC (Visual Studio or Build Tools with "Desktop development with C++"), CMake and Ninja. The MSVC runtime is linked statically, so the `.exe` doesn't need the VC++ Redistributable.
+- **macOS**: not supported for now: macOS's OpenGL stops at 4.1 Core and the engine uses 4.6 DSA.
+
 ### Steps
+
+The build is multi-config: always pass `--config Debug|Release|RelWithDebInfo`.
 
 ```bash
 mkdir build && cd build
 cmake -G "Ninja Multi-Config" ..
 cd ..
 cmake --build build --config Debug --target Project_AK
-./build/Debug/Project_AK   # Windows: build/Debug/Project_AK.exe
+./build/Debug/Project_AK          # Windows: build\Debug\Project_AK.exe
 ```
 
-Or, more directly, using the included script (works as-is on Linux, macOS, and Windows via a bash shell like Git Bash — it detects the `.exe` suffix automatically):
+Or use the script (Linux, macOS, or Git Bash on Windows), which configures if needed, builds Debug, runs the game and saves the output in `logs/`:
 
 ```bash
 ./runner.sh
 ```
 
+Notes:
+- **Debug builds use ASan/UBSan** (`ENABLE_SANITIZERS=ON`). They are slower: judge smoothness and performance in Release or RelWithDebInfo.
+- **Valgrind**: `./valgrindTest.sh` uses a separate `build-valgrind/` tree without sanitizers.
+- The build copies `assets/`, `shaders/` and `config/` next to the executable; paths are resolved relative to it.
+- Sources are collected with `GLOB_RECURSE`: after adding or removing a `.cpp`, re-run the CMake configure step.
+- CI (GitHub Actions) builds Release on Ubuntu (GCC, Clang) and Windows (MSVC).
+
+---
+
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details. Third-party notices are in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

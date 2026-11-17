@@ -26,46 +26,86 @@ namespace ENG
       m_s_current = m_scenesMap[id].get();
   }
 
+  bool ScenesManager::DestroyScene(const std::string& id)
+  {
+    auto it = m_scenesMap.find(id);
+    if(it == m_scenesMap.end())
+    {
+      LOG_ERROR(" | << Can't find the scene to destroy > DestroyScene: [ " + id + " ]");
+      return false;
+    }
+
+    if (it->second.get() == m_s_current)
+    {
+      LOG_ERROR(" | << DestroyScene: can't destroy the current scene [ " + id + " ]");
+      return false;
+    }
+
+    if (m_hasPeding && m_peding == id)
+    {
+      m_peding.clear();
+      m_hasPeding = false;
+    }
+
+    it->second->Destroy();
+    m_scenesMap.erase(it);
+    return true;
+  }
+
   Scene* ScenesManager::GetCurrent()
   {    
     assert(m_s_current != nullptr && "ScenesManager: No active scene");
     return m_s_current;
   }
 
-  void ScenesManager::ChangeScene(void)
+  bool ScenesManager::ChangeScene(void)
   { 
-    if(!m_arePeding)
+    if(!m_hasPeding)
     {
         LOG_ERROR(" | << ChangeScene called with no pending scene");
-        return;
+        return false;
     }
-    if(!m_scenesMap.contains(m_pedding))
-    {
-      LOG_ERROR(" | << Scene is not in the Manager: ID[" + m_pedding +"]");
-      return;
-    }
-    Render::Get().GetBatcher().SetCamera2D(nullptr);
-    auto it = m_scenesMap.find(m_pedding);
+
+    auto it = m_scenesMap.find(m_peding);
     if(it == m_scenesMap.end())
-      return;
+    {
+      LOG_ERROR(" | << Scene is not in the Manager: ID[" + m_peding +"]");
+      m_peding.clear();
+      m_hasPeding = false;
+      return false;
+    }
+
+    Render::Get().GetBatcher().SetCamera2D(nullptr);
     m_s_current = it->second.get();
-    m_arePeding = false;
+    m_peding.clear();
+    m_hasPeding = false;
+    return true;
   }
 
-  void ScenesManager::PedingScene(const std::string& id)
+  const std::string& ScenesManager::GetPedingScene(void)
   {
-    if(id == m_pedding)
+    return this->m_peding;
+  }
+
+  void ScenesManager::SetPedingScene(const std::string& id)
+  {
+    if(id == m_peding)
     {
-      LOG_INFO(" | << Pedding change: Scene current is equals the pedding");
+      LOG_INFO(" | << SetPedingScene: [ "+id+" ] equal to [ " + m_peding + " ].");
       return;
     }
-    m_pedding.clear();
-    m_pedding = id;
-    m_arePeding = true;
+    m_peding.clear();
+    m_peding = id;
+    m_hasPeding = true;
   }
 
-  bool ScenesManager::ArePeddingScene(void) const
+  bool ScenesManager::GetCheckScene(const std::string& id)
   {
-    return m_arePeding; 
+    return m_scenesMap.contains(id);
+  }
+
+  bool ScenesManager::HasPedingScene(void) const
+  {
+    return m_hasPeding; 
   }
 }

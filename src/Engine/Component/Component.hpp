@@ -2,9 +2,9 @@
 #pragma once
 /// | ------------------------------------ |
 #include "Engine/Render/Image/AtlasData.hpp"
-#include "Engine/Render/Image/RImage.hpp"
-#include "Engine/Render/Color/RColor.hpp"
-#include "Engine/Render/Shaders/RShader.hpp"
+#include "Engine/Render/Image/Image.hpp"
+#include "Engine/Render/Color/Color.hpp"
+#include "Engine/Render/Shaders/Shader.hpp"
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Log.hpp"
 #include "Engine/Utils/RawGeometry.hpp"
@@ -18,16 +18,16 @@
 
 namespace ENG
 {
-  //! Father class for all componentes
-  class IComponents
+  //! Father class for all component
+  class IComponent
   {
     public:
-      virtual ~IComponents()=default;
+      virtual ~IComponent()=default;
   };
 
   //! ITransform, control movement, velocity, direction of the Object.
   //! ALL objects have it mandatory
-  class ITransform: public IComponents
+  class ITransform: public IComponent
   {
     public:
       //! Defatul constructor.
@@ -46,27 +46,8 @@ namespace ENG
       float   m_angle;            //! Rotation of the object (NOT WORKING RIGHT NOW)
   };
 
-  //! IStats, control stats of the Object.
-  //! Right now you can "Kill" or erease an Object with the 'hp' member
-  //! | Why not have constructor.
-  //! > Because we dont need it, this objects is just a package of the stats,
-  //! > Actually mandatory on all objects.
-  class IStats : public IComponents
-  {
-    public:
-      ~IStats() override {}
-      /* | Why using uint8_t.
-       * > Caps the stat to only 1 byte (8 bits), so only 0 to 255 point of life.
-       */
-      uint8_t m_hp;
-      uint8_t m_hp_max;
-      uint8_t m_str;
-      uint8_t m_def;
-      uint8_t m_agi;
-  };
-
   //! ISprite, control the graphics to draw on the engine, this are only reference to the sprites.
-  class ISprite : public IComponents
+  class ISprite : public IComponent
   {
     public:
       //! Only for have one texture, its going yo be unique.
@@ -95,6 +76,10 @@ namespace ENG
       int GetAtlasLayer(void) const {return this->m_atlasLayer;}
       //! Get the section of the Atlas to draw. (Example: Frame to animation or the Tile)
       const UVRect& GetUV(void) const {return this->m_uv;}
+      //! Animation key, if it was built from an atlas animation (empty otherwise).
+      const std::string& GetAnimationKey(void) const {return this->m_animationKey;}
+      //! Tile id, if it was built from an atlas tile (empty otherwise).
+      const std::string& GetTileID(void) const {return this->m_tileID;}
 
       //! Set the actual frame form the animation to draw and Update the UVRect to draw.
       void SetFrame(const std::string& animKey, int frameIndex);
@@ -102,9 +87,9 @@ namespace ENG
       std::string             m_keyTexture; //! String Key to take the original texture from the Service::Assets().
       std::shared_ptr<RImage> m_image;      //! Shared_ptr.
 
-      int   m_width;    //! Width of the original texture.
-      int   m_height;   //! Height of the original texture.
-      float m_scale;    //! Scale of the sprite to draw.
+      int   m_width   = 0;    //! Width of the original texture.
+      int   m_height  = 0;   //! Height of the original texture.
+      float m_scale   = 1.0f;    //! Scale of the sprite to draw.
 
       bool    m_isAtlas = false;      //! The texture is Atlas or not.
       int     m_atlasLayer = -1;      //! Layer of the Atlas. (GPU information)
@@ -116,7 +101,7 @@ namespace ENG
   //! IAnimator, takes the logic of how the animation works.
   //! | Why IAnimator need ISprite to work.
   //! > Because IAnimator is only the logic and the ISprite is the logic to Draw and give to the batching what to draw.
-  class IAnimator : public IComponents
+  class IAnimator : public IComponent
   {
     public:
       //! Constructor "Defatult", this create automatic the rectangles to draw.
@@ -140,13 +125,16 @@ namespace ENG
       //! GetThe current frame where is playin the animation.
       int GetCurrentFrame(void) const {return this->m_currentFrame;}
 
-      //! Set New animation.
-      void SetAnimation(const std::string& keyAnim)
-      {
-        this->m_keyAnimation = keyAnim;
-      }
+      //! Changes the animation to play and updates the frame count from the atlas.
+      //! If it is a different animation, it restarts from frame 0. Returns false (and the
+      //! animator stops advancing) if the atlas or the animation does not exist.
+      bool SetAnimation(const std::string& keyAnim);
+      //! Whether the animator has a valid animation to play (frame count > 0).
+      bool IsValid(void) const { return this->m_frames > 0; }
       //! Get the name from the animation
       const std::string& GetKeyAnimation(void)const {return this->m_keyAnimation;}
+      //! Get the atlas key 
+      const std::string& GetKeyAtlas(void)const {return this->m_keyAtlas;}
       //! Get the amount of frames to pass.
       int GetFrames(void) const  { return this->m_frames;  }
       //! Get how many frames need to pass (If step is 1.0f, pass frame per frame).
@@ -163,15 +151,15 @@ namespace ENG
       int         m_frames        = 0;            //! Amount of animation to draw.
       int         m_step          = 1;            //! How many frames advance.
       float       m_speed         = 0.0f;         //! Speed of the animation.
-      float       m_scale         = 0.0f;         //! Scale of the animation to draw.
+      float       m_scale         = 1.0f;         //! Scale of the animation to draw.
       float       m_elapsed       = 0.0f;         //! How much time passed between last frame to the actual to meet the animation schedule.
       bool        m_playing       = false;        //! If the animation is playing.
-      int         m_currentFrame  = 1.0f;         //! Current frame of the animation.
+      int         m_currentFrame  = 0;         //! Current frame of the animation.
   };
 
   //! IBoundingBox, Vector2 position and Vector2 size.
   //! Used fot the physics system
-  class IBoundingBox: public IComponents
+  class IBoundingBox: public IComponent
   {
     public:
       //! Unique constructor, Dimention and if isTrigger (Defatult is solid).
@@ -191,6 +179,8 @@ namespace ENG
       void ChangeSize(const Vector2& dim)     { this->m_size = dim;     }
       //! Get the actual size from the IBoundingBox.
       const Vector2& GetSize(void) const      { return this->m_size;    }
+      //! Get if the IBoundingBox is trigger. 
+      bool GetTrigger(void) const             { return this->m_isTrigger;}
       //! Get the position from the IBoundingBox.
       const Vector2& GetPosition(void) const  { return this->m_position;}
       //! Get the center from the IBoundingBox.
@@ -216,7 +206,7 @@ namespace ENG
       bool    m_isTrigger;
   };
 
-  class ICircleBox : public IComponents
+  class ICircleBox : public IComponent
   {
     public:
       //! Unique constructor, Raidus and if isTrigger (Defatult is solid).
@@ -246,7 +236,7 @@ namespace ENG
   };
 
   //! IColor, is a storage for the object to save a color, change it and serialization
-  class IColor : public IComponents
+  class IColor : public IComponent
   {
     public:
       //! Constructor, you can give a color. (Example: ENG::Color::White).
@@ -268,19 +258,22 @@ namespace ENG
 
   //! IMaterial, this class storage one shader.
   //! Automatically draw the shader if have one.
-  class IMaterial : public IComponents
+  class IMaterial : public IComponent
   {
     public:
       //! Defatult constructor, takes a Shader from Service::Shader() with the key.
       IMaterial(const std::string& idKey);
       //! Gets the stored shader, if have one.
       Shader* GetShader(void)const;
+      //! Key of the shader in Service::Shaders() (used to save / load it).
+      const std::string& GetKey(void) const {return this->m_key;}
     private:
-      Shader* m_shader; //! Shader to storage
+      std::string m_key;          //! Key of the shader.
+      Shader* m_shader = nullptr; //! Shader to storage
   };
 
   //! IText, text storage
-  class IText : public IComponents
+  class IText : public IComponent
   {
     public:
       //! Constructor, need the text to storage.
@@ -332,40 +325,5 @@ namespace ENG
       std::string m_text;               //! Text to storage.
       Font*       m_font = nullptr;     //! Font ptr.
       float       m_fontSize = 0.0f;    //! Font size.
-  };
-
-  //! IDialog, system for make dialogs for the game.
-  class IDialog : public IComponents
-  {
-    public:
-      //! Constructor, give the information to take the text from Service::CSV().
-      IDialog(const std::string& keyDialogs, int text);
-      //! Constructor, give the information to take a range of text's from Service::CSV().
-      IDialog(const std::string& keyDialogs, int fromText, int whereText);
-      //! Constructor, give the information to take the text from Service::CSV(). (String form)
-      IDialog(const std::string& keyDialogs, const std::string& dialog);
-      //! Constructor, give the information to take a range of text's from Service::CSV(). (String form)
-      IDialog(const std::string& keyDialogs, const std::string& from, const std::string& where);
-
-      //! Set the velocity for the dialog.
-      void SetSpeed(float s);
-      //! Set the step, this is for oh many characters can pass trough.
-      void SetStep(int step);
-
-      //! Get if the dialog was completed
-      bool IsCompleteDialog(void) const;
-
-      //! Advance on the dialog. (If can do it)
-      void Advance(void) const;
-      //! Update the IDialog object.
-      void Update(void);
-      //! Draw the text logic.
-      void Draw(void) const;
-
-    private:
-      bool    m_complete;
-      float   m_speed;
-      int     m_step;
-      int     m_amountText;
   };
 }

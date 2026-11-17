@@ -1,8 +1,13 @@
+// This atlas is a Example for:
+// -> Regular JSON format to load.
+// -> "texture" is mandatory. ALWAYS ON ALL JSON
+// -> Can be two options, "animations" | "tiles", both defined for make 
+
+//! This format have animation, defined tiles size.
+
 {
   "name": "Cat Iddle",
   "texture": "Cat_Iddle.png",
-  "atlasWidth": 256,
-  "atlasHeight": 32,
   "tileSize": 32,
   "animations":
   {

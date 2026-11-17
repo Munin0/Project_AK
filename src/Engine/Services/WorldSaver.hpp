@@ -1,12 +1,9 @@
 // | -------------------------------
 #pragma once
 // | -------------------------------
-#include "Engine/Component/Component.hpp"
 #include "Engine/Services/KeyHash.hpp"
 #include "Engine/Utils/Vector2.hpp"
 // | -------------------------------
-#include "nlohmann/detail/macro_scope.hpp"
-#include "nlohmann/json_fwd.hpp"
 #include "nlohmann/json.hpp"
 // | -------------------------------
 #include <cstdint>
@@ -14,7 +11,6 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <vector>
 // | -------------------------------
 
 namespace ENG
@@ -46,14 +42,17 @@ namespace ENG
   struct IBoundingBoxData
   {
     /// @brief Width of the bounding box.
-    float m_width;
+    float   m_width = 0.0f;
     /// @brief Height of the bounding box.
-    float m_height;
+    float   m_height = 0.0f;
     /// @brief Whether the box is a trigger (detects overlaps without
     ///        blocking movement).
-    bool  m_isTrigger;
-    /// @brief Enables JSON conversion of all the members.
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(IBoundingBoxData,m_width,m_height,m_isTrigger)
+    bool    m_isTrigger = false;
+    /// @brief Offset of the box from the object position.
+    Vector2 m_offset{0.0f, 0.0f};
+    /// @brief Enables JSON conversion of all the members. Missing keys keep
+    ///        their default value, so older saves still load.
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(IBoundingBoxData,m_width,m_height,m_isTrigger,m_offset)
   };
 
   /**
@@ -66,15 +65,15 @@ namespace ENG
     /// @brief Key of the atlas.
     std::string m_keyAtlas;
     /// @brief Number of frames of the animation.
-    int m_frames;
+    int m_frames = 0;
     /// @brief Step between frames of the animation.
-    int m_step;
+    int m_step = 1;
     /// @brief Playback speed of the animation.
-    float m_speed;
+    float m_speed = 0.0f;
     /// @brief Scale applied to the animation.
-    float m_scale;
+    float m_scale = 1.0f;
     /// @brief Enables JSON conversion of all the members.
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(IAnimatorData,m_key,m_frames,m_step,m_speed,m_scale)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(IAnimatorData,m_key,m_keyAtlas,m_frames,m_step,m_speed,m_scale)
   };
 
   /**
@@ -82,37 +81,21 @@ namespace ENG
    */
   struct ISpriteData
   {
-    /// @brief Key of the sprite texture.
+    /// @brief Key of the texture, or of the atlas when m_animKey / m_tileID is set.
     std::string m_keyName;
-    /// @brief Width of the sprite, in pixels.
-    int m_width;
-    /// @brief Height of the sprite, in pixels.
-    int m_height;
+    /// @brief Width of the sprite, in pixels (informative; rebuilt on load).
+    int m_width = 0;
+    /// @brief Height of the sprite, in pixels (informative; rebuilt on load).
+    int m_height = 0;
     /// @brief Scale applied to the sprite.
-    float m_scale;
-    /// @brief Enables JSON conversion of all the members.
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ISpriteData,m_keyName,m_width,m_height,m_scale)
-  };
-
-  /**
-   * @brief Serializable gameplay stats of an object.
-   *
-   * All the stats are unsigned 8-bit and 32-bit values (0 to 255 and 0 to 4294967295 respectively).
-   */
-  struct IStatsData
-  {
-    /// @brief Current health points.
-    uint8_t m_hp;
-    /// @brief Maximum health points.
-    uint8_t m_hp_max;
-    /// @brief Strength.
-    uint8_t m_str;
-    /// @brief Defense.
-    uint8_t m_def;
-    /// @brief Agility.
-    uint8_t m_agi;
-    /// @brief Enables JSON conversion of all the members.
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(IStatsData, m_hp,m_hp_max,m_str,m_def,m_agi)
+    float m_scale = 1.0f;
+    /// @brief Atlas animation the sprite was built from (empty if none).
+    std::string m_animKey;
+    /// @brief Atlas tile the sprite was built from (empty if none).
+    std::string m_tileID;
+    /// @brief Enables JSON conversion of all the members. Missing keys keep
+    ///        their default value, so older saves still load.
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ISpriteData,m_keyName,m_width,m_height,m_scale,m_animKey,m_tileID)
   };
 
   /**
@@ -121,17 +104,44 @@ namespace ENG
   struct ITransformData
   {
     /// @brief Current position.
-    Vector2 m_position;
+    Vector2 m_position{0.0f, 0.0f};
     /// @brief Position in the previous frame.
-    Vector2 m_prev_position;
+    Vector2 m_prev_position{0.0f, 0.0f};
     /// @brief Current velocity.
-    Vector2 m_velocity;
+    Vector2 m_velocity{0.0f, 0.0f};
     /// @brief Direction the object is facing or moving in.
-    Vector2 m_direction;
+    Vector2 m_direction{0.0f, 0.0f};
+    /// @brief Direction in the previous frame.
+    Vector2 m_prev_direction{0.0f, 0.0f};
     /// @brief Rotation angle of the object.
-    float   m_angle;
+    float   m_angle = 0.0f;
+    /// @brief Enables JSON conversion of all the members. Missing keys keep
+    ///        their default value, so older saves still load.
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ITransformData, m_position,m_prev_position,m_velocity,m_direction,m_prev_direction,m_angle)
+  };
+
+  /**
+   * @brief Serializable circle collider data of an object.
+   */
+  struct ICircleBoxData
+  {
+    /// @brief Radius of the circle.
+    float m_radius = 0.0f;
+    /// @brief Whether the circle is a trigger.
+    bool  m_isTrigger = false;
     /// @brief Enables JSON conversion of all the members.
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ITransformData, m_position,m_prev_position,m_velocity,m_direction,m_angle)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(ICircleBoxData, m_radius, m_isTrigger)
+  };
+
+  /**
+   * @brief Serializable material data of an object (its shader, by key).
+   */
+  struct IMaterialData
+  {
+    /// @brief Key of the shader in the ShaderManager.
+    std::string m_shaderKey;
+    /// @brief Enables JSON conversion of all the members.
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(IMaterialData, m_shaderKey)
   };
 
   /**
@@ -153,30 +163,40 @@ namespace ENG
    * @brief Complete saved state of an object.
    *
    * ObjectState is a snapshot of an object made of its name, layer and the
-   * data of each of its components. The transform and stats data are always
-   * present; the sprite, animator, color and text data are optional, and an
-   * object can have any number of bounding boxes.
+   * data of each of its components. The transform data is always present;
+   * the sprite, animator, bounding box, circle box, color, text and material
+   * data are optional
+   * (std::nullopt when the object lacks that component). Components of the
+   * game are stored as json in m_components (see ComponentSerializers).
    */
   struct ObjectState
   {
     /// @brief Name of the object.
     std::string       m_name;
     /// @brief Layer the object belongs to.
-    uint8_t           m_layer;
+    uint8_t           m_layer = 0;
+    /// @brief Render space of the object (0 = World, 1 = Screen).
+    uint8_t           m_renderSpace = 0;
+    /// @brief Whether the object is drawn.
+    bool              m_visible = true;
     /// @brief Transform data of the object.
     ITransformData    m_tData;
-    /// @brief Stats data of the object.
-    IStatsData        m_sData;
     /// @brief Sprite data, if the object has a sprite.
     std::optional<ISpriteData>      m_spData;
     /// @brief Animator data, if the object has an animator.
     std::optional<IAnimatorData>    m_anData;
-    /// @brief Bounding boxes of the object. Empty if it has none.
-    std::vector<IBoundingBoxData>   m_bbData;
+    /// @brief Bounding box data, if the object has an IBoundingBox.
+    std::optional<IBoundingBoxData> m_bbData;
     /// @brief Color data, if the object has a color.
     std::optional<IColorData>       m_cData;
     /// @brief Text data, if the object is a text.
     std::optional<ITextData>        m_txData;
+    /// @brief Circle collider data, if the object has an ICircleBox.
+    std::optional<ICircleBoxData>   m_ccData;
+    /// @brief Material data, if the object has an IMaterial.
+    std::optional<IMaterialData>    m_mtData;
+    /// @brief Game components registered in ComponentSerializers, by key.
+    std::unordered_map<std::string, nlohmann::json> m_components;
   };
 
   /**
@@ -242,7 +262,7 @@ namespace ENG
       void from_json();
     private:
       /// @brief Stored object states, indexed by key.
-      std::unordered_map<std::string, ObjectState, StringHash, std::equal_to<>> m_ObjectSates;
+      std::unordered_map<std::string, ObjectState, StringHash, std::equal_to<>> m_objectSates;
       /// @brief JSON document used to write to and read from disk.
       nlohmann::json data;
   };

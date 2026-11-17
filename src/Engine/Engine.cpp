@@ -6,7 +6,7 @@
 #include "Engine/Render/Render.hpp"
 #include "Engine/Layer/GameLayer.hpp"
 #include "Engine/Services/Services.hpp"
-#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Color/Color.hpp"
 #include "Engine/Inputs/PollEvent.hpp"
 // | -------------------------------
 #include "SDL3/SDL_error.h"
@@ -53,7 +53,7 @@ namespace ENG
     Services::ProvideMusic(&m_eMusic);
     Services::ProvideShaders(&m_eShaders);
     Services::ProvideWorldSaver(&m_eWorldSaver);
-    Services::ProvideClockSaver(&m_eClock);
+    Services::ProvideClock(&m_eClock);
     Services::ProvideCSVManager(&m_eCSV);
     LOG_INFO(" | << AssertsManager created Succesfully");
     LOG_INFO(" | << ScenesManager created Succesfully");
@@ -148,7 +148,7 @@ namespace ENG
     Services::ProvideSFX(nullptr);
     Services::ProvideShaders(nullptr);
     Services::ProvideWorldSaver(nullptr);
-    Services::ProvideClockSaver(nullptr);
+    Services::ProvideClock(nullptr);
     Services::ProvideCSVManager(nullptr);
 
     LOG_INFO(" | << [ENGINE] Destroying SDL_MIX, waiting...");

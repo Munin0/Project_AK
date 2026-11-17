@@ -1,7 +1,7 @@
 /// | -------------------------------
 #pragma once
 /// | -------------------------------
-#include "Engine/Render/Image/RImage.hpp"
+#include "Engine/Render/Image/Image.hpp"
 /// | -------------------------------
 #include "nlohmann/json_fwd.hpp"
 /// | -------------------------------

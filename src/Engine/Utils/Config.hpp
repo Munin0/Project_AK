@@ -25,19 +25,23 @@ namespace ENG
    * }
    * @endcode
    */
+
   class EngineConfig
   {
     public:
       /// @brief Default constructor.
       EngineConfig() = default;
+
       /// @brief Default destructor.
       ~EngineConfig() = default;
+
       /**
        * @brief Serializes this configuration to JSON.
        *
        * @return A JSON object with the keys "name", "screen" (with "w" and
        *         "h") and "fullscreen".
        */
+
       nlohmann::json Save()
       {
         return {
@@ -46,6 +50,7 @@ namespace ENG
           { "fullscreen",  m_eFullscreen }
         };
       }
+
       /**
        * @brief Loads this configuration from JSON.
        *
@@ -66,6 +71,7 @@ namespace ENG
         }
         m_eFullscreen = j.value("fullscreen", m_eFullscreen);
       }
+
     public:
       /// @brief Title of the window.
       std::string   m_title      = "";

@@ -2,7 +2,7 @@
 #include "ShaderManager.hpp"
 // | -------------------------------
 #include "Engine/Render/Render.hpp"
-#include "Engine/Render/Shaders/RShader.hpp"
+#include "Engine/Render/Shaders/Shader.hpp"
 #include "Engine/Utils/Path.hpp"
 // | -------------------------------
 #include <memory>

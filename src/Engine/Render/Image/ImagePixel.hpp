@@ -23,19 +23,19 @@ namespace ENG
   struct ImagePixels
   {
     /// @brief Pixel buffer, allocated by stb_image. nullptr if no image is loaded.
-    uint8_t* data = nullptr;
+    uint8_t* m_data = nullptr;
     /// @brief Width of the image, in pixels.
-    int width = 0;
+    int m_width = 0;
     /// @brief Height of the image, in pixels.
-    int height = 0;
+    int m_height = 0;
     /// @brief Number of color channels per pixel (for example, 4 for RGBA).
-    int channels = 0;
+    int m_channels = 0;
     /**
      * @brief Frees the pixel buffer with stbi_image_free().
      */
     ~ImagePixels()
     {
-      if (data) stbi_image_free(data);
+      if (m_data) stbi_image_free(m_data);
     }
     /// @brief Not copyable, to avoid a double free of the stb_image buffer.
     ImagePixels(const ImagePixels&) = delete;
@@ -52,9 +52,9 @@ namespace ENG
      * @param[in,out] other ImagePixels to move from.
      */
     ImagePixels(ImagePixels&& other) noexcept
-      : data(other.data), width(other.width), height(other.height), channels(other.channels)
+      : m_data(other.m_data), m_width(other.m_width), m_height(other.m_height), m_channels(other.m_channels)
     {
-      other.data = nullptr;
+      other.m_data = nullptr;
     }
   };
 

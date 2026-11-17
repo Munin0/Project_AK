@@ -1,16 +1,19 @@
 /// | ------------------------------------ |
 #include "Game.hpp"
 /// | ------------------------------------ |
+#include "Engine/Component/ComponentSerializers.hpp"
 #include "Engine/Inputs/PollEvent.hpp"
-#include "Engine/Render/Batching/RAPIBatch.hpp"
-#include "Engine/Render/Color/RColor.hpp"
+#include "Engine/Render/Batching/Drawer.hpp"
+#include "Engine/Render/Color/Color.hpp"
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/Log.hpp"
+#include "Engine/Services/CSVManager.hpp"
 #include "Engine/Services/ScenesManager.hpp"
 #include "Engine/Services/Services.hpp"
 #include "Engine/Render/Render.hpp"
 /// | ------------------------------------ |
-#include "Game/Scenes/Demo.hpp"
+#include "Game/Components/Stats.hpp"
+#include "Game/Scenes/GameScene.hpp"
 #include "Game/Scenes/MainMenu.hpp"
 /// | ------------------------------------ |
 #include "SDL3/SDL_scancode.h"
@@ -29,6 +32,9 @@ namespace APP
   void Game::OnInit(void)
   {
     LOG_INFO(" | << Game application Init Succesfully");
+
+    /// Game components saved / loaded by the engine
+    ENG::ComponentSerializers::Register<IStats>("stats");
     
     /// Baking fonts
     // ENG::BakerFont baker("Font/TTF/Roboto.ttf");
@@ -41,11 +47,14 @@ namespace APP
     ENG::Services::Fonts().LoadFont(std::make_unique<ENG::Font>("CabinItalic"));
     /// Load All Atlas 
 
+    /// Texts (dialogs), by language column: "esp", "eng"
+    ENG::Services::CSV().Load("Dialogs/dialog.csv", "Dialogs");
+
     /// Adding Shaders
     ENG::Services::Shaders().Load("mono.fs","mono.vs","Mono");
-    /// Adding Scenes
+    /// Adding Scenes (the first one added is the starting scene)
     ENG::Services::Scenes().AddScene(std::make_unique<MainMenu>("MainMenu"));
-    ENG::Services::Scenes().AddScene(std::make_unique<DemoScene>("DemoScene"));
+    ENG::Services::Scenes().AddScene(std::make_unique<GameScene>("GameScene"));
     /// Start firts scene
     ENG::Services::Scenes().GetCurrent()->Init();
   }
@@ -58,7 +67,8 @@ namespace APP
 
   bool Game::IsRunning(void)
   {
-    return m_gameRunning;
+    // s_statusApp: the window was closed (or SIGTERM), or the "Salir" button was pressed.
+    return m_gameRunning && !ENG::PollEvent::s_statusApp;
   }
 
   void Game::OnInputs(float dt)
@@ -80,13 +90,17 @@ namespace APP
   void Game::OnUpdate(float dt)
   {
     auto s_current = ENG::Services::Scenes().GetCurrent();
+    auto& sceneManeger = ENG::Services::Scenes();
     // while running the current scene
-    if(!s_current->IsRunning())
+    if(sceneManeger.HasPedingScene())
     {
-      s_current->Destroy();
-      ENG::Services::Scenes().ChangeScene();
-      ENG::Services::Scenes().GetCurrent()->Init();
-      return;
+      auto* old = s_current;
+      if(sceneManeger.ChangeScene())
+      {
+        old->Destroy();
+        sceneManeger.GetCurrent()->Init();
+        return;
+      }
     }
     // Update current scene
     s_current->Update(dt);

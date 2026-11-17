@@ -6,6 +6,48 @@ Compact record of engine changes and versions.
 
 ---
 
+## Alpha 0.05
+
+`Alpha 0.05 | feature > Maps: Tiled importer outside the engine (IMP::TiledLoader -> MapData); SceneMap builds TileMaps + CollisionGrid from a MapLayerRules table (layer class/name, per-layer overrides).`
+
+`Alpha 0.05 | feature > CollisionGrid: solid cells of the map, object vs. grid collision and a debug view (DrawCollisionGrid).`
+
+`Alpha 0.05 | feature > ComponentSerializers: the game registers its own components (Register<T>, Ignore<T>); every native component is saved; WorldSaver writes CBOR.`
+
+`Alpha 0.05 | feature > RenderSpace (World / Screen) per object, Object::SetVisible, and RenderObjects by layer range.`
+
+`Alpha 0.05 | feature > PoolSystems: UpdateObjects, DispatchPointer and RenderObjects as free functions over an ObjectPool.`
+
+`Alpha 0.05 | feature > Click consumption in PollEvent (ConsumeMouseButtonPress claims the whole click); DispatchPointer gives the mouse top layer first; Button and TextBox take their own clicks.`
+
+`Alpha 0.05 | feature > TextBox text input: UTF-8 composed by SDL, keyboard captured while typing, caret with arrows/Home/End, Backspace/Delete by character, Ctrl+A, horizontal scroll, placeholder, max length, submit on Enter.`
+
+`Alpha 0.05 | feature > Dialogs: TextReveal (letter by letter) and Label::StartReveal; texts from CSVManager, one column per language.`
+
+`Alpha 0.05 | feature > UTF-8 text in TextAPI (Text/Utf8.hpp): accents, ñ, ¿¡.`
+
+`Alpha 0.05 | feature > Camera2D::Follow(position, dt) by value; ScenesManager::DestroyScene.`
+
+`Alpha 0.05 | change > Scene reduced to the interface plus its pool, main camera and ID; the map moved to SceneMap and the pool running to PoolSystems.`
+
+`Alpha 0.05 | change > Camera rule: only ChangeScene clears the batcher camera; each scene's Init activates its own. RenderObjects uses the active camera.`
+
+`Alpha 0.05 | change > IStats and IDialog moved out of the engine; only MainMenu and GameScene remain as sample scenes.`
+
+`Alpha 0.05 | change > TextBox API: the constructor takes a placeholder; SetText sets the typed text; GetTypedKeys returns keys with modifiers.`
+
+`Alpha 0.05 | bugfix > Changing to an unknown scene no longer destroys the current scene every frame; the request is reported and cleared.`
+
+`Alpha 0.05 | bugfix > Batch overflow, SFX, ISprite/IAnimator, Save/Load and null dereferences (critical issues C1-C8).`
+
+`Alpha 0.05 | bugfix > Closing the window, SIGTERM or the Quit button now exit the game.`
+
+`Alpha 0.05 | bugfix > TextBox::SetPosition moves its click area; the caret is drawn as a character; Label::SetText keeps the font.`
+
+`Alpha 0.05 | bugfix > GetMeasureText no longer crashes on glyphs missing from the font.`
+
+---
+
 ## Alpha 0.04f
 
 `Alpha 0.04f | feature > Isometric render, load and logic.`

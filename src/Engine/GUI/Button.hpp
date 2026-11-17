@@ -3,9 +3,8 @@
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
 #include "Engine/Object/Object.hpp"
-#include "Engine/Render/Batching/RBatch.hpp"
-#include "Engine/Render/Color/RColor.hpp"
-#include "Engine/Render/Geometry/RGeometry.hpp"
+#include "Engine/Render/Batching/Batch.hpp"
+#include "Engine/Render/Color/Color.hpp"
 #include "Engine/Render/Image/AtlasData.hpp"
 #include "Engine/Text/Font/Font.hpp"
 #include "Engine/Utils/RawGeometry.hpp"
@@ -26,12 +25,18 @@ namespace ENG
    * callback when it is activated. Any value can be attached to the button
    * with SetData() and given to the callback.
    *
+   * The button detects its own click in OnPointer(): when the left button is
+   * pressed over it, it consumes the click (nobody below gets it) and runs
+   * the callback. The scene only has to call ENG::DispatchPointer(m_pool) in Inputs().
+   * A hidden button (SetVisible(false)) does not react.
+   *
    * Usage:
    * @code
-   * ENG::Button play("play", {200.0f, 50.0f});
-   * play.SetText("Play");
-   * play.SetBackgroundColor(ENG::Color::Blue);
-   * play.SetFunction([](std::any) { StartGame(); });
+   * auto play = std::make_unique<ENG::Button>("play", ENG::Vector2{200.0f, 50.0f});
+   * play->SetText("Play");
+   * play->SetFunction([](std::any) { StartGame(); });
+   * m_pool.Add(std::move(play));
+   * // Inputs(): ENG::DispatchPointer(m_pool);
    * @endcode
    */
   class Button : public Object
@@ -63,11 +68,24 @@ namespace ENG
       ~Button() override {};
 
       /**
-       * @brief Updates the button once per frame.
+       * @brief Updates the button once per frame. Input is handled in OnPointer().
        *
        * @param[in] dt Time elapsed since the previous frame, in seconds.
        */
       void Update(float dt) override;
+
+      /**
+       * @brief Updates the hover state and runs the callback when clicked.
+       *
+       * Consumes the left click (PollEvent::ConsumeMouseButtonPress()) only
+       * if the mouse is over the button.
+       *
+       * @param[in] mouse Mouse position in the button's RenderSpace.
+       */
+      void OnPointer(const Vector2& mouse) override;
+
+      /// @brief Whether the mouse is over the button (updated by OnPointer()).
+      bool IsHover(void) const { return m_hover; }
 
       /**
        * @brief Submits the button to the Batcher for rendering.
@@ -79,7 +97,8 @@ namespace ENG
       /**
        * @brief Runs the callback of the button.
        *
-       * @param[in] _ Value given to the callback.
+       * The callback receives the value set with SetData(). It can be called
+       * directly (e.g. from a keyboard shortcut).
        */
       void Action(void);
 
@@ -200,5 +219,8 @@ namespace ENG
 
       /// @brief Whether the button is currently pressed.
       bool m_pressed = false;
+
+      /// @brief Whether the mouse is over the button. Updated by OnPointer().
+      bool m_hover = false;
   };
 }

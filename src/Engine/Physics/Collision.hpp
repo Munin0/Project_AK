@@ -2,7 +2,7 @@
 #pragma once
 // | -------------------------------
 #include "Engine/Component/Component.hpp"
-#include "Engine/Map/TileMap/TileMap.hpp"
+#include "Engine/Map/CollisionGrid.hpp"
 #include "Engine/Object/Object.hpp"
 #include "Engine/Utils/RawGeometry.hpp"
 #include "Engine/Utils/Vector2.hpp"
@@ -11,22 +11,26 @@
 namespace ENG
 {
   /**
-   * @brief Checks whether an object collides with a tile map (isometric).
+   * @brief Checks whether an object collides with the solid cells of a map.
    *
-   * Samples the footprint (solid bounding box) of @p object against the
-   * occupied cells of @p map. A cell is occupied when the layer holds a tile
-   * at that position (for example, a wall on the "World" layer).
+   * Samples the footprint (the lower part of the sprite, or of the bounding
+   * box if there is no sprite) of @p object against the solid cells of
+   * @p grid. Works for orthogonal and isometric grids.
+   *
+   * The resolution moves the object back towards
+   * ITransform::m_prev_position, so move it with Object::SetPosition(x, y)
+   * (which stores the previous position) before calling this.
    *
    * @param[in,out] object     Object to test. If @p resolution is true and a
    *                           collision is found, it is moved back to its
    *                           previous position.
-   * @param[in]     map        Tile map to test against.
+   * @param[in]     grid       Collision grid to test against.
    * @param[in]     resolution true to resolve the collision, false to only
    *                           detect it.
    * @return true if the object collides with an occupied cell, false
    *         otherwise.
    */
-  [[maybe_unused]] bool CollisionTileMapIsometric(Object& object, const TileMap& map, bool resolution);
+  [[maybe_unused]] bool CollisionObjectGrid(Object& object, const CollisionGrid& grid, bool resolution);
 
   /**
    * @brief Checks whether two objects collide using their AABBs, and can
@@ -86,11 +90,11 @@ namespace ENG
   /**
    * @brief Checks A Tilemap of Collisions vs a Entity->ICircleBox.
    *
-   * @param[in] TileMap, Collisions map.
+   * @param[in] grid Collision grid.
    * @param[in] Entity ICircleBox.
    * @return true if has a collision and resolver, false otherwise.
    */
-  [[maybe_unused]] bool CollisionTileToCircle(const TileMap& map, const ICircleBox& circleBox);
+  [[maybe_unused]] bool CollisionTileToCircle(const CollisionGrid& grid, const ICircleBox& circleBox);
 
   [[maybe_unused]] bool CollisionRectTriangle(const ENG::Rectangle& rect, const ENG::Triangle& triangle);
 
